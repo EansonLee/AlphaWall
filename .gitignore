@@ -1,0 +1,34 @@
+# Local agent/tooling directories
+.agent/
+.claude/
+.codex/
+.gemini/
+.skills/
+
+# macOS
+.DS_Store
+
+# Xcode user-specific files
+*.xcuserstate
+*.xcworkspace/xcuserdata/
+*.xcodeproj/xcuserdata/
+xcuserdata/
+
+# Build artifacts and dependencies
+DerivedData/
+build/
+Pods/
+
+# Local environment files
+.env
+.env.*
+
+# Root-level design/screenshot assets not intended for repo
+/Screenshot *.png
+/detail_wall.png
+/laucnch.png
+/mainpage.png
+/mainpage_2.png
+/mainpage_3.png
+/app_launchScreen6.png
+/profile.png
