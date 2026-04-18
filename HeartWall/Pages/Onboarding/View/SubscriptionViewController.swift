@@ -249,12 +249,12 @@ final class SubscriptionViewController: BaseViewController {
 
         lastKnownCarouselSize = carouselView.bounds.size
 
-        let itemWidth = max(286, carouselView.bounds.width - 90)
-        let itemHeight = max(560, carouselView.bounds.height - 8)
-        let horizontalInset = max(18, (carouselView.bounds.width - itemWidth) * 0.5)
+        let itemWidth = carouselView.bounds.width
+        let itemHeight = carouselView.bounds.height
+        let horizontalInset: CGFloat = 0
 
         carouselLayout.itemSize = CGSize(width: itemWidth, height: itemHeight)
-        carouselLayout.sectionInset = UIEdgeInsets(top: 4, left: horizontalInset, bottom: 4, right: horizontalInset)
+        carouselLayout.sectionInset = UIEdgeInsets(top: 0, left: horizontalInset, bottom: 0, right: horizontalInset)
         carouselLayout.invalidateLayout()
     }
 
@@ -332,7 +332,7 @@ final class SubscriptionViewController: BaseViewController {
             let distance = abs(cell.center.x - visibleCenterX)
             let normalizedDistance = min(distance / max(pageStride, 1), 1)
             let focusProgress = 1 - normalizedDistance
-            let scale = 0.90 + (focusProgress * 0.10)
+            let scale = 0.98 + (focusProgress * 0.02)
             cell.transform = CGAffineTransform(scaleX: scale, y: scale)
             cell.applyFocusProgress(focusProgress)
             cell.layer.zPosition = focusProgress
@@ -504,7 +504,6 @@ private final class VideoCarouselCell: UICollectionViewCell {
     static let reuseIdentifier = "VideoCarouselCell"
 
     private let videoContainerView = UIView()
-    private let videoCropView = UIView()
     private let videoView = LoopingVideoView()
     private let dimView = UIView()
     private let borderView = UIView()
@@ -591,16 +590,14 @@ private final class VideoCarouselCell: UICollectionViewCell {
         contentView.clipsToBounds = false
 
         layer.shadowColor = UIColor.black.cgColor
-        layer.shadowOpacity = 0.26
-        layer.shadowRadius = 34
-        layer.shadowOffset = CGSize(width: 0, height: 18)
+        layer.shadowOpacity = 0
+        layer.shadowRadius = 0
+        layer.shadowOffset = .zero
 
-        videoContainerView.layer.cornerRadius = 38
+        videoContainerView.layer.cornerRadius = 0
         videoContainerView.layer.cornerCurve = .continuous
         videoContainerView.clipsToBounds = true
         videoContainerView.layer.insertSublayer(fallbackGradientLayer, at: 0)
-
-        videoCropView.clipsToBounds = true
 
         fallbackGradientLayer.colors = [
             UIColor(red: 0.12, green: 0.16, blue: 0.10, alpha: 1).cgColor,
@@ -639,12 +636,10 @@ private final class VideoCarouselCell: UICollectionViewCell {
         timeLabel.textAlignment = .center
 
         contentView.addSubview(videoContainerView)
-        [videoCropView, dimView, borderView, dateLabel, timeLabel].forEach {
+        [videoView, dimView, borderView, dateLabel, timeLabel].forEach {
             videoContainerView.addSubview($0)
             $0.translatesAutoresizingMaskIntoConstraints = false
         }
-        videoCropView.addSubview(videoView)
-        videoView.translatesAutoresizingMaskIntoConstraints = false
         videoContainerView.translatesAutoresizingMaskIntoConstraints = false
 
         NSLayoutConstraint.activate([
@@ -653,15 +648,10 @@ private final class VideoCarouselCell: UICollectionViewCell {
             videoContainerView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor),
             videoContainerView.bottomAnchor.constraint(equalTo: contentView.bottomAnchor),
 
-            videoCropView.topAnchor.constraint(equalTo: videoContainerView.topAnchor),
-            videoCropView.leadingAnchor.constraint(equalTo: videoContainerView.leadingAnchor),
-            videoCropView.trailingAnchor.constraint(equalTo: videoContainerView.trailingAnchor),
-            videoCropView.bottomAnchor.constraint(equalTo: videoContainerView.bottomAnchor),
-
-            videoView.topAnchor.constraint(equalTo: videoCropView.topAnchor, constant: -20),
-            videoView.leadingAnchor.constraint(equalTo: videoCropView.leadingAnchor, constant: -36),
-            videoView.trailingAnchor.constraint(equalTo: videoCropView.trailingAnchor, constant: 36),
-            videoView.bottomAnchor.constraint(equalTo: videoCropView.bottomAnchor, constant: 20),
+            videoView.topAnchor.constraint(equalTo: videoContainerView.topAnchor),
+            videoView.leadingAnchor.constraint(equalTo: videoContainerView.leadingAnchor),
+            videoView.trailingAnchor.constraint(equalTo: videoContainerView.trailingAnchor),
+            videoView.bottomAnchor.constraint(equalTo: videoContainerView.bottomAnchor),
 
             dimView.topAnchor.constraint(equalTo: videoContainerView.topAnchor),
             dimView.leadingAnchor.constraint(equalTo: videoContainerView.leadingAnchor),
