@@ -17,6 +17,8 @@ final class SubscriptionViewController: BaseViewController {
 
     // MARK: - UI
 
+    private let backgroundVideoView = LoopingVideoView()
+    private let backgroundDimView = UIView()
     private let carouselLayout = UICollectionViewFlowLayout()
 
     private lazy var carouselView: UICollectionView = {
@@ -49,7 +51,7 @@ final class SubscriptionViewController: BaseViewController {
     // MARK: - Lifecycle
 
     init(videoResource: OnboardingVideoResource) {
-        self.currentIndex = OnboardingVideoResource.allCases.firstIndex(of: videoResource) ?? 0
+        self.currentIndex = min(1, OnboardingVideoResource.allCases.count - 1)
         super.init(nibName: nil, bundle: nil)
     }
 
@@ -70,6 +72,7 @@ final class SubscriptionViewController: BaseViewController {
 
     override func viewDidDisappear(_ animated: Bool) {
         super.viewDidDisappear(animated)
+        backgroundVideoView.pause()
         pauseVisibleCells()
     }
 
@@ -96,13 +99,24 @@ final class SubscriptionViewController: BaseViewController {
 
         configureTopButtons()
         configureOverlayContent()
+        configureBackgroundVideo()
 
-        [carouselView, bottomOverlayView, closeButton, restoreButton, contentStackView].forEach {
+        [backgroundVideoView, backgroundDimView, carouselView, bottomOverlayView, closeButton, restoreButton, contentStackView].forEach {
             view.addSubview($0)
             $0.translatesAutoresizingMaskIntoConstraints = false
         }
 
         NSLayoutConstraint.activate([
+            backgroundVideoView.topAnchor.constraint(equalTo: view.topAnchor),
+            backgroundVideoView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            backgroundVideoView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+            backgroundVideoView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
+
+            backgroundDimView.topAnchor.constraint(equalTo: view.topAnchor),
+            backgroundDimView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            backgroundDimView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+            backgroundDimView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
+
             carouselView.topAnchor.constraint(equalTo: view.topAnchor),
             carouselView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
             carouselView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
@@ -128,6 +142,11 @@ final class SubscriptionViewController: BaseViewController {
 
             trialButton.heightAnchor.constraint(equalToConstant: 58)
         ])
+    }
+
+    private func configureBackgroundVideo() {
+        backgroundDimView.backgroundColor = UIColor.black.withAlphaComponent(0.22)
+        syncBackgroundVideo()
     }
 
     private func configureTopButtons() {
@@ -232,12 +251,22 @@ final class SubscriptionViewController: BaseViewController {
     private func syncCurrentIndexFromScrollPosition() {
         let nextIndex = nearestIndex(for: carouselView.contentOffset.x)
         guard nextIndex != currentIndex else {
+            syncBackgroundVideo()
             refreshVisibleCellState(animated: true)
             return
         }
 
         currentIndex = nextIndex
+        syncBackgroundVideo()
         refreshVisibleCellState(animated: true)
+    }
+
+    private func syncBackgroundVideo() {
+        guard videoResources.indices.contains(currentIndex) else { return }
+        guard let url = videoResources[currentIndex].bundleURL() else { return }
+
+        backgroundVideoView.configure(url: url, isMuted: true)
+        backgroundVideoView.play()
     }
 
     private func refreshVisibleCellState(animated: Bool) {
@@ -276,6 +305,7 @@ final class SubscriptionViewController: BaseViewController {
     @objc
     private func handleEnterHome() {
         UIImpactFeedbackGenerator(style: .light).impactOccurred()
+        backgroundVideoView.pause()
         pauseVisibleCells()
 
         guard let navigationController else { return }
