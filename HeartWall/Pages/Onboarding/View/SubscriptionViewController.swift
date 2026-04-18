@@ -9,7 +9,6 @@ final class SubscriptionViewController: BaseViewController {
 
     // MARK: - Properties
 
-    private let initialResource: OnboardingVideoResource
     private let videoResources = OnboardingVideoResource.allCases
 
     private var currentIndex: Int
@@ -39,20 +38,17 @@ final class SubscriptionViewController: BaseViewController {
 
     private let closeButton = UIButton(type: .system)
     private let restoreButton = UIButton(type: .system)
-    private let counterLabel = UILabel()
-    private let bottomScrimView = VerticalScrimView()
-    private let bottomBlurView = UIVisualEffectView(effect: UIBlurEffect(style: .systemUltraThinMaterialDark))
+    private let bottomOverlayView = BottomRadiantOverlayView()
     private let contentStackView = UIStackView()
     private let benefitStackView = UIStackView()
     private let titleLabel = UILabel()
     private let trialButton = GradientCapsuleButton()
-    private let noteLabel = UILabel()
-    private let legalLabel = UILabel()
+    private let priceLabel = UILabel()
+    private let agreementView = AgreementRowView()
 
     // MARK: - Lifecycle
 
     init(videoResource: OnboardingVideoResource) {
-        self.initialResource = videoResource
         self.currentIndex = OnboardingVideoResource.allCases.firstIndex(of: videoResource) ?? 0
         super.init(nibName: nil, bundle: nil)
     }
@@ -100,17 +96,11 @@ final class SubscriptionViewController: BaseViewController {
 
         configureTopButtons()
         configureOverlayContent()
-        updateCounterLabel()
 
-        [carouselView, bottomScrimView, bottomBlurView, closeButton, restoreButton, counterLabel].forEach {
+        [carouselView, bottomOverlayView, closeButton, restoreButton, contentStackView].forEach {
             view.addSubview($0)
             $0.translatesAutoresizingMaskIntoConstraints = false
         }
-
-        bottomBlurView.alpha = 0.52
-
-        bottomBlurView.contentView.addSubview(contentStackView)
-        contentStackView.translatesAutoresizingMaskIntoConstraints = false
 
         NSLayoutConstraint.activate([
             carouselView.topAnchor.constraint(equalTo: view.topAnchor),
@@ -118,15 +108,10 @@ final class SubscriptionViewController: BaseViewController {
             carouselView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
             carouselView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
 
-            bottomScrimView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
-            bottomScrimView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
-            bottomScrimView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
-            bottomScrimView.heightAnchor.constraint(equalTo: view.heightAnchor, multiplier: 0.46),
-
-            bottomBlurView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
-            bottomBlurView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
-            bottomBlurView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
-            bottomBlurView.heightAnchor.constraint(equalTo: bottomScrimView.heightAnchor),
+            bottomOverlayView.topAnchor.constraint(equalTo: view.topAnchor),
+            bottomOverlayView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            bottomOverlayView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+            bottomOverlayView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
 
             closeButton.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 12),
             closeButton.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
@@ -136,13 +121,10 @@ final class SubscriptionViewController: BaseViewController {
             restoreButton.centerYAnchor.constraint(equalTo: closeButton.centerYAnchor),
             restoreButton.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -24),
 
-            counterLabel.centerXAnchor.constraint(equalTo: view.centerXAnchor),
-            counterLabel.centerYAnchor.constraint(equalTo: closeButton.centerYAnchor),
-
-            contentStackView.leadingAnchor.constraint(equalTo: bottomBlurView.contentView.leadingAnchor, constant: 24),
-            contentStackView.trailingAnchor.constraint(equalTo: bottomBlurView.contentView.trailingAnchor, constant: -24),
+            contentStackView.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 24),
+            contentStackView.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -24),
             contentStackView.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -14),
-            contentStackView.topAnchor.constraint(greaterThanOrEqualTo: bottomBlurView.contentView.topAnchor, constant: 22),
+            contentStackView.topAnchor.constraint(greaterThanOrEqualTo: view.centerYAnchor, constant: 70),
 
             trialButton.heightAnchor.constraint(equalToConstant: 58)
         ])
@@ -150,51 +132,47 @@ final class SubscriptionViewController: BaseViewController {
 
     private func configureTopButtons() {
         var closeConfiguration = UIButton.Configuration.plain()
-        closeConfiguration.baseForegroundColor = UIColor.white.withAlphaComponent(0.88)
+        closeConfiguration.baseForegroundColor = UIColor.white.withAlphaComponent(0.82)
         closeConfiguration.contentInsets = .zero
         closeConfiguration.preferredSymbolConfigurationForImage = UIImage.SymbolConfiguration(pointSize: 12, weight: .semibold)
         closeButton.configuration = closeConfiguration
         closeButton.setImage(UIImage(systemName: "xmark"), for: .normal)
-        closeButton.backgroundColor = UIColor.white.withAlphaComponent(0.09)
+        closeButton.backgroundColor = UIColor.white.withAlphaComponent(0.06)
         closeButton.layer.cornerRadius = 18
         closeButton.layer.cornerCurve = .continuous
         closeButton.layer.borderWidth = 1
-        closeButton.layer.borderColor = UIColor.white.withAlphaComponent(0.10).cgColor
+        closeButton.layer.borderColor = UIColor.white.withAlphaComponent(0.08).cgColor
         closeButton.addTarget(self, action: #selector(handleEnterHome), for: .touchUpInside)
 
         var restoreConfiguration = UIButton.Configuration.plain()
         restoreConfiguration.title = "恢复购买"
-        restoreConfiguration.baseForegroundColor = UIColor.white.withAlphaComponent(0.76)
+        restoreConfiguration.baseForegroundColor = UIColor.white.withAlphaComponent(0.72)
         restoreConfiguration.contentInsets = .zero
         restoreButton.configuration = restoreConfiguration
         restoreButton.titleLabel?.font = .systemFont(ofSize: 14, weight: .medium)
         restoreButton.addTarget(self, action: #selector(handleRestore), for: .touchUpInside)
-
-        counterLabel.font = .monospacedDigitSystemFont(ofSize: 13, weight: .semibold)
-        counterLabel.textColor = UIColor.white.withAlphaComponent(0.78)
-        counterLabel.textAlignment = .center
     }
 
     private func configureOverlayContent() {
         contentStackView.axis = .vertical
         contentStackView.alignment = .fill
-        contentStackView.spacing = 14
+        contentStackView.spacing = 12
 
         benefitStackView.axis = .vertical
         benefitStackView.alignment = .fill
-        benefitStackView.spacing = 8
+        benefitStackView.spacing = 7
 
         [
-            "所有私密视频功能不限量使用",
-            "导入、整理与预览体验持续解锁",
-            "高清动态片段与质感动效完整可用",
-            "沉浸式浏览过程保持无广告"
+            "所有壁纸无限下载",
+            "白噪音无限畅听",
+            "最新功能抢先体验",
+            "沉浸体验无广告"
         ]
         .map(FeatureRowView.init)
         .forEach(benefitStackView.addArrangedSubview)
 
-        titleLabel.text = "解锁完整私密视频体验"
-        titleLabel.font = serifFont(size: 34, weight: .bold)
+        titleLabel.text = "海量动态壁纸高清下载"
+        titleLabel.font = serifFont(size: 35, weight: .bold)
         titleLabel.textColor = UIColor.white.withAlphaComponent(0.98)
         titleLabel.numberOfLines = 2
         titleLabel.textAlignment = .left
@@ -202,21 +180,21 @@ final class SubscriptionViewController: BaseViewController {
         trialButton.setTitle("免费试用", for: .normal)
         trialButton.addTarget(self, action: #selector(handleEnterHome), for: .touchUpInside)
 
-        noteLabel.text = "当前为预览版本，订阅购买能力暂未接入"
-        noteLabel.font = .systemFont(ofSize: 13, weight: .medium)
-        noteLabel.textColor = UIColor.white.withAlphaComponent(0.78)
-        noteLabel.textAlignment = .center
-        noteLabel.numberOfLines = 0
+        priceLabel.text = "首周 ¥9.9 后自动续费 ¥48/月，可随时取消"
+        priceLabel.font = .systemFont(ofSize: 12, weight: .medium)
+        priceLabel.textColor = UIColor.white.withAlphaComponent(0.70)
+        priceLabel.textAlignment = .center
 
-        legalLabel.text = "继续即表示你已阅读《会员协议》与《自动续费说明》。本轮仅实现页面与跳转，不触发真实扣费。"
-        legalLabel.font = .systemFont(ofSize: 11, weight: .medium)
-        legalLabel.textColor = UIColor.white.withAlphaComponent(0.54)
-        legalLabel.textAlignment = .center
-        legalLabel.numberOfLines = 0
+        agreementView.configure(text: "同意《会员协议》和《自动续费协议》")
 
-        [benefitStackView, titleLabel, trialButton, noteLabel, legalLabel].forEach {
+        [benefitStackView, titleLabel, trialButton, priceLabel, agreementView].forEach {
             contentStackView.addArrangedSubview($0)
         }
+
+        contentStackView.setCustomSpacing(16, after: benefitStackView)
+        contentStackView.setCustomSpacing(18, after: titleLabel)
+        contentStackView.setCustomSpacing(10, after: trialButton)
+        contentStackView.setCustomSpacing(6, after: priceLabel)
     }
 
     // MARK: - Carousel
@@ -227,12 +205,12 @@ final class SubscriptionViewController: BaseViewController {
 
         lastKnownCarouselSize = carouselView.bounds.size
 
-        let itemWidth = max(294, carouselView.bounds.width - 76)
-        let itemHeight = max(560, carouselView.bounds.height - 24)
+        let itemWidth = max(286, carouselView.bounds.width - 90)
+        let itemHeight = max(560, carouselView.bounds.height - 8)
         let horizontalInset = max(18, (carouselView.bounds.width - itemWidth) * 0.5)
 
         carouselLayout.itemSize = CGSize(width: itemWidth, height: itemHeight)
-        carouselLayout.sectionInset = UIEdgeInsets(top: 12, left: horizontalInset, bottom: 12, right: horizontalInset)
+        carouselLayout.sectionInset = UIEdgeInsets(top: 4, left: horizontalInset, bottom: 4, right: horizontalInset)
         carouselLayout.invalidateLayout()
     }
 
@@ -254,13 +232,11 @@ final class SubscriptionViewController: BaseViewController {
     private func syncCurrentIndexFromScrollPosition() {
         let nextIndex = nearestIndex(for: carouselView.contentOffset.x)
         guard nextIndex != currentIndex else {
-            updateCounterLabel()
             refreshVisibleCellState(animated: true)
             return
         }
 
         currentIndex = nextIndex
-        updateCounterLabel()
         refreshVisibleCellState(animated: true)
     }
 
@@ -269,7 +245,7 @@ final class SubscriptionViewController: BaseViewController {
 
         for cell in carouselView.visibleCells.compactMap({ $0 as? VideoCarouselCell }) {
             guard let indexPath = carouselView.indexPath(for: cell) else { continue }
-            let shouldPlay = abs(indexPath.item - currentIndex) <= 1
+            let shouldPlay = indexPath.item == currentIndex
             shouldPlay ? cell.play() : cell.pause()
             cell.setFocused(indexPath.item == currentIndex, animated: animated)
         }
@@ -293,10 +269,6 @@ final class SubscriptionViewController: BaseViewController {
         for cell in carouselView.visibleCells.compactMap({ $0 as? VideoCarouselCell }) {
             cell.pause()
         }
-    }
-
-    private func updateCounterLabel() {
-        counterLabel.text = String(format: "%02d / %02d", currentIndex + 1, videoResources.count)
     }
 
     // MARK: - Actions
@@ -351,7 +323,7 @@ extension SubscriptionViewController: UICollectionViewDataSource {
         }
 
         let resource = videoResources[indexPath.item]
-        cell.configure(resource: resource, index: indexPath.item)
+        cell.configure(resource: resource)
         cell.setFocused(indexPath.item == currentIndex, animated: false)
         return cell
     }
@@ -364,14 +336,13 @@ extension SubscriptionViewController: UICollectionViewDelegateFlowLayout {
     func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
         guard indexPath.item != currentIndex else { return }
         currentIndex = indexPath.item
-        updateCounterLabel()
         scrollToIndex(currentIndex, animated: true)
     }
 
     func collectionView(_ collectionView: UICollectionView, willDisplay cell: UICollectionViewCell, forItemAt indexPath: IndexPath) {
         guard let videoCell = cell as? VideoCarouselCell else { return }
         videoCell.setFocused(indexPath.item == currentIndex, animated: false)
-        if abs(indexPath.item - currentIndex) <= 1 {
+        if indexPath.item == currentIndex {
             videoCell.play()
         }
     }
@@ -421,8 +392,6 @@ private final class VideoCarouselCell: UICollectionViewCell {
     private let videoView = LoopingVideoView()
     private let dimView = UIView()
     private let borderView = UIView()
-    private let heroPillView = UIVisualEffectView(effect: UIBlurEffect(style: .systemUltraThinMaterialLight))
-    private let heroPillLabel = UILabel()
     private let dateLabel = UILabel()
     private let timeLabel = UILabel()
 
@@ -435,7 +404,7 @@ private final class VideoCarouselCell: UICollectionViewCell {
 
     override init(frame: CGRect) {
         super.init(frame: frame)
-        configure()
+        configureUI()
     }
 
     @available(*, unavailable)
@@ -452,11 +421,11 @@ private final class VideoCarouselCell: UICollectionViewCell {
 
     override func prepareForReuse() {
         super.prepareForReuse()
+        configuredResource = nil
         pause()
     }
 
-    func configure(resource: OnboardingVideoResource, index: Int) {
-        heroPillLabel.text = String(format: "精选片段 %02d", index + 1)
+    func configure(resource: OnboardingVideoResource) {
         dateLabel.text = Self.dateFormatter.string(from: Date())
         timeLabel.text = Self.timeFormatter.string(from: Date())
 
@@ -468,13 +437,14 @@ private final class VideoCarouselCell: UICollectionViewCell {
             videoView.configure(url: url, isMuted: true)
         } else {
             videoView.isHidden = true
+            pause()
         }
     }
 
     func setFocused(_ isFocused: Bool, animated: Bool) {
         let changes = {
-            self.dimView.alpha = isFocused ? 0.12 : 0.28
-            self.borderView.layer.borderColor = UIColor.white.withAlphaComponent(isFocused ? 0.72 : 0.22).cgColor
+            self.dimView.alpha = isFocused ? 0.08 : 0.24
+            self.borderView.layer.borderColor = UIColor.white.withAlphaComponent(isFocused ? 0.78 : 0.20).cgColor
             self.borderView.backgroundColor = UIColor.white.withAlphaComponent(isFocused ? 0.06 : 0.02)
         }
 
@@ -487,7 +457,6 @@ private final class VideoCarouselCell: UICollectionViewCell {
 
     func applyFocusProgress(_ progress: CGFloat) {
         let clamped = max(0, min(progress, 1))
-        heroPillView.alpha = 0.36 + (clamped * 0.64)
         dateLabel.alpha = 0.30 + (clamped * 0.70)
         timeLabel.alpha = 0.38 + (clamped * 0.62)
         dateLabel.transform = CGAffineTransform(scaleX: 0.96 + (clamped * 0.04), y: 0.96 + (clamped * 0.04))
@@ -502,7 +471,7 @@ private final class VideoCarouselCell: UICollectionViewCell {
         videoView.pause()
     }
 
-    private func configure() {
+    private func configureUI() {
         contentView.backgroundColor = .clear
         contentView.clipsToBounds = false
 
@@ -534,42 +503,30 @@ private final class VideoCarouselCell: UICollectionViewCell {
             videoContainerView.addSubview(orbView)
         }
 
-        dimView.backgroundColor = UIColor.black.withAlphaComponent(1)
-        dimView.alpha = 0.14
+        dimView.backgroundColor = UIColor.black
+        dimView.alpha = 0.12
 
         borderView.layer.cornerRadius = 38
         borderView.layer.cornerCurve = .continuous
         borderView.layer.borderWidth = 1.2
-        borderView.layer.borderColor = UIColor.white.withAlphaComponent(0.70).cgColor
+        borderView.layer.borderColor = UIColor.white.withAlphaComponent(0.78).cgColor
         borderView.backgroundColor = UIColor.white.withAlphaComponent(0.04)
         borderView.isUserInteractionEnabled = false
-
-        heroPillView.layer.cornerRadius = 16
-        heroPillView.layer.cornerCurve = .continuous
-        heroPillView.clipsToBounds = true
-        heroPillView.layer.borderWidth = 1
-        heroPillView.layer.borderColor = UIColor.white.withAlphaComponent(0.12).cgColor
-
-        heroPillLabel.font = .systemFont(ofSize: 12, weight: .semibold)
-        heroPillLabel.textColor = UIColor.white.withAlphaComponent(0.92)
-        heroPillLabel.textAlignment = .center
 
         dateLabel.font = .systemFont(ofSize: 17, weight: .semibold)
         dateLabel.textColor = UIColor.white.withAlphaComponent(0.88)
         dateLabel.textAlignment = .center
 
-        timeLabel.font = .monospacedDigitSystemFont(ofSize: 66, weight: .bold)
+        timeLabel.font = .monospacedDigitSystemFont(ofSize: 68, weight: .heavy)
         timeLabel.textColor = UIColor.white.withAlphaComponent(0.97)
         timeLabel.textAlignment = .center
 
-        [videoContainerView].forEach(contentView.addSubview)
-        [videoView, dimView, borderView, heroPillView, dateLabel, timeLabel].forEach {
+        contentView.addSubview(videoContainerView)
+        [videoView, dimView, borderView, dateLabel, timeLabel].forEach {
             videoContainerView.addSubview($0)
             $0.translatesAutoresizingMaskIntoConstraints = false
         }
-
-        heroPillView.contentView.addSubview(heroPillLabel)
-        heroPillLabel.translatesAutoresizingMaskIntoConstraints = false
+        videoContainerView.translatesAutoresizingMaskIntoConstraints = false
 
         NSLayoutConstraint.activate([
             videoContainerView.topAnchor.constraint(equalTo: contentView.topAnchor),
@@ -592,16 +549,8 @@ private final class VideoCarouselCell: UICollectionViewCell {
             borderView.trailingAnchor.constraint(equalTo: videoContainerView.trailingAnchor),
             borderView.bottomAnchor.constraint(equalTo: videoContainerView.bottomAnchor),
 
-            heroPillView.topAnchor.constraint(equalTo: videoContainerView.safeAreaLayoutGuide.topAnchor, constant: 22),
-            heroPillView.centerXAnchor.constraint(equalTo: videoContainerView.centerXAnchor),
-
-            heroPillLabel.topAnchor.constraint(equalTo: heroPillView.contentView.topAnchor, constant: 9),
-            heroPillLabel.leadingAnchor.constraint(equalTo: heroPillView.contentView.leadingAnchor, constant: 16),
-            heroPillLabel.trailingAnchor.constraint(equalTo: heroPillView.contentView.trailingAnchor, constant: -16),
-            heroPillLabel.bottomAnchor.constraint(equalTo: heroPillView.contentView.bottomAnchor, constant: -9),
-
             dateLabel.centerXAnchor.constraint(equalTo: videoContainerView.centerXAnchor),
-            dateLabel.centerYAnchor.constraint(equalTo: videoContainerView.centerYAnchor, constant: -106),
+            dateLabel.topAnchor.constraint(equalTo: videoContainerView.safeAreaLayoutGuide.topAnchor, constant: 78),
 
             timeLabel.centerXAnchor.constraint(equalTo: videoContainerView.centerXAnchor),
             timeLabel.topAnchor.constraint(equalTo: dateLabel.bottomAnchor, constant: 8)
@@ -679,6 +628,52 @@ private final class FeatureRowView: UIView {
     }
 }
 
+private final class AgreementRowView: UIView {
+
+    private let iconView = UIImageView(image: UIImage(systemName: "checkmark.circle.fill"))
+    private let label = UILabel()
+
+    override init(frame: CGRect) {
+        super.init(frame: frame)
+
+        iconView.tintColor = UIColor(red: 0.35, green: 0.68, blue: 1.0, alpha: 1)
+        iconView.contentMode = .scaleAspectFit
+        iconView.preferredSymbolConfiguration = UIImage.SymbolConfiguration(pointSize: 12, weight: .semibold)
+
+        label.font = .systemFont(ofSize: 11, weight: .medium)
+        label.textColor = UIColor.white.withAlphaComponent(0.60)
+        label.textAlignment = .center
+
+        let stackView = UIStackView(arrangedSubviews: [iconView, label])
+        stackView.axis = .horizontal
+        stackView.alignment = .center
+        stackView.spacing = 6
+
+        addSubview(stackView)
+        stackView.translatesAutoresizingMaskIntoConstraints = false
+
+        NSLayoutConstraint.activate([
+            iconView.widthAnchor.constraint(equalToConstant: 14),
+            iconView.heightAnchor.constraint(equalToConstant: 14),
+
+            stackView.topAnchor.constraint(equalTo: topAnchor),
+            stackView.centerXAnchor.constraint(equalTo: centerXAnchor),
+            stackView.leadingAnchor.constraint(greaterThanOrEqualTo: leadingAnchor),
+            stackView.trailingAnchor.constraint(lessThanOrEqualTo: trailingAnchor),
+            stackView.bottomAnchor.constraint(equalTo: bottomAnchor)
+        ])
+    }
+
+    @available(*, unavailable)
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
+
+    func configure(text: String) {
+        label.text = text
+    }
+}
+
 private final class GradientCapsuleButton: UIButton {
 
     private let gradientLayer = CAGradientLayer()
@@ -730,32 +725,54 @@ private final class GradientCapsuleButton: UIButton {
     }
 }
 
-private final class VerticalScrimView: UIView {
+private final class BottomRadiantOverlayView: UIView {
 
-    override class var layerClass: AnyClass {
-        CAGradientLayer.self
-    }
-
-    private var gradientLayer: CAGradientLayer {
-        layer as! CAGradientLayer
-    }
+    private let radialGlowLayer = CAGradientLayer()
+    private let verticalFadeLayer = CAGradientLayer()
 
     override init(frame: CGRect) {
         super.init(frame: frame)
         isUserInteractionEnabled = false
-        gradientLayer.colors = [
-            UIColor.clear.cgColor,
-            UIColor.black.withAlphaComponent(0.10).cgColor,
-            UIColor.black.withAlphaComponent(0.42).cgColor,
-            UIColor.black.withAlphaComponent(0.72).cgColor
+
+        radialGlowLayer.type = .radial
+        radialGlowLayer.colors = [
+            UIColor(red: 0.98, green: 0.90, blue: 0.68, alpha: 0.34).cgColor,
+            UIColor(red: 0.96, green: 0.84, blue: 0.58, alpha: 0.12).cgColor,
+            UIColor.clear.cgColor
         ]
-        gradientLayer.locations = [0, 0.16, 0.58, 1]
-        gradientLayer.startPoint = CGPoint(x: 0.5, y: 0)
-        gradientLayer.endPoint = CGPoint(x: 0.5, y: 1)
+        radialGlowLayer.locations = [0, 0.28, 1]
+        radialGlowLayer.startPoint = CGPoint(x: 0.5, y: 1.0)
+        radialGlowLayer.endPoint = CGPoint(x: 0.5, y: 0.0)
+
+        verticalFadeLayer.colors = [
+            UIColor.clear.cgColor,
+            UIColor.black.withAlphaComponent(0.04).cgColor,
+            UIColor.black.withAlphaComponent(0.24).cgColor,
+            UIColor.black.withAlphaComponent(0.68).cgColor,
+            UIColor.black.withAlphaComponent(0.94).cgColor
+        ]
+        verticalFadeLayer.locations = [0, 0.40, 0.60, 0.82, 1]
+        verticalFadeLayer.startPoint = CGPoint(x: 0.5, y: 0)
+        verticalFadeLayer.endPoint = CGPoint(x: 0.5, y: 1)
+
+        layer.addSublayer(radialGlowLayer)
+        layer.addSublayer(verticalFadeLayer)
     }
 
     @available(*, unavailable)
     required init?(coder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
+    }
+
+    override func layoutSubviews() {
+        super.layoutSubviews()
+
+        verticalFadeLayer.frame = bounds
+        radialGlowLayer.frame = CGRect(
+            x: -bounds.width * 0.28,
+            y: bounds.height * 0.22,
+            width: bounds.width * 1.56,
+            height: bounds.height * 0.96
+        )
     }
 }

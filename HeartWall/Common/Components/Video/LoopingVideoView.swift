@@ -10,8 +10,10 @@ final class LoopingVideoView: UIView {
 
     // MARK: - Properties
 
-    private var queuePlayer: AVQueuePlayer?
-    private var playerLooper: AVPlayerLooper?
+    private var player: AVPlayer?
+    private var endObserver: NSObjectProtocol?
+    private var configuredURL: URL?
+    private var shouldPlay = false
 
     private var playerLayer: AVPlayerLayer {
         layer as! AVPlayerLayer
@@ -27,35 +29,73 @@ final class LoopingVideoView: UIView {
         tearDown()
     }
 
+    override func didMoveToWindow() {
+        super.didMoveToWindow()
+
+        guard player != nil else { return }
+
+        if window == nil {
+            player?.pause()
+        } else if shouldPlay {
+            player?.play()
+        }
+    }
+
     // MARK: - Playback
 
     func configure(url: URL, isMuted: Bool = true, videoGravity: AVLayerVideoGravity = .resizeAspectFill) {
-        tearDown()
+        if configuredURL != url || player == nil {
+            tearDown()
 
-        let item = AVPlayerItem(url: url)
-        let player = AVQueuePlayer()
-        player.actionAtItemEnd = .none
-        player.isMuted = isMuted
-        playerLooper = AVPlayerLooper(player: player, templateItem: item)
-        queuePlayer = player
+            let item = AVPlayerItem(url: url)
+            let player = AVPlayer(playerItem: item)
+            player.actionAtItemEnd = .none
+            player.isMuted = isMuted
 
-        playerLayer.player = player
+            endObserver = NotificationCenter.default.addObserver(
+                forName: .AVPlayerItemDidPlayToEndTime,
+                object: item,
+                queue: .main
+            ) { [weak self] _ in
+                guard let self else { return }
+                self.player?.seek(to: .zero)
+                if self.shouldPlay {
+                    self.player?.play()
+                }
+            }
+
+            configuredURL = url
+            self.player = player
+            playerLayer.player = player
+        }
+
+        player?.isMuted = isMuted
         playerLayer.videoGravity = videoGravity
-        player.play()
+
+        if shouldPlay {
+            player?.play()
+        }
     }
 
     func play() {
-        queuePlayer?.play()
+        shouldPlay = true
+        player?.play()
     }
 
     func pause() {
-        queuePlayer?.pause()
+        shouldPlay = false
+        player?.pause()
     }
 
     private func tearDown() {
-        queuePlayer?.pause()
+        if let endObserver {
+            NotificationCenter.default.removeObserver(endObserver)
+        }
+        endObserver = nil
+
+        player?.pause()
         playerLayer.player = nil
-        playerLooper = nil
-        queuePlayer = nil
+        player = nil
+        configuredURL = nil
     }
 }
