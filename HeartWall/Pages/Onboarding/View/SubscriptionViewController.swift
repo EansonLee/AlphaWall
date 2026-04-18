@@ -549,7 +549,7 @@ private final class VideoCarouselCell: UICollectionViewCell {
     func setFocused(_ isFocused: Bool, animated: Bool) {
         let changes = {
             self.dimView.alpha = isFocused ? 0.08 : 0.24
-            self.borderView.backgroundColor = UIColor.white.withAlphaComponent(isFocused ? 0.02 : 0.0)
+            self.borderView.backgroundColor = .clear
         }
 
         if animated {
@@ -614,7 +614,7 @@ private final class VideoCarouselCell: UICollectionViewCell {
         borderView.layer.cornerCurve = .continuous
         borderView.layer.borderWidth = 0
         borderView.layer.borderColor = UIColor.clear.cgColor
-        borderView.backgroundColor = UIColor.clear
+        borderView.backgroundColor = .clear
         borderView.isUserInteractionEnabled = false
 
         dateLabel.font = .systemFont(ofSize: 17, weight: .semibold)
