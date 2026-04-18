@@ -28,6 +28,7 @@ final class SubscriptionViewController: BaseViewController {
 
     // MARK: - UI
 
+    private let backgroundVideoCropView = UIView()
     private let backgroundVideoView = LoopingVideoView()
     private let backgroundDimView = UIView()
     private let carouselLayout = UICollectionViewFlowLayout()
@@ -116,16 +117,24 @@ final class SubscriptionViewController: BaseViewController {
         configureOverlayContent()
         configureBackgroundVideo()
 
-        [backgroundVideoView, backgroundDimView, carouselView, bottomOverlayView, closeButton, restoreButton, contentStackView].forEach {
+        [backgroundVideoCropView, backgroundDimView, carouselView, bottomOverlayView, closeButton, restoreButton, contentStackView].forEach {
             view.addSubview($0)
             $0.translatesAutoresizingMaskIntoConstraints = false
         }
 
+        backgroundVideoCropView.addSubview(backgroundVideoView)
+        backgroundVideoView.translatesAutoresizingMaskIntoConstraints = false
+
         NSLayoutConstraint.activate([
-            backgroundVideoView.topAnchor.constraint(equalTo: view.topAnchor),
-            backgroundVideoView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
-            backgroundVideoView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
-            backgroundVideoView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
+            backgroundVideoCropView.topAnchor.constraint(equalTo: view.topAnchor),
+            backgroundVideoCropView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            backgroundVideoCropView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+            backgroundVideoCropView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
+
+            backgroundVideoView.topAnchor.constraint(equalTo: backgroundVideoCropView.topAnchor, constant: -84),
+            backgroundVideoView.leadingAnchor.constraint(equalTo: backgroundVideoCropView.leadingAnchor, constant: -96),
+            backgroundVideoView.trailingAnchor.constraint(equalTo: backgroundVideoCropView.trailingAnchor, constant: 96),
+            backgroundVideoView.bottomAnchor.constraint(equalTo: backgroundVideoCropView.bottomAnchor, constant: 84),
 
             backgroundDimView.topAnchor.constraint(equalTo: view.topAnchor),
             backgroundDimView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
@@ -160,6 +169,7 @@ final class SubscriptionViewController: BaseViewController {
     }
 
     private func configureBackgroundVideo() {
+        backgroundVideoCropView.clipsToBounds = true
         backgroundDimView.backgroundColor = UIColor.black.withAlphaComponent(0.22)
         syncBackgroundVideo()
     }
@@ -494,6 +504,7 @@ private final class VideoCarouselCell: UICollectionViewCell {
     static let reuseIdentifier = "VideoCarouselCell"
 
     private let videoContainerView = UIView()
+    private let videoCropView = UIView()
     private let videoView = LoopingVideoView()
     private let dimView = UIView()
     private let borderView = UIView()
@@ -589,6 +600,8 @@ private final class VideoCarouselCell: UICollectionViewCell {
         videoContainerView.clipsToBounds = true
         videoContainerView.layer.insertSublayer(fallbackGradientLayer, at: 0)
 
+        videoCropView.clipsToBounds = true
+
         fallbackGradientLayer.colors = [
             UIColor(red: 0.12, green: 0.16, blue: 0.10, alpha: 1).cgColor,
             UIColor(red: 0.55, green: 0.62, blue: 0.36, alpha: 1).cgColor,
@@ -626,10 +639,12 @@ private final class VideoCarouselCell: UICollectionViewCell {
         timeLabel.textAlignment = .center
 
         contentView.addSubview(videoContainerView)
-        [videoView, dimView, borderView, dateLabel, timeLabel].forEach {
+        [videoCropView, dimView, borderView, dateLabel, timeLabel].forEach {
             videoContainerView.addSubview($0)
             $0.translatesAutoresizingMaskIntoConstraints = false
         }
+        videoCropView.addSubview(videoView)
+        videoView.translatesAutoresizingMaskIntoConstraints = false
         videoContainerView.translatesAutoresizingMaskIntoConstraints = false
 
         NSLayoutConstraint.activate([
@@ -638,10 +653,15 @@ private final class VideoCarouselCell: UICollectionViewCell {
             videoContainerView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor),
             videoContainerView.bottomAnchor.constraint(equalTo: contentView.bottomAnchor),
 
-            videoView.topAnchor.constraint(equalTo: videoContainerView.topAnchor),
-            videoView.leadingAnchor.constraint(equalTo: videoContainerView.leadingAnchor),
-            videoView.trailingAnchor.constraint(equalTo: videoContainerView.trailingAnchor),
-            videoView.bottomAnchor.constraint(equalTo: videoContainerView.bottomAnchor),
+            videoCropView.topAnchor.constraint(equalTo: videoContainerView.topAnchor),
+            videoCropView.leadingAnchor.constraint(equalTo: videoContainerView.leadingAnchor),
+            videoCropView.trailingAnchor.constraint(equalTo: videoContainerView.trailingAnchor),
+            videoCropView.bottomAnchor.constraint(equalTo: videoContainerView.bottomAnchor),
+
+            videoView.topAnchor.constraint(equalTo: videoCropView.topAnchor, constant: -20),
+            videoView.leadingAnchor.constraint(equalTo: videoCropView.leadingAnchor, constant: -36),
+            videoView.trailingAnchor.constraint(equalTo: videoCropView.trailingAnchor, constant: 36),
+            videoView.bottomAnchor.constraint(equalTo: videoCropView.bottomAnchor, constant: 20),
 
             dimView.topAnchor.constraint(equalTo: videoContainerView.topAnchor),
             dimView.leadingAnchor.constraint(equalTo: videoContainerView.leadingAnchor),
