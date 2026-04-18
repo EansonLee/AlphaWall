@@ -508,7 +508,6 @@ private final class VideoCarouselCell: UICollectionViewCell {
     private let dimView = UIView()
     private let borderView = UIView()
     private let dateLabel = UILabel()
-    private let timeLabel = UILabel()
 
     private let fallbackGradientLayer = CAGradientLayer()
     private let glowOrbOne = UIView()
@@ -542,7 +541,6 @@ private final class VideoCarouselCell: UICollectionViewCell {
 
     func configure(resource: OnboardingVideoResource) {
         dateLabel.text = Self.dateFormatter.string(from: Date())
-        timeLabel.text = Self.timeFormatter.string(from: Date())
 
         guard configuredResource != resource else { return }
         configuredResource = resource
@@ -572,9 +570,7 @@ private final class VideoCarouselCell: UICollectionViewCell {
     func applyFocusProgress(_ progress: CGFloat) {
         let clamped = max(0, min(progress, 1))
         dateLabel.alpha = 0.30 + (clamped * 0.70)
-        timeLabel.alpha = 0.38 + (clamped * 0.62)
         dateLabel.transform = CGAffineTransform(scaleX: 0.96 + (clamped * 0.04), y: 0.96 + (clamped * 0.04))
-        timeLabel.transform = CGAffineTransform(scaleX: 0.94 + (clamped * 0.06), y: 0.94 + (clamped * 0.06))
     }
 
     func play() {
@@ -631,12 +627,8 @@ private final class VideoCarouselCell: UICollectionViewCell {
         dateLabel.textColor = UIColor.white.withAlphaComponent(0.88)
         dateLabel.textAlignment = .center
 
-        timeLabel.font = .monospacedDigitSystemFont(ofSize: 68, weight: .heavy)
-        timeLabel.textColor = UIColor.white.withAlphaComponent(0.97)
-        timeLabel.textAlignment = .center
-
         contentView.addSubview(videoContainerView)
-        [videoView, dimView, borderView, dateLabel, timeLabel].forEach {
+        [videoView, dimView, borderView, dateLabel].forEach {
             videoContainerView.addSubview($0)
             $0.translatesAutoresizingMaskIntoConstraints = false
         }
@@ -664,10 +656,7 @@ private final class VideoCarouselCell: UICollectionViewCell {
             borderView.bottomAnchor.constraint(equalTo: videoContainerView.bottomAnchor),
 
             dateLabel.centerXAnchor.constraint(equalTo: videoContainerView.centerXAnchor),
-            dateLabel.topAnchor.constraint(equalTo: videoContainerView.safeAreaLayoutGuide.topAnchor, constant: 78),
-
-            timeLabel.centerXAnchor.constraint(equalTo: videoContainerView.centerXAnchor),
-            timeLabel.topAnchor.constraint(equalTo: dateLabel.bottomAnchor, constant: 8)
+            dateLabel.topAnchor.constraint(equalTo: videoContainerView.safeAreaLayoutGuide.topAnchor, constant: 78)
         ])
     }
 
@@ -693,12 +682,6 @@ private final class VideoCarouselCell: UICollectionViewCell {
         return formatter
     }()
 
-    private static let timeFormatter: DateFormatter = {
-        let formatter = DateFormatter()
-        formatter.locale = Locale(identifier: "zh_CN")
-        formatter.dateFormat = "HH:mm"
-        return formatter
-    }()
 }
 
 private final class FeatureRowView: UIView {
