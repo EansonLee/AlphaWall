@@ -7,13 +7,24 @@ import UIKit
 
 final class SubscriptionViewController: BaseViewController {
 
+    private enum CarouselConfig {
+        static let loopMultiplier = 120
+        static let autoScrollInterval: TimeInterval = 2.8
+    }
+
     // MARK: - Properties
 
     private let videoResources = OnboardingVideoResource.allCases
 
-    private var currentIndex: Int
+    private lazy var loopedVideoResources: [OnboardingVideoResource] = {
+        Array(repeating: videoResources, count: CarouselConfig.loopMultiplier).flatMap { $0 }
+    }()
+
+    private var currentLoopIndex: Int
     private var didSetInitialOffset = false
     private var lastKnownCarouselSize: CGSize = .zero
+    private var autoScrollTimer: Timer?
+    private var isUserInteracting = false
 
     // MARK: - UI
 
@@ -51,7 +62,9 @@ final class SubscriptionViewController: BaseViewController {
     // MARK: - Lifecycle
 
     init(videoResource: OnboardingVideoResource) {
-        self.currentIndex = min(1, OnboardingVideoResource.allCases.count - 1)
+        let preferredIndex = min(1, OnboardingVideoResource.allCases.count - 1)
+        let middleCycle = max(0, CarouselConfig.loopMultiplier / 2)
+        self.currentLoopIndex = (middleCycle * OnboardingVideoResource.allCases.count) + preferredIndex
         super.init(nibName: nil, bundle: nil)
     }
 
@@ -66,12 +79,14 @@ final class SubscriptionViewController: BaseViewController {
 
     override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
+        startAutoScrollIfNeeded()
         syncCurrentIndexFromScrollPosition()
         refreshVisibleCellState(animated: false)
     }
 
     override func viewDidDisappear(_ animated: Bool) {
         super.viewDidDisappear(animated)
+        stopAutoScroll()
         backgroundVideoView.pause()
         pauseVisibleCells()
     }
@@ -85,7 +100,7 @@ final class SubscriptionViewController: BaseViewController {
         if !didSetInitialOffset {
             didSetInitialOffset = true
             carouselView.layoutIfNeeded()
-            scrollToIndex(currentIndex, animated: false)
+            scrollToLoopIndex(currentLoopIndex, animated: false)
             refreshVisibleCellState(animated: false)
         } else {
             updateCellTransforms()
@@ -237,33 +252,53 @@ final class SubscriptionViewController: BaseViewController {
         carouselLayout.itemSize.width + carouselLayout.minimumLineSpacing
     }
 
-    private func scrollToIndex(_ index: Int, animated: Bool) {
+    private func scrollToLoopIndex(_ index: Int, animated: Bool) {
         let targetX = CGFloat(index) * pageStride
         carouselView.setContentOffset(CGPoint(x: targetX, y: 0), animated: animated)
     }
 
-    private func nearestIndex(for contentOffsetX: CGFloat) -> Int {
+    private func nearestLoopIndex(for contentOffsetX: CGFloat) -> Int {
         guard pageStride > 0 else { return 0 }
         let rawIndex = Int(round(contentOffsetX / pageStride))
-        return max(0, min(videoResources.count - 1, rawIndex))
+        return max(0, min(loopedVideoResources.count - 1, rawIndex))
+    }
+
+    private func resource(for loopIndex: Int) -> OnboardingVideoResource {
+        let safeIndex = ((loopIndex % videoResources.count) + videoResources.count) % videoResources.count
+        return videoResources[safeIndex]
+    }
+
+    private func normalizedLoopIndex(_ loopIndex: Int) -> Int {
+        guard !videoResources.isEmpty else { return 0 }
+        let safeResourceIndex = ((loopIndex % videoResources.count) + videoResources.count) % videoResources.count
+        let middleCycle = max(0, CarouselConfig.loopMultiplier / 2)
+        return (middleCycle * videoResources.count) + safeResourceIndex
+    }
+
+    private func recenterLoopPositionIfNeeded() {
+        let normalizedIndex = normalizedLoopIndex(currentLoopIndex)
+        guard normalizedIndex != currentLoopIndex else { return }
+
+        currentLoopIndex = normalizedIndex
+        scrollToLoopIndex(normalizedIndex, animated: false)
     }
 
     private func syncCurrentIndexFromScrollPosition() {
-        let nextIndex = nearestIndex(for: carouselView.contentOffset.x)
-        guard nextIndex != currentIndex else {
+        let nextLoopIndex = nearestLoopIndex(for: carouselView.contentOffset.x)
+        guard nextLoopIndex != currentLoopIndex else {
             syncBackgroundVideo()
             refreshVisibleCellState(animated: true)
             return
         }
 
-        currentIndex = nextIndex
+        currentLoopIndex = nextLoopIndex
         syncBackgroundVideo()
         refreshVisibleCellState(animated: true)
     }
 
     private func syncBackgroundVideo() {
-        guard videoResources.indices.contains(currentIndex) else { return }
-        guard let url = videoResources[currentIndex].bundleURL() else { return }
+        guard !videoResources.isEmpty else { return }
+        guard let url = resource(for: currentLoopIndex).bundleURL() else { return }
 
         backgroundVideoView.configure(url: url, isMuted: true)
         backgroundVideoView.play()
@@ -274,9 +309,9 @@ final class SubscriptionViewController: BaseViewController {
 
         for cell in carouselView.visibleCells.compactMap({ $0 as? VideoCarouselCell }) {
             guard let indexPath = carouselView.indexPath(for: cell) else { continue }
-            let shouldPlay = indexPath.item == currentIndex
+            let shouldPlay = indexPath.item == currentLoopIndex
             shouldPlay ? cell.play() : cell.pause()
-            cell.setFocused(indexPath.item == currentIndex, animated: animated)
+            cell.setFocused(indexPath.item == currentLoopIndex, animated: animated)
         }
     }
 
@@ -298,6 +333,34 @@ final class SubscriptionViewController: BaseViewController {
         for cell in carouselView.visibleCells.compactMap({ $0 as? VideoCarouselCell }) {
             cell.pause()
         }
+    }
+
+    private func startAutoScrollIfNeeded() {
+        guard autoScrollTimer == nil, videoResources.count > 1 else { return }
+
+        let timer = Timer.scheduledTimer(withTimeInterval: CarouselConfig.autoScrollInterval, repeats: true) { [weak self] _ in
+            self?.advanceToNextVideoIfNeeded()
+        }
+        RunLoop.main.add(timer, forMode: .common)
+        autoScrollTimer = timer
+    }
+
+    private func stopAutoScroll() {
+        autoScrollTimer?.invalidate()
+        autoScrollTimer = nil
+    }
+
+    private func resumeAutoScrollIfNeeded() {
+        stopAutoScroll()
+        startAutoScrollIfNeeded()
+    }
+
+    private func advanceToNextVideoIfNeeded() {
+        guard !isUserInteracting else { return }
+        guard carouselView.window != nil else { return }
+
+        currentLoopIndex = min(currentLoopIndex + 1, loopedVideoResources.count - 1)
+        scrollToLoopIndex(currentLoopIndex, animated: true)
     }
 
     // MARK: - Actions
@@ -341,7 +404,7 @@ final class SubscriptionViewController: BaseViewController {
 extension SubscriptionViewController: UICollectionViewDataSource {
 
     func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
-        videoResources.count
+        loopedVideoResources.count
     }
 
     func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
@@ -352,9 +415,9 @@ extension SubscriptionViewController: UICollectionViewDataSource {
             return UICollectionViewCell()
         }
 
-        let resource = videoResources[indexPath.item]
+        let resource = loopedVideoResources[indexPath.item]
         cell.configure(resource: resource)
-        cell.setFocused(indexPath.item == currentIndex, animated: false)
+        cell.setFocused(indexPath.item == currentLoopIndex, animated: false)
         return cell
     }
 }
@@ -364,15 +427,15 @@ extension SubscriptionViewController: UICollectionViewDataSource {
 extension SubscriptionViewController: UICollectionViewDelegateFlowLayout {
 
     func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
-        guard indexPath.item != currentIndex else { return }
-        currentIndex = indexPath.item
-        scrollToIndex(currentIndex, animated: true)
+        guard indexPath.item != currentLoopIndex else { return }
+        currentLoopIndex = indexPath.item
+        scrollToLoopIndex(currentLoopIndex, animated: true)
     }
 
     func collectionView(_ collectionView: UICollectionView, willDisplay cell: UICollectionViewCell, forItemAt indexPath: IndexPath) {
         guard let videoCell = cell as? VideoCarouselCell else { return }
-        videoCell.setFocused(indexPath.item == currentIndex, animated: false)
-        if indexPath.item == currentIndex {
+        videoCell.setFocused(indexPath.item == currentLoopIndex, animated: false)
+        if indexPath.item == currentLoopIndex {
             videoCell.play()
         }
     }
@@ -390,18 +453,30 @@ extension SubscriptionViewController {
         updateCellTransforms()
     }
 
+    func scrollViewWillBeginDragging(_ scrollView: UIScrollView) {
+        isUserInteracting = true
+        stopAutoScroll()
+    }
+
     func scrollViewDidEndDecelerating(_ scrollView: UIScrollView) {
         syncCurrentIndexFromScrollPosition()
+        recenterLoopPositionIfNeeded()
+        isUserInteracting = false
+        resumeAutoScrollIfNeeded()
     }
 
     func scrollViewDidEndDragging(_ scrollView: UIScrollView, willDecelerate decelerate: Bool) {
         if !decelerate {
             syncCurrentIndexFromScrollPosition()
+            recenterLoopPositionIfNeeded()
+            isUserInteracting = false
+            resumeAutoScrollIfNeeded()
         }
     }
 
     func scrollViewDidEndScrollingAnimation(_ scrollView: UIScrollView) {
         syncCurrentIndexFromScrollPosition()
+        recenterLoopPositionIfNeeded()
     }
 
     func scrollViewWillEndDragging(
@@ -409,7 +484,7 @@ extension SubscriptionViewController {
         withVelocity velocity: CGPoint,
         targetContentOffset: UnsafeMutablePointer<CGPoint>
     ) {
-        let targetIndex = nearestIndex(for: targetContentOffset.pointee.x)
+        let targetIndex = nearestLoopIndex(for: targetContentOffset.pointee.x)
         targetContentOffset.pointee.x = CGFloat(targetIndex) * pageStride
     }
 }
@@ -474,8 +549,7 @@ private final class VideoCarouselCell: UICollectionViewCell {
     func setFocused(_ isFocused: Bool, animated: Bool) {
         let changes = {
             self.dimView.alpha = isFocused ? 0.08 : 0.24
-            self.borderView.layer.borderColor = UIColor.white.withAlphaComponent(isFocused ? 0.78 : 0.20).cgColor
-            self.borderView.backgroundColor = UIColor.white.withAlphaComponent(isFocused ? 0.06 : 0.02)
+            self.borderView.backgroundColor = UIColor.white.withAlphaComponent(isFocused ? 0.02 : 0.0)
         }
 
         if animated {
@@ -538,9 +612,9 @@ private final class VideoCarouselCell: UICollectionViewCell {
 
         borderView.layer.cornerRadius = 38
         borderView.layer.cornerCurve = .continuous
-        borderView.layer.borderWidth = 1.2
-        borderView.layer.borderColor = UIColor.white.withAlphaComponent(0.78).cgColor
-        borderView.backgroundColor = UIColor.white.withAlphaComponent(0.04)
+        borderView.layer.borderWidth = 0
+        borderView.layer.borderColor = UIColor.clear.cgColor
+        borderView.backgroundColor = UIColor.clear
         borderView.isUserInteractionEnabled = false
 
         dateLabel.font = .systemFont(ofSize: 17, weight: .semibold)
