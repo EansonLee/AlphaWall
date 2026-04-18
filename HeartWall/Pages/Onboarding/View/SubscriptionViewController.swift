@@ -382,14 +382,14 @@ final class SubscriptionViewController: BaseViewController {
         pauseVisibleCells()
 
         guard let navigationController else { return }
-        let libraryViewController = LibraryViewController()
+        let homeRootViewController = HomeRootViewController()
 
         UIView.transition(
             with: navigationController.view,
             duration: UIAccessibility.isReduceMotionEnabled ? 0.15 : 0.40,
             options: [.transitionCrossDissolve, .allowAnimatedContent]
         ) {
-            navigationController.setViewControllers([libraryViewController], animated: false)
+            navigationController.setViewControllers([homeRootViewController], animated: false)
         }
     }
 
