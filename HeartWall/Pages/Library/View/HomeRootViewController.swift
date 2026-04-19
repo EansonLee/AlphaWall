@@ -70,10 +70,10 @@ final class HomeRootViewController: BaseViewController {
             contentContainerView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
             contentContainerView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
 
-            tabBarView.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 14),
-            tabBarView.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -14),
+            tabBarView.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
+            tabBarView.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20),
             tabBarView.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -6),
-            tabBarView.heightAnchor.constraint(equalToConstant: 48)
+            tabBarView.heightAnchor.constraint(equalToConstant: 52)
         ])
 
         tabBarView.configure(items: Tab.allCases.map { .init(title: $0.title, iconName: $0.iconName) }, selectedIndex: 1)

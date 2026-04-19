@@ -50,10 +50,10 @@ final class FloatingHomeTabBar: UIView {
     private func configure() {
         layer.shadowColor = UIColor.black.cgColor
         layer.shadowOpacity = 0.10
-        layer.shadowRadius = 18
-        layer.shadowOffset = CGSize(width: 0, height: 10)
+        layer.shadowRadius = 20
+        layer.shadowOffset = CGSize(width: 0, height: 11)
 
-        capsuleBlurView.layer.cornerRadius = 21
+        capsuleBlurView.layer.cornerRadius = 23
         capsuleBlurView.layer.cornerCurve = .continuous
         capsuleBlurView.clipsToBounds = true
         capsuleBlurView.layer.borderWidth = 1
@@ -78,21 +78,21 @@ final class FloatingHomeTabBar: UIView {
         capsuleStackView.addArrangedSubview(profileButton)
 
         NSLayoutConstraint.activate([
-            capsuleBlurView.widthAnchor.constraint(equalToConstant: 136),
+            capsuleBlurView.widthAnchor.constraint(equalToConstant: 144),
             capsuleBlurView.trailingAnchor.constraint(equalTo: trailingAnchor),
             capsuleBlurView.bottomAnchor.constraint(equalTo: bottomAnchor),
-            capsuleBlurView.heightAnchor.constraint(equalToConstant: 46),
+            capsuleBlurView.heightAnchor.constraint(equalToConstant: 50),
 
             audioButton.leadingAnchor.constraint(equalTo: leadingAnchor),
-            audioButton.trailingAnchor.constraint(lessThanOrEqualTo: capsuleBlurView.leadingAnchor, constant: -24),
+            audioButton.trailingAnchor.constraint(lessThanOrEqualTo: capsuleBlurView.leadingAnchor, constant: -26),
             audioButton.centerYAnchor.constraint(equalTo: capsuleBlurView.centerYAnchor),
-            audioButton.widthAnchor.constraint(equalToConstant: 46),
-            audioButton.heightAnchor.constraint(equalToConstant: 46),
+            audioButton.widthAnchor.constraint(equalToConstant: 50),
+            audioButton.heightAnchor.constraint(equalToConstant: 50),
 
-            capsuleStackView.topAnchor.constraint(equalTo: capsuleBlurView.contentView.topAnchor, constant: 4),
-            capsuleStackView.leadingAnchor.constraint(equalTo: capsuleBlurView.contentView.leadingAnchor, constant: 6),
-            capsuleStackView.trailingAnchor.constraint(equalTo: capsuleBlurView.contentView.trailingAnchor, constant: -6),
-            capsuleStackView.bottomAnchor.constraint(equalTo: capsuleBlurView.contentView.bottomAnchor, constant: -4)
+            capsuleStackView.topAnchor.constraint(equalTo: capsuleBlurView.contentView.topAnchor, constant: 5),
+            capsuleStackView.leadingAnchor.constraint(equalTo: capsuleBlurView.contentView.leadingAnchor, constant: 7),
+            capsuleStackView.trailingAnchor.constraint(equalTo: capsuleBlurView.contentView.trailingAnchor, constant: -7),
+            capsuleStackView.bottomAnchor.constraint(equalTo: capsuleBlurView.contentView.bottomAnchor, constant: -5)
         ])
     }
 
@@ -140,7 +140,7 @@ private final class FloatingHomeTabBarButton: UIButton {
     }
 
     private func configure() {
-        selectionBackgroundView.layer.cornerRadius = style == .orb ? 23 : 17
+        selectionBackgroundView.layer.cornerRadius = style == .orb ? 25 : 19
         selectionBackgroundView.layer.cornerCurve = .continuous
         selectionBackgroundView.backgroundColor = style == .orb
             ? UIColor.white.withAlphaComponent(0.12)
@@ -157,12 +157,12 @@ private final class FloatingHomeTabBarButton: UIButton {
 
         iconImageView.tintColor = UIColor.white.withAlphaComponent(0.78)
         iconImageView.preferredSymbolConfiguration = UIImage.SymbolConfiguration(
-            pointSize: 16,
+            pointSize: 17,
             weight: .semibold
         )
         contentStackView.addArrangedSubview(iconImageView)
 
-        titleLabelView.font = UIFont.systemFont(ofSize: 10, weight: .medium)
+        titleLabelView.font = UIFont.systemFont(ofSize: 10.5, weight: .medium)
         titleLabelView.textColor = UIColor.white.withAlphaComponent(0.78)
         contentStackView.addArrangedSubview(titleLabelView)
 
