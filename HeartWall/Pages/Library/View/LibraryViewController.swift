@@ -436,11 +436,11 @@ final class LibraryViewController: BaseViewController {
 
     @objc
     private func handleCardTap(_ sender: HeartQuoteCardTapGestureRecognizer) {
-        showDetail(title: sender.page.title)
+        showDetail(page: sender.page)
     }
 
-    private func showDetail(title: String) {
-        let detailViewController = HeartQuoteDetailViewController(titleText: title)
+    private func showDetail(page: HeartQuotePage) {
+        let detailViewController = HeartQuoteDetailViewController(page: page)
         detailViewController.hidesBottomBarWhenPushed = true
         navigationController?.pushViewController(detailViewController, animated: true)
     }
@@ -697,7 +697,7 @@ extension LibraryViewController: UICollectionViewDataSource {
 
 extension LibraryViewController: UICollectionViewDelegate {
     func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
-        showDetail(title: featuredPages[logicalIndex(forCarouselItem: indexPath.item)].title)
+        showDetail(page: featuredPages[logicalIndex(forCarouselItem: indexPath.item)])
     }
 
     func scrollViewWillBeginDragging(_ scrollView: UIScrollView) {
