@@ -930,7 +930,7 @@ private final class HeartQuoteSectionView: UIView {
     private func configure() {
         let titleLabel = UILabel()
         titleLabel.text = section.title
-        titleLabel.font = UIFont.systemFont(ofSize: 20, weight: .bold)
+        titleLabel.font = UIFont.systemFont(ofSize: 18, weight: .bold)
         titleLabel.textColor = .white
 
         let countLabel = UILabel()
@@ -955,7 +955,7 @@ private final class HeartQuoteSectionView: UIView {
 
         let contentStack = UIStackView(arrangedSubviews: [headerStack, cardStack])
         contentStack.axis = .vertical
-        contentStack.spacing = 12
+        contentStack.spacing = 10
         addSubview(contentStack)
         contentStack.translatesAutoresizingMaskIntoConstraints = false
 
