@@ -70,7 +70,7 @@ final class HomeRootViewController: BaseViewController {
             contentContainerView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
             contentContainerView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
 
-            tabBarView.leadingAnchor.constraint(greaterThanOrEqualTo: view.leadingAnchor, constant: 18),
+            tabBarView.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 14),
             tabBarView.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -14),
             tabBarView.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -6),
             tabBarView.heightAnchor.constraint(equalToConstant: 48)

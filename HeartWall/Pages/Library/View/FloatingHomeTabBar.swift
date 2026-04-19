@@ -78,20 +78,20 @@ final class FloatingHomeTabBar: UIView {
         capsuleStackView.addArrangedSubview(profileButton)
 
         NSLayoutConstraint.activate([
-            capsuleBlurView.widthAnchor.constraint(equalToConstant: 116),
+            capsuleBlurView.widthAnchor.constraint(equalToConstant: 136),
             capsuleBlurView.trailingAnchor.constraint(equalTo: trailingAnchor),
             capsuleBlurView.bottomAnchor.constraint(equalTo: bottomAnchor),
             capsuleBlurView.heightAnchor.constraint(equalToConstant: 46),
 
-            audioButton.trailingAnchor.constraint(equalTo: capsuleBlurView.leadingAnchor, constant: -12),
+            audioButton.leadingAnchor.constraint(equalTo: leadingAnchor),
+            audioButton.trailingAnchor.constraint(lessThanOrEqualTo: capsuleBlurView.leadingAnchor, constant: -24),
             audioButton.centerYAnchor.constraint(equalTo: capsuleBlurView.centerYAnchor),
-            audioButton.leadingAnchor.constraint(greaterThanOrEqualTo: leadingAnchor),
             audioButton.widthAnchor.constraint(equalToConstant: 46),
             audioButton.heightAnchor.constraint(equalToConstant: 46),
 
             capsuleStackView.topAnchor.constraint(equalTo: capsuleBlurView.contentView.topAnchor, constant: 4),
-            capsuleStackView.leadingAnchor.constraint(equalTo: capsuleBlurView.contentView.leadingAnchor, constant: 4),
-            capsuleStackView.trailingAnchor.constraint(equalTo: capsuleBlurView.contentView.trailingAnchor, constant: -4),
+            capsuleStackView.leadingAnchor.constraint(equalTo: capsuleBlurView.contentView.leadingAnchor, constant: 6),
+            capsuleStackView.trailingAnchor.constraint(equalTo: capsuleBlurView.contentView.trailingAnchor, constant: -6),
             capsuleStackView.bottomAnchor.constraint(equalTo: capsuleBlurView.contentView.bottomAnchor, constant: -4)
         ])
     }
