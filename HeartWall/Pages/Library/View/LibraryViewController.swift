@@ -386,9 +386,9 @@ final class LibraryViewController: BaseViewController {
     private func updateCarouselLayout() {
         guard let layout = carouselCollectionView.collectionViewLayout as? UICollectionViewFlowLayout else { return }
         let availableWidth = max(0, view.bounds.width)
-        layout.minimumLineSpacing = 4
-        let itemWidth = min(216, max(190, availableWidth * 0.535))
-        let itemHeight = min(264, max(238, itemWidth * 1.23))
+        layout.minimumLineSpacing = 2
+        let itemWidth = min(204, max(178, availableWidth * 0.50))
+        let itemHeight = min(272, max(244, itemWidth * 1.34))
         let newSize = CGSize(width: itemWidth, height: itemHeight)
         if layout.itemSize != newSize {
             layout.itemSize = newSize
@@ -930,7 +930,7 @@ private final class HeartQuoteSectionView: UIView {
     private func configure() {
         let titleLabel = UILabel()
         titleLabel.text = section.title
-        titleLabel.font = UIFont.systemFont(ofSize: 18, weight: .bold)
+        titleLabel.font = UIFont.systemFont(ofSize: 16, weight: .bold)
         titleLabel.textColor = .white
 
         let countLabel = UILabel()
@@ -944,7 +944,7 @@ private final class HeartQuoteSectionView: UIView {
 
         let cardStack = UIStackView()
         cardStack.axis = .horizontal
-        cardStack.spacing = 10
+        cardStack.spacing = 14
         cardStack.distribution = .fillEqually
 
         section.items.forEach { page in
@@ -961,8 +961,8 @@ private final class HeartQuoteSectionView: UIView {
 
         NSLayoutConstraint.activate([
             contentStack.topAnchor.constraint(equalTo: topAnchor),
-            contentStack.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 16),
-            contentStack.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -16),
+            contentStack.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 18),
+            contentStack.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -18),
             contentStack.bottomAnchor.constraint(equalTo: bottomAnchor),
 
             cardStack.heightAnchor.constraint(equalToConstant: 172)
@@ -1007,6 +1007,7 @@ private final class HeartQuoteSmallCardView: UIView {
         clipsToBounds = true
         backgroundColor = UIColor.white.withAlphaComponent(0.08)
         isUserInteractionEnabled = true
+        transform = CGAffineTransform(scaleX: 0.94, y: 1)
 
         addSubview(imageView)
         imageView.translatesAutoresizingMaskIntoConstraints = false
@@ -1020,7 +1021,7 @@ private final class HeartQuoteSmallCardView: UIView {
         addSubview(gradientView)
         gradientView.translatesAutoresizingMaskIntoConstraints = false
 
-        titleLabel.font = UIFont.systemFont(ofSize: 13, weight: .bold)
+        titleLabel.font = UIFont.systemFont(ofSize: 12, weight: .bold)
         titleLabel.textColor = .white
         titleLabel.numberOfLines = 2
 

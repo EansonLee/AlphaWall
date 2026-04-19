@@ -20,6 +20,7 @@ final class FloatingHomeTabBar: UIView {
     private let quoteButton = FloatingHomeTabBarButton(style: .capsule)
     private let profileButton = FloatingHomeTabBarButton(style: .capsule)
     private lazy var buttons: [FloatingHomeTabBarButton] = [audioButton, quoteButton, profileButton]
+    private var capsuleWidthConstraint: NSLayoutConstraint?
 
     override init(frame: CGRect) {
         super.init(frame: frame)
@@ -77,21 +78,23 @@ final class FloatingHomeTabBar: UIView {
         capsuleStackView.addArrangedSubview(quoteButton)
         capsuleStackView.addArrangedSubview(profileButton)
 
+        capsuleWidthConstraint = capsuleBlurView.widthAnchor.constraint(equalToConstant: 166)
+
         NSLayoutConstraint.activate([
-            capsuleBlurView.widthAnchor.constraint(equalToConstant: 144),
+            capsuleWidthConstraint!,
             capsuleBlurView.trailingAnchor.constraint(equalTo: trailingAnchor),
             capsuleBlurView.bottomAnchor.constraint(equalTo: bottomAnchor),
             capsuleBlurView.heightAnchor.constraint(equalToConstant: 50),
 
             audioButton.leadingAnchor.constraint(equalTo: leadingAnchor),
-            audioButton.trailingAnchor.constraint(lessThanOrEqualTo: capsuleBlurView.leadingAnchor, constant: -26),
+            audioButton.trailingAnchor.constraint(lessThanOrEqualTo: capsuleBlurView.leadingAnchor, constant: -22),
             audioButton.centerYAnchor.constraint(equalTo: capsuleBlurView.centerYAnchor),
             audioButton.widthAnchor.constraint(equalToConstant: 50),
             audioButton.heightAnchor.constraint(equalToConstant: 50),
 
             capsuleStackView.topAnchor.constraint(equalTo: capsuleBlurView.contentView.topAnchor, constant: 5),
-            capsuleStackView.leadingAnchor.constraint(equalTo: capsuleBlurView.contentView.leadingAnchor, constant: 7),
-            capsuleStackView.trailingAnchor.constraint(equalTo: capsuleBlurView.contentView.trailingAnchor, constant: -7),
+            capsuleStackView.leadingAnchor.constraint(equalTo: capsuleBlurView.contentView.leadingAnchor, constant: 8),
+            capsuleStackView.trailingAnchor.constraint(equalTo: capsuleBlurView.contentView.trailingAnchor, constant: -8),
             capsuleStackView.bottomAnchor.constraint(equalTo: capsuleBlurView.contentView.bottomAnchor, constant: -5)
         ])
     }
@@ -116,6 +119,7 @@ private final class FloatingHomeTabBarButton: UIButton {
     private let iconImageView = UIImageView()
     private let titleLabelView = UILabel()
     private let contentStackView = UIStackView()
+    private var horizontalPaddingConstraints: [NSLayoutConstraint] = []
 
     override var isSelected: Bool {
         didSet {
@@ -175,6 +179,14 @@ private final class FloatingHomeTabBarButton: UIButton {
             contentStackView.centerXAnchor.constraint(equalTo: centerXAnchor),
             contentStackView.centerYAnchor.constraint(equalTo: centerYAnchor)
         ])
+
+        if style == .capsule {
+            horizontalPaddingConstraints = [
+                contentStackView.leadingAnchor.constraint(greaterThanOrEqualTo: leadingAnchor, constant: 8),
+                trailingAnchor.constraint(greaterThanOrEqualTo: contentStackView.trailingAnchor, constant: 8)
+            ]
+            NSLayoutConstraint.activate(horizontalPaddingConstraints)
+        }
 
         updateAppearance()
     }
