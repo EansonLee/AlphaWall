@@ -16,9 +16,9 @@ final class LibraryViewController: BaseViewController {
     private var carouselTimer: Timer?
     private var currentCarouselIndex = 0
 
-    private let headerHeight: CGFloat = 104
-    private let contentHorizontalInset: CGFloat = 20
-    private let tabBarReservedHeight: CGFloat = 128
+    private let headerHeight: CGFloat = 84
+    private let contentHorizontalInset: CGFloat = 16
+    private let tabBarReservedHeight: CGFloat = 112
 
     // MARK: - UI
 
@@ -27,16 +27,15 @@ final class LibraryViewController: BaseViewController {
     private let scrollView = UIScrollView()
     private let stackView = UIStackView()
     private let topHeaderView = UIView()
-    private let topBlurView = UIVisualEffectView(effect: UIBlurEffect(style: .systemUltraThinMaterialDark))
     private let monthLabel = UILabel()
     private let dayLabel = UILabel()
-    private let dividerView = UIView()
     private let greetingLabel = UILabel()
     private let subtitleLabel = UILabel()
     private let appBadgeView = UIView()
     private let appBadgeTextLabel = UILabel()
     private let carouselCollectionView: UICollectionView
-    private let pageControl = UIPageControl()
+    private let featuredSummaryLabel = UILabel()
+    private let featuredTagStackView = UIStackView()
     private let bottomFadeView = UIView()
     private let bottomGradientLayer = CAGradientLayer()
 
@@ -45,8 +44,8 @@ final class LibraryViewController: BaseViewController {
     init() {
         let layout = UICollectionViewFlowLayout()
         layout.scrollDirection = .horizontal
-        layout.minimumLineSpacing = 14
-        layout.minimumInteritemSpacing = 14
+        layout.minimumLineSpacing = 12
+        layout.minimumInteritemSpacing = 12
         carouselCollectionView = UICollectionView(frame: .zero, collectionViewLayout: layout)
         super.init(nibName: nil, bundle: nil)
     }
@@ -88,7 +87,7 @@ final class LibraryViewController: BaseViewController {
     // MARK: - Setup
 
     override func setupUI() {
-        view.backgroundColor = UIColor(red: 0.08, green: 0.10, blue: 0.12, alpha: 1)
+        view.backgroundColor = UIColor(red: 0.22, green: 0.22, blue: 0.23, alpha: 1)
         configureBackground()
         configureScrollView()
         configureCarousel()
@@ -119,11 +118,11 @@ final class LibraryViewController: BaseViewController {
     private func configureBackground() {
         backgroundImageView.image = UIImage(named: "HeartQuotePagePrimary")
         backgroundImageView.contentMode = .scaleAspectFill
-        backgroundImageView.alpha = 0.30
+        backgroundImageView.alpha = 0.18
         view.addSubview(backgroundImageView)
         backgroundImageView.translatesAutoresizingMaskIntoConstraints = false
 
-        dimView.backgroundColor = UIColor(red: 0.05, green: 0.07, blue: 0.09, alpha: 0.64)
+        dimView.backgroundColor = UIColor(red: 0.19, green: 0.19, blue: 0.20, alpha: 0.72)
         view.addSubview(dimView)
         dimView.translatesAutoresizingMaskIntoConstraints = false
 
@@ -149,7 +148,7 @@ final class LibraryViewController: BaseViewController {
         scrollView.translatesAutoresizingMaskIntoConstraints = false
 
         stackView.axis = .vertical
-        stackView.spacing = 22
+        stackView.spacing = 18
         scrollView.addSubview(stackView)
         stackView.translatesAutoresizingMaskIntoConstraints = false
 
@@ -159,7 +158,7 @@ final class LibraryViewController: BaseViewController {
             scrollView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
             scrollView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
 
-            stackView.topAnchor.constraint(equalTo: scrollView.contentLayoutGuide.topAnchor, constant: 12),
+            stackView.topAnchor.constraint(equalTo: scrollView.contentLayoutGuide.topAnchor, constant: 8),
             stackView.leadingAnchor.constraint(equalTo: scrollView.contentLayoutGuide.leadingAnchor),
             stackView.trailingAnchor.constraint(equalTo: scrollView.contentLayoutGuide.trailingAnchor),
             stackView.bottomAnchor.constraint(equalTo: scrollView.contentLayoutGuide.bottomAnchor, constant: -tabBarReservedHeight),
@@ -173,69 +172,69 @@ final class LibraryViewController: BaseViewController {
         carouselCollectionView.isPagingEnabled = false
         carouselCollectionView.decelerationRate = .fast
         carouselCollectionView.contentInsetAdjustmentBehavior = .never
+        carouselCollectionView.clipsToBounds = false
         carouselCollectionView.dataSource = self
         carouselCollectionView.delegate = self
         carouselCollectionView.register(HeartQuoteHeroCell.self, forCellWithReuseIdentifier: HeartQuoteHeroCell.reuseIdentifier)
 
-        pageControl.currentPageIndicatorTintColor = .white
-        pageControl.pageIndicatorTintColor = UIColor.white.withAlphaComponent(0.28)
-        pageControl.isUserInteractionEnabled = false
+        featuredSummaryLabel.font = UIFont.systemFont(ofSize: 13, weight: .medium)
+        featuredSummaryLabel.textColor = UIColor.white.withAlphaComponent(0.74)
+        featuredSummaryLabel.textAlignment = .center
+        featuredSummaryLabel.numberOfLines = 2
+
+        featuredTagStackView.axis = .horizontal
+        featuredTagStackView.alignment = .center
+        featuredTagStackView.spacing = 8
+        featuredTagStackView.distribution = .fillProportionally
 
         let container = UIView()
+        container.clipsToBounds = false
         container.addSubview(carouselCollectionView)
-        container.addSubview(pageControl)
+        container.addSubview(featuredSummaryLabel)
+        container.addSubview(featuredTagStackView)
         carouselCollectionView.translatesAutoresizingMaskIntoConstraints = false
-        pageControl.translatesAutoresizingMaskIntoConstraints = false
+        featuredSummaryLabel.translatesAutoresizingMaskIntoConstraints = false
+        featuredTagStackView.translatesAutoresizingMaskIntoConstraints = false
 
         NSLayoutConstraint.activate([
             carouselCollectionView.topAnchor.constraint(equalTo: container.topAnchor),
             carouselCollectionView.leadingAnchor.constraint(equalTo: container.leadingAnchor),
             carouselCollectionView.trailingAnchor.constraint(equalTo: container.trailingAnchor),
-            carouselCollectionView.heightAnchor.constraint(equalToConstant: 378),
+            carouselCollectionView.heightAnchor.constraint(equalToConstant: 254),
 
-            pageControl.topAnchor.constraint(equalTo: carouselCollectionView.bottomAnchor, constant: 4),
-            pageControl.centerXAnchor.constraint(equalTo: container.centerXAnchor),
-            pageControl.bottomAnchor.constraint(equalTo: container.bottomAnchor)
+            featuredSummaryLabel.topAnchor.constraint(equalTo: carouselCollectionView.bottomAnchor, constant: 14),
+            featuredSummaryLabel.leadingAnchor.constraint(equalTo: container.leadingAnchor, constant: 42),
+            featuredSummaryLabel.trailingAnchor.constraint(equalTo: container.trailingAnchor, constant: -42),
+
+            featuredTagStackView.topAnchor.constraint(equalTo: featuredSummaryLabel.bottomAnchor, constant: 10),
+            featuredTagStackView.centerXAnchor.constraint(equalTo: container.centerXAnchor),
+            featuredTagStackView.bottomAnchor.constraint(equalTo: container.bottomAnchor)
         ])
 
         stackView.addArrangedSubview(container)
     }
 
     private func configureHeader() {
-        topHeaderView.layer.shadowColor = UIColor.black.cgColor
-        topHeaderView.layer.shadowOpacity = 0.16
-        topHeaderView.layer.shadowRadius = 18
-        topHeaderView.layer.shadowOffset = CGSize(width: 0, height: 12)
         view.addSubview(topHeaderView)
         topHeaderView.translatesAutoresizingMaskIntoConstraints = false
 
-        topBlurView.layer.cornerRadius = 30
-        topBlurView.layer.cornerCurve = .continuous
-        topBlurView.clipsToBounds = true
-        topBlurView.layer.borderWidth = 1
-        topBlurView.layer.borderColor = UIColor.white.withAlphaComponent(0.10).cgColor
-        topHeaderView.addSubview(topBlurView)
-        topBlurView.translatesAutoresizingMaskIntoConstraints = false
-
         monthLabel.text = currentMonthText()
-        monthLabel.font = UIFont.systemFont(ofSize: 15, weight: .semibold)
-        monthLabel.textColor = UIColor.white.withAlphaComponent(0.78)
+        monthLabel.font = UIFont.systemFont(ofSize: 12, weight: .semibold)
+        monthLabel.textColor = UIColor.white.withAlphaComponent(0.68)
 
         dayLabel.text = currentDayText()
-        dayLabel.font = UIFont.systemFont(ofSize: 44, weight: .black)
+        dayLabel.font = UIFont.systemFont(ofSize: 28, weight: .black)
         dayLabel.textColor = .white
 
-        dividerView.backgroundColor = UIColor.white.withAlphaComponent(0.35)
-
         greetingLabel.text = currentGreetingText()
-        greetingLabel.font = UIFont.systemFont(ofSize: 34, weight: .heavy)
+        greetingLabel.font = UIFont.systemFont(ofSize: 23, weight: .bold)
         greetingLabel.textColor = .white
 
         subtitleLabel.text = "今日心语"
-        subtitleLabel.font = UIFont.systemFont(ofSize: 17, weight: .semibold)
-        subtitleLabel.textColor = UIColor.white.withAlphaComponent(0.82)
+        subtitleLabel.font = UIFont.systemFont(ofSize: 12, weight: .medium)
+        subtitleLabel.textColor = UIColor.white.withAlphaComponent(0.72)
 
-        appBadgeView.layer.cornerRadius = 15
+        appBadgeView.layer.cornerRadius = 10
         appBadgeView.layer.cornerCurve = .continuous
         appBadgeView.layer.masksToBounds = true
         let badgeGradient = CAGradientLayer()
@@ -248,58 +247,46 @@ final class LibraryViewController: BaseViewController {
         appBadgeView.layer.insertSublayer(badgeGradient, at: 0)
 
         appBadgeTextLabel.text = "V"
-        appBadgeTextLabel.font = UIFont.systemFont(ofSize: 26, weight: .black)
+        appBadgeTextLabel.font = UIFont.systemFont(ofSize: 16, weight: .black)
         appBadgeTextLabel.textColor = UIColor(red: 0.70, green: 0.42, blue: 0.27, alpha: 1)
 
         let dateStack = UIStackView(arrangedSubviews: [monthLabel, dayLabel])
         dateStack.axis = .vertical
         dateStack.alignment = .leading
-        dateStack.spacing = -4
+        dateStack.spacing = -2
 
         let greetingStack = UIStackView(arrangedSubviews: [greetingLabel, subtitleLabel])
         greetingStack.axis = .vertical
         greetingStack.alignment = .leading
-        greetingStack.spacing = 0
+        greetingStack.spacing = 1
 
-        topBlurView.contentView.addSubview(dateStack)
-        topBlurView.contentView.addSubview(dividerView)
-        topBlurView.contentView.addSubview(greetingStack)
-        topBlurView.contentView.addSubview(appBadgeView)
+        topHeaderView.addSubview(dateStack)
+        topHeaderView.addSubview(greetingStack)
+        topHeaderView.addSubview(appBadgeView)
         appBadgeView.addSubview(appBadgeTextLabel)
 
         dateStack.translatesAutoresizingMaskIntoConstraints = false
-        dividerView.translatesAutoresizingMaskIntoConstraints = false
         greetingStack.translatesAutoresizingMaskIntoConstraints = false
         appBadgeView.translatesAutoresizingMaskIntoConstraints = false
         appBadgeTextLabel.translatesAutoresizingMaskIntoConstraints = false
 
         NSLayoutConstraint.activate([
-            topHeaderView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 8),
+            topHeaderView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 6),
             topHeaderView.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: contentHorizontalInset),
             topHeaderView.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -contentHorizontalInset),
-            topHeaderView.heightAnchor.constraint(equalToConstant: 92),
+            topHeaderView.heightAnchor.constraint(equalToConstant: 68),
 
-            topBlurView.topAnchor.constraint(equalTo: topHeaderView.topAnchor),
-            topBlurView.leadingAnchor.constraint(equalTo: topHeaderView.leadingAnchor),
-            topBlurView.trailingAnchor.constraint(equalTo: topHeaderView.trailingAnchor),
-            topBlurView.bottomAnchor.constraint(equalTo: topHeaderView.bottomAnchor),
+            dateStack.leadingAnchor.constraint(equalTo: topHeaderView.leadingAnchor),
+            dateStack.centerYAnchor.constraint(equalTo: topHeaderView.centerYAnchor, constant: 2),
 
-            dateStack.leadingAnchor.constraint(equalTo: topBlurView.contentView.leadingAnchor, constant: 18),
-            dateStack.centerYAnchor.constraint(equalTo: topBlurView.contentView.centerYAnchor, constant: 2),
-
-            dividerView.leadingAnchor.constraint(equalTo: dateStack.trailingAnchor, constant: 14),
-            dividerView.centerYAnchor.constraint(equalTo: dateStack.centerYAnchor),
-            dividerView.widthAnchor.constraint(equalToConstant: 1),
-            dividerView.heightAnchor.constraint(equalToConstant: 56),
-
-            greetingStack.leadingAnchor.constraint(equalTo: dividerView.trailingAnchor, constant: 16),
-            greetingStack.centerYAnchor.constraint(equalTo: dateStack.centerYAnchor, constant: 1),
+            greetingStack.leadingAnchor.constraint(equalTo: dateStack.trailingAnchor, constant: 14),
+            greetingStack.centerYAnchor.constraint(equalTo: topHeaderView.centerYAnchor, constant: 2),
             greetingStack.trailingAnchor.constraint(lessThanOrEqualTo: appBadgeView.leadingAnchor, constant: -12),
 
-            appBadgeView.trailingAnchor.constraint(equalTo: topBlurView.contentView.trailingAnchor, constant: -18),
-            appBadgeView.centerYAnchor.constraint(equalTo: topBlurView.contentView.centerYAnchor),
-            appBadgeView.widthAnchor.constraint(equalToConstant: 42),
-            appBadgeView.heightAnchor.constraint(equalToConstant: 42),
+            appBadgeView.trailingAnchor.constraint(equalTo: topHeaderView.trailingAnchor),
+            appBadgeView.centerYAnchor.constraint(equalTo: topHeaderView.centerYAnchor, constant: 2),
+            appBadgeView.widthAnchor.constraint(equalToConstant: 30),
+            appBadgeView.heightAnchor.constraint(equalToConstant: 30),
 
             appBadgeTextLabel.centerXAnchor.constraint(equalTo: appBadgeView.centerXAnchor),
             appBadgeTextLabel.centerYAnchor.constraint(equalTo: appBadgeView.centerYAnchor)
@@ -309,7 +296,7 @@ final class LibraryViewController: BaseViewController {
     private func configureBottomFade() {
         bottomGradientLayer.colors = [
             UIColor.clear.cgColor,
-            UIColor(red: 0.05, green: 0.07, blue: 0.09, alpha: 0.70).cgColor
+            UIColor(red: 0.16, green: 0.16, blue: 0.17, alpha: 0.76).cgColor
         ]
         bottomGradientLayer.locations = [0, 1]
         bottomFadeView.isUserInteractionEnabled = false
@@ -321,7 +308,7 @@ final class LibraryViewController: BaseViewController {
             bottomFadeView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
             bottomFadeView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
             bottomFadeView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
-            bottomFadeView.heightAnchor.constraint(equalToConstant: 150)
+            bottomFadeView.heightAnchor.constraint(equalToConstant: 124)
         ])
     }
 
@@ -329,10 +316,9 @@ final class LibraryViewController: BaseViewController {
 
     private func renderCarousel() {
         currentCarouselIndex = 0
-        pageControl.numberOfPages = featuredPages.count
-        pageControl.currentPage = 0
         carouselCollectionView.reloadData()
         carouselCollectionView.setContentOffset(.zero, animated: false)
+        updateFeaturedSummary(for: 0)
         startCarouselTimerIfNeeded()
     }
 
@@ -349,13 +335,16 @@ final class LibraryViewController: BaseViewController {
 
     private func updateCarouselLayout() {
         guard let layout = carouselCollectionView.collectionViewLayout as? UICollectionViewFlowLayout else { return }
-        let width = max(0, view.bounds.width - (contentHorizontalInset * 2))
-        let newSize = CGSize(width: width, height: 378)
+        let availableWidth = max(0, view.bounds.width)
+        let itemWidth = min(214, max(188, availableWidth * 0.52))
+        let itemHeight = min(258, max(236, itemWidth * 1.28))
+        let newSize = CGSize(width: itemWidth, height: itemHeight)
         if layout.itemSize != newSize {
             layout.itemSize = newSize
             layout.invalidateLayout()
         }
-        carouselCollectionView.contentInset = UIEdgeInsets(top: 0, left: contentHorizontalInset, bottom: 0, right: contentHorizontalInset)
+        let sideInset = max(contentHorizontalInset, (availableWidth - itemWidth) / 2)
+        carouselCollectionView.contentInset = UIEdgeInsets(top: 0, left: sideInset, bottom: 0, right: sideInset)
     }
 
     // MARK: - Carousel
@@ -383,7 +372,7 @@ final class LibraryViewController: BaseViewController {
     private func scrollCarousel(to index: Int, animated: Bool) {
         guard featuredPages.indices.contains(index) else { return }
         currentCarouselIndex = index
-        pageControl.currentPage = index
+        updateFeaturedSummary(for: index)
         let indexPath = IndexPath(item: index, section: 0)
         carouselCollectionView.scrollToItem(at: indexPath, at: .centeredHorizontally, animated: animated)
     }
@@ -424,6 +413,37 @@ final class LibraryViewController: BaseViewController {
             return "下午好"
         default:
             return "晚上好"
+        }
+    }
+
+    private func updateFeaturedSummary(for index: Int) {
+        guard featuredPages.indices.contains(index) else {
+            featuredSummaryLabel.text = nil
+            featuredTagStackView.arrangedSubviews.forEach { view in
+                featuredTagStackView.removeArrangedSubview(view)
+                view.removeFromSuperview()
+            }
+            return
+        }
+
+        let page = featuredPages[index]
+        featuredSummaryLabel.text = page.subtitle
+
+        featuredTagStackView.arrangedSubviews.forEach { view in
+            featuredTagStackView.removeArrangedSubview(view)
+            view.removeFromSuperview()
+        }
+
+        page.tags.forEach { tag in
+            let label = InsetLabel(top: 4, left: 8, bottom: 4, right: 8)
+            label.text = tag
+            label.font = UIFont.systemFont(ofSize: 11, weight: .medium)
+            label.textColor = UIColor.white.withAlphaComponent(0.76)
+            label.backgroundColor = UIColor.white.withAlphaComponent(0.10)
+            label.layer.cornerRadius = 8
+            label.layer.cornerCurve = .continuous
+            label.clipsToBounds = true
+            featuredTagStackView.addArrangedSubview(label)
         }
     }
 }
@@ -485,7 +505,7 @@ extension LibraryViewController {
         let visibleCenterX = carouselCollectionView.contentOffset.x + (carouselCollectionView.bounds.width / 2)
         guard let indexPath = carouselCollectionView.indexPathForItem(at: CGPoint(x: visibleCenterX, y: carouselCollectionView.bounds.midY)) else { return }
         currentCarouselIndex = indexPath.item
-        pageControl.currentPage = indexPath.item
+        updateFeaturedSummary(for: indexPath.item)
     }
 }
 
@@ -495,13 +515,14 @@ private final class HeartQuoteHeroCell: UICollectionViewCell {
 
     static let reuseIdentifier = "HeartQuoteHeroCell"
 
+    private let backCardRear = UIView()
+    private let backCardFront = UIView()
+    private let cardContainerView = UIView()
     private let imageView = CroppedAssetImageView()
     private let gradientView = UIView()
     private let gradientLayer = CAGradientLayer()
     private let badgeLabel = InsetLabel()
     private let titleLabel = UILabel()
-    private let subtitleLabel = UILabel()
-    private let tagStackView = UIStackView()
 
     override init(frame: CGRect) {
         super.init(frame: frame)
@@ -518,95 +539,103 @@ private final class HeartQuoteHeroCell: UICollectionViewCell {
         gradientLayer.frame = gradientView.bounds
     }
 
-    override func prepareForReuse() {
-        super.prepareForReuse()
-        tagStackView.arrangedSubviews.forEach { view in
-            tagStackView.removeArrangedSubview(view)
-            view.removeFromSuperview()
-        }
-    }
-
     func configure(page: HeartQuotePage) {
         imageView.configure(assetName: page.assetName, cropRect: page.cropRect)
         titleLabel.text = page.title
-        subtitleLabel.text = page.subtitle
         badgeLabel.text = page.badgeText
         badgeLabel.isHidden = page.badgeText == nil
-
-        page.tags.forEach { tag in
-            let label = InsetLabel(top: 6, left: 10, bottom: 6, right: 10)
-            label.text = tag
-            label.font = UIFont.systemFont(ofSize: 13, weight: .semibold)
-            label.textColor = UIColor.white.withAlphaComponent(0.86)
-            label.backgroundColor = UIColor.white.withAlphaComponent(0.12)
-            label.layer.cornerRadius = 10
-            label.layer.cornerCurve = .continuous
-            label.clipsToBounds = true
-            tagStackView.addArrangedSubview(label)
-        }
     }
 
     private func configure() {
-        contentView.layer.cornerRadius = 34
-        contentView.layer.cornerCurve = .continuous
-        contentView.layer.masksToBounds = true
-        contentView.backgroundColor = UIColor.white.withAlphaComponent(0.08)
+        backgroundColor = .clear
+        contentView.backgroundColor = .clear
+        contentView.clipsToBounds = false
+        layer.shadowColor = UIColor.black.cgColor
+        layer.shadowOpacity = 0.22
+        layer.shadowRadius = 18
+        layer.shadowOffset = CGSize(width: 0, height: 10)
+
+        [backCardRear, backCardFront].forEach { backCard in
+            backCard.layer.cornerRadius = 26
+            backCard.layer.cornerCurve = .continuous
+            backCard.backgroundColor = UIColor.black.withAlphaComponent(0.88)
+            contentView.addSubview(backCard)
+            backCard.translatesAutoresizingMaskIntoConstraints = false
+        }
+
+        backCardFront.backgroundColor = UIColor.black.withAlphaComponent(0.96)
+
+        cardContainerView.layer.cornerRadius = 28
+        cardContainerView.layer.cornerCurve = .continuous
+        cardContainerView.layer.masksToBounds = true
+        cardContainerView.layer.borderWidth = 1
+        cardContainerView.layer.borderColor = UIColor.white.withAlphaComponent(0.55).cgColor
+        cardContainerView.backgroundColor = UIColor.white.withAlphaComponent(0.08)
+        contentView.addSubview(cardContainerView)
+        cardContainerView.translatesAutoresizingMaskIntoConstraints = false
 
         imageView.contentMode = .scaleAspectFill
-        contentView.addSubview(imageView)
+        cardContainerView.addSubview(imageView)
         imageView.translatesAutoresizingMaskIntoConstraints = false
 
         gradientLayer.colors = [
-            UIColor.black.withAlphaComponent(0.05).cgColor,
-            UIColor.black.withAlphaComponent(0.28).cgColor,
-            UIColor.black.withAlphaComponent(0.76).cgColor
+            UIColor.black.withAlphaComponent(0.02).cgColor,
+            UIColor.black.withAlphaComponent(0.18).cgColor,
+            UIColor.black.withAlphaComponent(0.74).cgColor
         ]
-        gradientLayer.locations = [0, 0.42, 1]
+        gradientLayer.locations = [0, 0.48, 1]
         gradientView.layer.addSublayer(gradientLayer)
-        contentView.addSubview(gradientView)
+        cardContainerView.addSubview(gradientView)
         gradientView.translatesAutoresizingMaskIntoConstraints = false
 
-        badgeLabel.font = UIFont.systemFont(ofSize: 13, weight: .bold)
+        badgeLabel.font = UIFont.systemFont(ofSize: 11, weight: .bold)
         badgeLabel.textColor = .white
-        badgeLabel.backgroundColor = UIColor.black.withAlphaComponent(0.34)
-        badgeLabel.layer.cornerRadius = 14
+        badgeLabel.backgroundColor = UIColor(white: 0.22, alpha: 0.54)
+        badgeLabel.layer.cornerRadius = 10
         badgeLabel.layer.cornerCurve = .continuous
         badgeLabel.clipsToBounds = true
 
-        titleLabel.font = UIFont.systemFont(ofSize: 30, weight: .heavy)
+        titleLabel.font = UIFont.systemFont(ofSize: 17, weight: .heavy)
         titleLabel.textColor = .white
         titleLabel.numberOfLines = 2
 
-        subtitleLabel.font = UIFont.systemFont(ofSize: 15, weight: .medium)
-        subtitleLabel.textColor = UIColor.white.withAlphaComponent(0.82)
-        subtitleLabel.numberOfLines = 2
-
-        tagStackView.axis = .horizontal
-        tagStackView.spacing = 8
-        tagStackView.alignment = .leading
-        tagStackView.distribution = .fillProportionally
-
-        let textStack = UIStackView(arrangedSubviews: [badgeLabel, titleLabel, subtitleLabel, tagStackView])
-        textStack.axis = .vertical
-        textStack.alignment = .leading
-        textStack.spacing = 10
-        contentView.addSubview(textStack)
-        textStack.translatesAutoresizingMaskIntoConstraints = false
+        cardContainerView.addSubview(badgeLabel)
+        cardContainerView.addSubview(titleLabel)
+        badgeLabel.translatesAutoresizingMaskIntoConstraints = false
+        titleLabel.translatesAutoresizingMaskIntoConstraints = false
 
         NSLayoutConstraint.activate([
-            imageView.topAnchor.constraint(equalTo: contentView.topAnchor),
-            imageView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor),
-            imageView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor),
-            imageView.bottomAnchor.constraint(equalTo: contentView.bottomAnchor),
+            backCardRear.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 10),
+            backCardRear.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 26),
+            backCardRear.trailingAnchor.constraint(equalTo: contentView.trailingAnchor),
+            backCardRear.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -8),
 
-            gradientView.topAnchor.constraint(equalTo: contentView.topAnchor),
-            gradientView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor),
-            gradientView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor),
-            gradientView.bottomAnchor.constraint(equalTo: contentView.bottomAnchor),
+            backCardFront.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 5),
+            backCardFront.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 14),
+            backCardFront.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -8),
+            backCardFront.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -4),
 
-            textStack.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 22),
-            textStack.trailingAnchor.constraint(lessThanOrEqualTo: contentView.trailingAnchor, constant: -22),
-            textStack.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -24)
+            cardContainerView.topAnchor.constraint(equalTo: contentView.topAnchor),
+            cardContainerView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor),
+            cardContainerView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -18),
+            cardContainerView.bottomAnchor.constraint(equalTo: contentView.bottomAnchor),
+
+            imageView.topAnchor.constraint(equalTo: cardContainerView.topAnchor),
+            imageView.leadingAnchor.constraint(equalTo: cardContainerView.leadingAnchor),
+            imageView.trailingAnchor.constraint(equalTo: cardContainerView.trailingAnchor),
+            imageView.bottomAnchor.constraint(equalTo: cardContainerView.bottomAnchor),
+
+            gradientView.topAnchor.constraint(equalTo: cardContainerView.topAnchor),
+            gradientView.leadingAnchor.constraint(equalTo: cardContainerView.leadingAnchor),
+            gradientView.trailingAnchor.constraint(equalTo: cardContainerView.trailingAnchor),
+            gradientView.bottomAnchor.constraint(equalTo: cardContainerView.bottomAnchor),
+
+            badgeLabel.topAnchor.constraint(equalTo: cardContainerView.topAnchor, constant: 14),
+            badgeLabel.leadingAnchor.constraint(equalTo: cardContainerView.leadingAnchor, constant: 12),
+
+            titleLabel.leadingAnchor.constraint(equalTo: cardContainerView.leadingAnchor, constant: 14),
+            titleLabel.trailingAnchor.constraint(lessThanOrEqualTo: cardContainerView.trailingAnchor, constant: -14),
+            titleLabel.bottomAnchor.constraint(equalTo: cardContainerView.bottomAnchor, constant: -16)
         ])
     }
 }
@@ -633,13 +662,13 @@ private final class HeartQuoteSectionView: UIView {
     private func configure() {
         let titleLabel = UILabel()
         titleLabel.text = section.title
-        titleLabel.font = UIFont.systemFont(ofSize: 28, weight: .heavy)
+        titleLabel.font = UIFont.systemFont(ofSize: 20, weight: .bold)
         titleLabel.textColor = .white
 
         let countLabel = UILabel()
         countLabel.text = section.countText + "  >"
-        countLabel.font = UIFont.systemFont(ofSize: 15, weight: .bold)
-        countLabel.textColor = UIColor.white.withAlphaComponent(0.78)
+        countLabel.font = UIFont.systemFont(ofSize: 13, weight: .semibold)
+        countLabel.textColor = UIColor.white.withAlphaComponent(0.70)
 
         let headerStack = UIStackView(arrangedSubviews: [titleLabel, UIView(), countLabel])
         headerStack.axis = .horizontal
@@ -647,7 +676,7 @@ private final class HeartQuoteSectionView: UIView {
 
         let cardStack = UIStackView()
         cardStack.axis = .horizontal
-        cardStack.spacing = 12
+        cardStack.spacing = 10
         cardStack.distribution = .fillEqually
 
         section.items.forEach { page in
@@ -658,17 +687,17 @@ private final class HeartQuoteSectionView: UIView {
 
         let contentStack = UIStackView(arrangedSubviews: [headerStack, cardStack])
         contentStack.axis = .vertical
-        contentStack.spacing = 14
+        contentStack.spacing = 12
         addSubview(contentStack)
         contentStack.translatesAutoresizingMaskIntoConstraints = false
 
         NSLayoutConstraint.activate([
             contentStack.topAnchor.constraint(equalTo: topAnchor),
-            contentStack.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 20),
-            contentStack.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -20),
+            contentStack.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 16),
+            contentStack.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -16),
             contentStack.bottomAnchor.constraint(equalTo: bottomAnchor),
 
-            cardStack.heightAnchor.constraint(equalToConstant: 188)
+            cardStack.heightAnchor.constraint(equalToConstant: 172)
         ])
     }
 }
@@ -700,12 +729,12 @@ private final class HeartQuoteSmallCardView: UIView {
     private func apply(page: HeartQuotePage) {
         imageView.configure(assetName: page.assetName, cropRect: page.cropRect)
         titleLabel.text = page.title
-        subtitleLabel.text = page.subtitle
+        subtitleLabel.text = nil
         accessibilityLabel = page.title
     }
 
     private func configure() {
-        layer.cornerRadius = 22
+        layer.cornerRadius = 18
         layer.cornerCurve = .continuous
         clipsToBounds = true
         backgroundColor = UIColor.white.withAlphaComponent(0.08)
@@ -723,17 +752,18 @@ private final class HeartQuoteSmallCardView: UIView {
         addSubview(gradientView)
         gradientView.translatesAutoresizingMaskIntoConstraints = false
 
-        titleLabel.font = UIFont.systemFont(ofSize: 16, weight: .heavy)
+        titleLabel.font = UIFont.systemFont(ofSize: 13, weight: .bold)
         titleLabel.textColor = .white
-        titleLabel.numberOfLines = 1
+        titleLabel.numberOfLines = 2
 
-        subtitleLabel.font = UIFont.systemFont(ofSize: 11, weight: .semibold)
+        subtitleLabel.font = UIFont.systemFont(ofSize: 10, weight: .medium)
         subtitleLabel.textColor = UIColor.white.withAlphaComponent(0.76)
         subtitleLabel.numberOfLines = 2
+        subtitleLabel.isHidden = true
 
         let textStack = UIStackView(arrangedSubviews: [titleLabel, subtitleLabel])
         textStack.axis = .vertical
-        textStack.spacing = 3
+        textStack.spacing = 2
         addSubview(textStack)
         textStack.translatesAutoresizingMaskIntoConstraints = false
 
@@ -748,9 +778,9 @@ private final class HeartQuoteSmallCardView: UIView {
             gradientView.trailingAnchor.constraint(equalTo: trailingAnchor),
             gradientView.bottomAnchor.constraint(equalTo: bottomAnchor),
 
-            textStack.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 12),
-            textStack.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -12),
-            textStack.bottomAnchor.constraint(equalTo: bottomAnchor, constant: -12)
+            textStack.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 10),
+            textStack.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -10),
+            textStack.bottomAnchor.constraint(equalTo: bottomAnchor, constant: -10)
         ])
     }
 }
