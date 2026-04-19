@@ -246,7 +246,7 @@ final class LibraryViewController: BaseViewController {
             carouselCollectionView.topAnchor.constraint(equalTo: container.topAnchor),
             carouselCollectionView.leadingAnchor.constraint(equalTo: container.leadingAnchor),
             carouselCollectionView.trailingAnchor.constraint(equalTo: container.trailingAnchor),
-            carouselCollectionView.heightAnchor.constraint(equalToConstant: 270),
+            carouselCollectionView.heightAnchor.constraint(equalToConstant: 248),
 
             featuredSummaryLabel.topAnchor.constraint(equalTo: carouselCollectionView.bottomAnchor, constant: 14),
             featuredSummaryLabel.leadingAnchor.constraint(equalTo: container.leadingAnchor, constant: 42),
@@ -387,8 +387,8 @@ final class LibraryViewController: BaseViewController {
         guard let layout = carouselCollectionView.collectionViewLayout as? UICollectionViewFlowLayout else { return }
         let availableWidth = max(0, view.bounds.width)
         layout.minimumLineSpacing = 2
-        let itemWidth = min(204, max(178, availableWidth * 0.50))
-        let itemHeight = min(272, max(244, itemWidth * 1.34))
+        let itemWidth = min(188, max(166, availableWidth * 0.46))
+        let itemHeight = min(248, max(224, itemWidth * 1.32))
         let newSize = CGSize(width: itemWidth, height: itemHeight)
         if layout.itemSize != newSize {
             layout.itemSize = newSize

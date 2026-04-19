@@ -73,7 +73,7 @@ final class HomeRootViewController: BaseViewController {
             tabBarView.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
             tabBarView.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20),
             tabBarView.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -6),
-            tabBarView.heightAnchor.constraint(equalToConstant: 52)
+            tabBarView.heightAnchor.constraint(equalToConstant: 56)
         ])
 
         tabBarView.configure(items: Tab.allCases.map { .init(title: $0.title, iconName: $0.iconName) }, selectedIndex: 1)
