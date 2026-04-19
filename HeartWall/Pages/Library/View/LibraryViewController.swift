@@ -54,6 +54,7 @@ final class LibraryViewController: BaseViewController {
     private let featuredTagStackView = UIStackView()
     private let bottomFadeView = UIView()
     private let bottomGradientLayer = CAGradientLayer()
+    private let backgroundTransitionDuration: CFTimeInterval = 0.78
 
     // MARK: - Lifecycle
 
@@ -385,9 +386,9 @@ final class LibraryViewController: BaseViewController {
     private func updateCarouselLayout() {
         guard let layout = carouselCollectionView.collectionViewLayout as? UICollectionViewFlowLayout else { return }
         let availableWidth = max(0, view.bounds.width)
-        layout.minimumLineSpacing = 6
-        let itemWidth = min(224, max(198, availableWidth * 0.56))
-        let itemHeight = min(268, max(244, itemWidth * 1.22))
+        layout.minimumLineSpacing = 4
+        let itemWidth = min(216, max(190, availableWidth * 0.535))
+        let itemHeight = min(264, max(238, itemWidth * 1.23))
         let newSize = CGSize(width: itemWidth, height: itemHeight)
         if layout.itemSize != newSize {
             layout.itemSize = newSize
@@ -587,7 +588,7 @@ final class LibraryViewController: BaseViewController {
         updateGradientLayer(backgroundGradientLayer, colors: theme.backgroundColors.map(\.cgColor), animated: animated)
         updateGradientLayer(backgroundGlowLayer, colors: theme.glowColors.map(\.cgColor), animated: animated)
         backgroundGlowLayer.startPoint = theme.glowCenter
-        UIView.animate(withDuration: animated ? 0.55 : 0, delay: 0, options: [.curveEaseInOut, .beginFromCurrentState]) {
+        UIView.animate(withDuration: animated ? backgroundTransitionDuration : 0, delay: 0, options: [.curveEaseInOut, .beginFromCurrentState]) {
             self.dimView.backgroundColor = theme.dimColor
             self.view.backgroundColor = theme.backgroundColors.last
         }
@@ -602,7 +603,7 @@ final class LibraryViewController: BaseViewController {
             return
         }
 
-        UIView.transition(with: backgroundImageView, duration: 0.55, options: [.transitionCrossDissolve, .beginFromCurrentState]) {
+        UIView.transition(with: backgroundImageView, duration: backgroundTransitionDuration, options: [.transitionCrossDissolve, .beginFromCurrentState]) {
             self.backgroundImageView.image = nextImage
         }
     }
@@ -616,7 +617,7 @@ final class LibraryViewController: BaseViewController {
         let animation = CABasicAnimation(keyPath: "colors")
         animation.fromValue = previousColors
         animation.toValue = colors
-        animation.duration = 0.55
+        animation.duration = backgroundTransitionDuration
         animation.timingFunction = CAMediaTimingFunction(name: .easeInEaseOut)
         layer.colors = colors
         layer.add(animation, forKey: "colors")
@@ -891,16 +892,16 @@ private final class HeartQuoteHeroCell: UICollectionViewCell {
     func applyEmphasis(distanceRatio: CGFloat) {
         let clampedRatio = max(0, min(distanceRatio, 1))
         let focus = 1 - clampedRatio
-        let scale = 0.84 + (focus * 0.22)
-        let lift = 12 * clampedRatio
+        let scale = 0.80 + (focus * 0.28)
+        let lift = 14 * clampedRatio
 
         transform = CGAffineTransform(scaleX: scale, y: scale).translatedBy(x: 0, y: lift)
-        layer.shadowOpacity = Float(0.10 + (focus * 0.24))
-        layer.shadowRadius = 12 + (focus * 14)
-        layer.zPosition = focus * 10
+        layer.shadowOpacity = Float(0.08 + (focus * 0.28))
+        layer.shadowRadius = 10 + (focus * 18)
+        layer.zPosition = focus * 12
 
-        backCardRear.alpha = 0.22 + (focus * 0.52)
-        backCardFront.alpha = 0.42 + (focus * 0.48)
+        backCardRear.alpha = 0.18 + (focus * 0.56)
+        backCardFront.alpha = 0.36 + (focus * 0.54)
         cardContainerView.layer.borderColor = UIColor.white.withAlphaComponent(0.28 + (focus * 0.36)).cgColor
         badgeLabel.alpha = badgeLabel.isHidden ? 0 : 0.66 + (focus * 0.34)
         titleLabel.alpha = 0.78 + (focus * 0.22)
