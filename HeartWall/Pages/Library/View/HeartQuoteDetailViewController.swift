@@ -25,9 +25,6 @@ final class HeartQuoteDetailViewController: BaseViewController {
     private let lockStatusLabel = UILabel()
     private let timeLabel = UILabel()
     private let dateLabel = UILabel()
-    private let quoteCardView = UIVisualEffectView(effect: UIBlurEffect(style: .systemUltraThinMaterialDark))
-    private let quoteTitleLabel = UILabel()
-    private let quoteSubtitleLabel = UILabel()
     private let headerView = UIView()
     private let backButton = UIButton(type: .system)
     private let titleLabel = UILabel()
@@ -74,7 +71,6 @@ final class HeartQuoteDetailViewController: BaseViewController {
         configureWallpaper()
         configureGradients()
         configureLockPreview()
-        configureQuoteCard()
         configureHeader()
         configureActions()
         configureSaveButton()
@@ -186,47 +182,6 @@ final class HeartQuoteDetailViewController: BaseViewController {
             timeLabel.topAnchor.constraint(equalTo: dateLabel.bottomAnchor, constant: 2),
             timeLabel.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 26),
             timeLabel.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -26)
-        ])
-    }
-
-    private func configureQuoteCard() {
-        quoteCardView.layer.cornerRadius = 28
-        quoteCardView.layer.cornerCurve = .continuous
-        quoteCardView.clipsToBounds = true
-        quoteCardView.layer.borderWidth = 1
-        quoteCardView.layer.borderColor = UIColor.white.withAlphaComponent(0.08).cgColor
-
-        quoteTitleLabel.text = page.title
-        quoteTitleLabel.font = .systemFont(ofSize: 18, weight: .heavy)
-        quoteTitleLabel.textColor = UIColor.white.withAlphaComponent(0.94)
-        quoteTitleLabel.textAlignment = .center
-        quoteTitleLabel.numberOfLines = 2
-
-        quoteSubtitleLabel.text = page.subtitle
-        quoteSubtitleLabel.font = .systemFont(ofSize: 14, weight: .semibold)
-        quoteSubtitleLabel.textColor = UIColor.white.withAlphaComponent(0.76)
-        quoteSubtitleLabel.textAlignment = .center
-        quoteSubtitleLabel.numberOfLines = 3
-
-        let stack = UIStackView(arrangedSubviews: [quoteTitleLabel, quoteSubtitleLabel])
-        stack.axis = .vertical
-        stack.alignment = .fill
-        stack.spacing = 8
-
-        view.addSubview(quoteCardView)
-        quoteCardView.contentView.addSubview(stack)
-        quoteCardView.translatesAutoresizingMaskIntoConstraints = false
-        stack.translatesAutoresizingMaskIntoConstraints = false
-
-        NSLayoutConstraint.activate([
-            quoteCardView.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 24),
-            quoteCardView.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -24),
-            quoteCardView.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -92),
-
-            stack.topAnchor.constraint(equalTo: quoteCardView.contentView.topAnchor, constant: 18),
-            stack.leadingAnchor.constraint(equalTo: quoteCardView.contentView.leadingAnchor, constant: 18),
-            stack.trailingAnchor.constraint(equalTo: quoteCardView.contentView.trailingAnchor, constant: -18),
-            stack.bottomAnchor.constraint(equalTo: quoteCardView.contentView.bottomAnchor, constant: -18)
         ])
     }
 
@@ -496,7 +451,6 @@ final class HeartQuoteDetailViewController: BaseViewController {
             self.actionBarView.alpha = self.isChromeVisible ? 1 : 0
             self.downloadButton.alpha = self.isChromeVisible ? 1 : 0
             self.saveButton.alpha = self.isChromeVisible ? 0 : 1
-            self.quoteCardView.alpha = self.isChromeVisible ? 1 : 0
             self.lockStatusLabel.alpha = self.isChromeVisible ? 0 : 1
             self.dateLabel.alpha = self.isChromeVisible ? 0 : 1
             self.timeLabel.alpha = self.isChromeVisible ? 0 : 1
@@ -516,7 +470,6 @@ final class HeartQuoteDetailViewController: BaseViewController {
             headerView.transform = hiddenTopTransform
             actionBarView.transform = hiddenBottomTransform
             downloadButton.transform = hiddenBottomTransform
-            quoteCardView.transform = hiddenBottomTransform
             saveButton.transform = shownTransform
         }
 
@@ -529,7 +482,6 @@ final class HeartQuoteDetailViewController: BaseViewController {
             self.headerView.transform = self.isChromeVisible ? shownTransform : hiddenTopTransform
             self.actionBarView.transform = self.isChromeVisible ? shownTransform : hiddenBottomTransform
             self.downloadButton.transform = self.isChromeVisible ? shownTransform : hiddenBottomTransform
-            self.quoteCardView.transform = self.isChromeVisible ? shownTransform : hiddenBottomTransform
             self.saveButton.transform = self.isChromeVisible ? hiddenBottomTransform : shownTransform
         }
     }
