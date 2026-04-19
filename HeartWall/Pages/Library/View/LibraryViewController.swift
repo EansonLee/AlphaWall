@@ -8,6 +8,14 @@ import Combine
 
 final class LibraryViewController: BaseViewController {
 
+    private struct FeaturedBackgroundTheme {
+        let backgroundColors: [UIColor]
+        let glowColors: [UIColor]
+        let dimColor: UIColor
+        let bottomFadeColor: UIColor
+        let glowCenter: CGPoint
+    }
+
     // MARK: - Properties
 
     private let viewModel = LibraryViewModel()
@@ -15,6 +23,10 @@ final class LibraryViewController: BaseViewController {
     private var sections: [HeartQuoteSection] = []
     private var carouselTimer: Timer?
     private var currentCarouselIndex = 0
+    private var currentCarouselItem = 0
+    private var appliedFeaturedLogicalIndex: Int?
+    private var currentBackgroundAssetName: String?
+    private let carouselLoopMultiplier = 400
 
     private let headerHeight: CGFloat = 84
     private let contentHorizontalInset: CGFloat = 16
@@ -23,6 +35,10 @@ final class LibraryViewController: BaseViewController {
     // MARK: - UI
 
     private let backgroundImageView = UIImageView()
+    private let backgroundGradientView = UIView()
+    private let backgroundGlowView = UIView()
+    private let backgroundGradientLayer = CAGradientLayer()
+    private let backgroundGlowLayer = CAGradientLayer()
     private let dimView = UIView()
     private let scrollView = UIScrollView()
     private let stackView = UIStackView()
@@ -77,11 +93,14 @@ final class LibraryViewController: BaseViewController {
 
     override func viewDidLayoutSubviews() {
         super.viewDidLayoutSubviews()
+        backgroundGradientLayer.frame = backgroundGradientView.bounds
+        backgroundGlowLayer.frame = backgroundGlowView.bounds
         bottomGradientLayer.frame = bottomFadeView.bounds
         if let badgeGradient = appBadgeView.layer.sublayers?.first as? CAGradientLayer {
             badgeGradient.frame = appBadgeView.bounds
         }
         updateCarouselLayout()
+        updateCarouselCardEmphasis()
     }
 
     // MARK: - Setup
@@ -118,11 +137,27 @@ final class LibraryViewController: BaseViewController {
     private func configureBackground() {
         backgroundImageView.image = UIImage(named: "HeartQuotePagePrimary")
         backgroundImageView.contentMode = .scaleAspectFill
-        backgroundImageView.alpha = 0.18
+        backgroundImageView.alpha = 0.22
         view.addSubview(backgroundImageView)
         backgroundImageView.translatesAutoresizingMaskIntoConstraints = false
 
-        dimView.backgroundColor = UIColor(red: 0.19, green: 0.19, blue: 0.20, alpha: 0.72)
+        backgroundGradientLayer.startPoint = CGPoint(x: 0.15, y: 0)
+        backgroundGradientLayer.endPoint = CGPoint(x: 0.88, y: 1)
+        backgroundGradientLayer.colors = backgroundTheme(for: 0).backgroundColors.map(\.cgColor)
+        backgroundGradientView.layer.addSublayer(backgroundGradientLayer)
+        view.addSubview(backgroundGradientView)
+        backgroundGradientView.translatesAutoresizingMaskIntoConstraints = false
+
+        backgroundGlowLayer.type = .radial
+        backgroundGlowLayer.startPoint = backgroundTheme(for: 0).glowCenter
+        backgroundGlowLayer.endPoint = CGPoint(x: 1, y: 1)
+        backgroundGlowLayer.colors = backgroundTheme(for: 0).glowColors.map(\.cgColor)
+        backgroundGlowView.alpha = 0.9
+        backgroundGlowView.layer.addSublayer(backgroundGlowLayer)
+        view.addSubview(backgroundGlowView)
+        backgroundGlowView.translatesAutoresizingMaskIntoConstraints = false
+
+        dimView.backgroundColor = backgroundTheme(for: 0).dimColor
         view.addSubview(dimView)
         dimView.translatesAutoresizingMaskIntoConstraints = false
 
@@ -131,6 +166,16 @@ final class LibraryViewController: BaseViewController {
             backgroundImageView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
             backgroundImageView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
             backgroundImageView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
+
+            backgroundGradientView.topAnchor.constraint(equalTo: view.topAnchor),
+            backgroundGradientView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            backgroundGradientView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+            backgroundGradientView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
+
+            backgroundGlowView.topAnchor.constraint(equalTo: view.topAnchor),
+            backgroundGlowView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            backgroundGlowView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+            backgroundGlowView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
 
             dimView.topAnchor.constraint(equalTo: view.topAnchor),
             dimView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
@@ -200,7 +245,7 @@ final class LibraryViewController: BaseViewController {
             carouselCollectionView.topAnchor.constraint(equalTo: container.topAnchor),
             carouselCollectionView.leadingAnchor.constraint(equalTo: container.leadingAnchor),
             carouselCollectionView.trailingAnchor.constraint(equalTo: container.trailingAnchor),
-            carouselCollectionView.heightAnchor.constraint(equalToConstant: 254),
+            carouselCollectionView.heightAnchor.constraint(equalToConstant: 270),
 
             featuredSummaryLabel.topAnchor.constraint(equalTo: carouselCollectionView.bottomAnchor, constant: 14),
             featuredSummaryLabel.leadingAnchor.constraint(equalTo: container.leadingAnchor, constant: 42),
@@ -296,7 +341,7 @@ final class LibraryViewController: BaseViewController {
     private func configureBottomFade() {
         bottomGradientLayer.colors = [
             UIColor.clear.cgColor,
-            UIColor(red: 0.16, green: 0.16, blue: 0.17, alpha: 0.76).cgColor
+            backgroundTheme(for: 0).bottomFadeColor.cgColor
         ]
         bottomGradientLayer.locations = [0, 1]
         bottomFadeView.isUserInteractionEnabled = false
@@ -315,10 +360,14 @@ final class LibraryViewController: BaseViewController {
     // MARK: - Rendering
 
     private func renderCarousel() {
+        stopCarouselTimer()
         currentCarouselIndex = 0
+        appliedFeaturedLogicalIndex = nil
+        currentCarouselItem = initialCarouselItem(for: 0)
+        currentBackgroundAssetName = nil
         carouselCollectionView.reloadData()
-        carouselCollectionView.setContentOffset(.zero, animated: false)
-        updateFeaturedSummary(for: 0)
+        view.layoutIfNeeded()
+        scrollCarousel(toItem: currentCarouselItem, animated: false)
         startCarouselTimerIfNeeded()
     }
 
@@ -336,8 +385,9 @@ final class LibraryViewController: BaseViewController {
     private func updateCarouselLayout() {
         guard let layout = carouselCollectionView.collectionViewLayout as? UICollectionViewFlowLayout else { return }
         let availableWidth = max(0, view.bounds.width)
-        let itemWidth = min(214, max(188, availableWidth * 0.52))
-        let itemHeight = min(258, max(236, itemWidth * 1.28))
+        layout.minimumLineSpacing = 6
+        let itemWidth = min(224, max(198, availableWidth * 0.56))
+        let itemHeight = min(268, max(244, itemWidth * 1.22))
         let newSize = CGSize(width: itemWidth, height: itemHeight)
         if layout.itemSize != newSize {
             layout.itemSize = newSize
@@ -365,16 +415,20 @@ final class LibraryViewController: BaseViewController {
 
     private func advanceCarousel() {
         guard featuredPages.count > 1 else { return }
-        let nextIndex = (currentCarouselIndex + 1) % featuredPages.count
-        scrollCarousel(to: nextIndex, animated: true)
+        scrollCarousel(toItem: currentCarouselItem + 1, animated: true)
     }
 
-    private func scrollCarousel(to index: Int, animated: Bool) {
-        guard featuredPages.indices.contains(index) else { return }
-        currentCarouselIndex = index
-        updateFeaturedSummary(for: index)
-        let indexPath = IndexPath(item: index, section: 0)
+    private func scrollCarousel(toItem item: Int, animated: Bool) {
+        guard totalCarouselItems > 0 else { return }
+        let safeItem = max(0, min(item, totalCarouselItems - 1))
+        currentCarouselItem = safeItem
+        updateSelectedFeaturedPage(logicalIndex: logicalIndex(forCarouselItem: safeItem), animated: animated)
+        let indexPath = IndexPath(item: safeItem, section: 0)
         carouselCollectionView.scrollToItem(at: indexPath, at: .centeredHorizontally, animated: animated)
+        if !animated {
+            carouselCollectionView.layoutIfNeeded()
+            updateCarouselCardEmphasis()
+        }
     }
 
     // MARK: - Actions
@@ -446,20 +500,194 @@ final class LibraryViewController: BaseViewController {
             featuredTagStackView.addArrangedSubview(label)
         }
     }
+
+    private var totalCarouselItems: Int {
+        guard featuredPages.count > 1 else { return featuredPages.count }
+        return featuredPages.count * carouselLoopMultiplier
+    }
+
+    private func initialCarouselItem(for logicalIndex: Int) -> Int {
+        guard featuredPages.count > 1 else { return logicalIndex }
+        let middleLoopStart = (carouselLoopMultiplier / 2) * featuredPages.count
+        return middleLoopStart + logicalIndex
+    }
+
+    private func logicalIndex(forCarouselItem item: Int) -> Int {
+        guard !featuredPages.isEmpty else { return 0 }
+        let count = featuredPages.count
+        let remainder = item % count
+        return remainder >= 0 ? remainder : remainder + count
+    }
+
+    private func nearestCarouselItemIndex(for contentOffsetX: CGFloat) -> Int? {
+        guard totalCarouselItems > 0,
+              let layout = carouselCollectionView.collectionViewLayout as? UICollectionViewFlowLayout,
+              layout.itemSize.width > 0 else {
+            return nil
+        }
+
+        let stride = layout.itemSize.width + layout.minimumLineSpacing
+        let visibleCenterX = contentOffsetX + (carouselCollectionView.bounds.width / 2)
+        let rawIndex = (visibleCenterX - (layout.itemSize.width / 2)) / stride
+        let nearestIndex = Int(round(rawIndex))
+        return max(0, min(nearestIndex, totalCarouselItems - 1))
+    }
+
+    private func updateSelectedFeaturedPage(logicalIndex: Int, animated: Bool) {
+        guard featuredPages.indices.contains(logicalIndex) else { return }
+        currentCarouselIndex = logicalIndex
+        guard appliedFeaturedLogicalIndex != logicalIndex else { return }
+        appliedFeaturedLogicalIndex = logicalIndex
+        updateFeaturedSummary(for: logicalIndex)
+        applyBackgroundTheme(for: logicalIndex, animated: animated)
+    }
+
+    private func normalizeCarouselPositionIfNeeded() {
+        guard featuredPages.count > 1 else { return }
+        let logicalIndex = logicalIndex(forCarouselItem: currentCarouselItem)
+        let normalizedItem = initialCarouselItem(for: logicalIndex)
+        let distanceFromCenter = abs(currentCarouselItem - normalizedItem)
+        let shouldNormalize = distanceFromCenter > featuredPages.count * 20
+            || currentCarouselItem < featuredPages.count * 4
+            || currentCarouselItem > totalCarouselItems - (featuredPages.count * 4)
+
+        guard shouldNormalize else { return }
+        currentCarouselItem = normalizedItem
+        carouselCollectionView.scrollToItem(at: IndexPath(item: normalizedItem, section: 0), at: .centeredHorizontally, animated: false)
+        carouselCollectionView.layoutIfNeeded()
+        updateCarouselCardEmphasis()
+    }
+
+    private func updateCarouselCardEmphasis() {
+        guard let layout = carouselCollectionView.collectionViewLayout as? UICollectionViewFlowLayout,
+              layout.itemSize.width > 0 else {
+            return
+        }
+
+        let visibleCenterX = carouselCollectionView.contentOffset.x + (carouselCollectionView.bounds.width / 2)
+        let stride = layout.itemSize.width + layout.minimumLineSpacing
+
+        carouselCollectionView.visibleCells.forEach { cell in
+            guard let heroCell = cell as? HeartQuoteHeroCell else { return }
+            let distance = abs(heroCell.center.x - visibleCenterX)
+            let ratio = min(1, distance / stride)
+            heroCell.applyEmphasis(distanceRatio: ratio)
+        }
+
+        guard let nearestItem = nearestCarouselItemIndex(for: carouselCollectionView.contentOffset.x) else { return }
+        currentCarouselItem = nearestItem
+        updateSelectedFeaturedPage(logicalIndex: logicalIndex(forCarouselItem: nearestItem), animated: true)
+    }
+
+    private func applyBackgroundTheme(for logicalIndex: Int, animated: Bool) {
+        guard featuredPages.indices.contains(logicalIndex) else { return }
+        let page = featuredPages[logicalIndex]
+        let theme = backgroundTheme(for: logicalIndex)
+
+        updateGradientLayer(backgroundGradientLayer, colors: theme.backgroundColors.map(\.cgColor), animated: animated)
+        updateGradientLayer(backgroundGlowLayer, colors: theme.glowColors.map(\.cgColor), animated: animated)
+        backgroundGlowLayer.startPoint = theme.glowCenter
+        UIView.animate(withDuration: animated ? 0.55 : 0, delay: 0, options: [.curveEaseInOut, .beginFromCurrentState]) {
+            self.dimView.backgroundColor = theme.dimColor
+            self.view.backgroundColor = theme.backgroundColors.last
+        }
+        updateGradientLayer(bottomGradientLayer, colors: [UIColor.clear.cgColor, theme.bottomFadeColor.cgColor], animated: animated)
+
+        guard currentBackgroundAssetName != page.assetName else { return }
+        currentBackgroundAssetName = page.assetName
+
+        let nextImage = UIImage(named: page.assetName)
+        guard animated else {
+            backgroundImageView.image = nextImage
+            return
+        }
+
+        UIView.transition(with: backgroundImageView, duration: 0.55, options: [.transitionCrossDissolve, .beginFromCurrentState]) {
+            self.backgroundImageView.image = nextImage
+        }
+    }
+
+    private func updateGradientLayer(_ layer: CAGradientLayer, colors: [CGColor], animated: Bool) {
+        guard animated, let previousColors = layer.presentation()?.colors ?? layer.colors else {
+            layer.colors = colors
+            return
+        }
+
+        let animation = CABasicAnimation(keyPath: "colors")
+        animation.fromValue = previousColors
+        animation.toValue = colors
+        animation.duration = 0.55
+        animation.timingFunction = CAMediaTimingFunction(name: .easeInEaseOut)
+        layer.colors = colors
+        layer.add(animation, forKey: "colors")
+    }
+
+    private func backgroundTheme(for logicalIndex: Int) -> FeaturedBackgroundTheme {
+        switch logicalIndex {
+        case 0:
+            return FeaturedBackgroundTheme(
+                backgroundColors: [
+                    UIColor(red: 0.27, green: 0.26, blue: 0.30, alpha: 1),
+                    UIColor(red: 0.44, green: 0.31, blue: 0.20, alpha: 1),
+                    UIColor(red: 0.12, green: 0.11, blue: 0.12, alpha: 1)
+                ],
+                glowColors: [
+                    UIColor(red: 0.91, green: 0.72, blue: 0.45, alpha: 0.46),
+                    UIColor(red: 0.72, green: 0.48, blue: 0.28, alpha: 0.18),
+                    UIColor.clear
+                ],
+                dimColor: UIColor(red: 0.09, green: 0.09, blue: 0.10, alpha: 0.62),
+                bottomFadeColor: UIColor(red: 0.11, green: 0.11, blue: 0.12, alpha: 0.88),
+                glowCenter: CGPoint(x: 0.22, y: 0.18)
+            )
+        case 1:
+            return FeaturedBackgroundTheme(
+                backgroundColors: [
+                    UIColor(red: 0.12, green: 0.19, blue: 0.23, alpha: 1),
+                    UIColor(red: 0.30, green: 0.32, blue: 0.19, alpha: 1),
+                    UIColor(red: 0.08, green: 0.10, blue: 0.12, alpha: 1)
+                ],
+                glowColors: [
+                    UIColor(red: 0.56, green: 0.70, blue: 0.46, alpha: 0.38),
+                    UIColor(red: 0.76, green: 0.62, blue: 0.34, alpha: 0.16),
+                    UIColor.clear
+                ],
+                dimColor: UIColor(red: 0.08, green: 0.10, blue: 0.12, alpha: 0.64),
+                bottomFadeColor: UIColor(red: 0.08, green: 0.10, blue: 0.11, alpha: 0.90),
+                glowCenter: CGPoint(x: 0.78, y: 0.20)
+            )
+        default:
+            return FeaturedBackgroundTheme(
+                backgroundColors: [
+                    UIColor(red: 0.15, green: 0.14, blue: 0.24, alpha: 1),
+                    UIColor(red: 0.39, green: 0.23, blue: 0.22, alpha: 1),
+                    UIColor(red: 0.08, green: 0.07, blue: 0.10, alpha: 1)
+                ],
+                glowColors: [
+                    UIColor(red: 0.92, green: 0.54, blue: 0.31, alpha: 0.38),
+                    UIColor(red: 0.62, green: 0.41, blue: 0.78, alpha: 0.16),
+                    UIColor.clear
+                ],
+                dimColor: UIColor(red: 0.07, green: 0.07, blue: 0.10, alpha: 0.66),
+                bottomFadeColor: UIColor(red: 0.08, green: 0.07, blue: 0.10, alpha: 0.90),
+                glowCenter: CGPoint(x: 0.52, y: 0.10)
+            )
+        }
+    }
 }
 
 // MARK: - UICollectionViewDataSource
 
 extension LibraryViewController: UICollectionViewDataSource {
     func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
-        featuredPages.count
+        totalCarouselItems
     }
 
     func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
         guard let cell = collectionView.dequeueReusableCell(withReuseIdentifier: HeartQuoteHeroCell.reuseIdentifier, for: indexPath) as? HeartQuoteHeroCell else {
             return UICollectionViewCell()
         }
-        cell.configure(page: featuredPages[indexPath.item])
+        cell.configure(page: featuredPages[logicalIndex(forCarouselItem: indexPath.item)])
         return cell
     }
 }
@@ -468,7 +696,7 @@ extension LibraryViewController: UICollectionViewDataSource {
 
 extension LibraryViewController: UICollectionViewDelegate {
     func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
-        showDetail(title: featuredPages[indexPath.item].title)
+        showDetail(title: featuredPages[logicalIndex(forCarouselItem: indexPath.item)].title)
     }
 
     func scrollViewWillBeginDragging(_ scrollView: UIScrollView) {
@@ -477,16 +705,34 @@ extension LibraryViewController: UICollectionViewDelegate {
         }
     }
 
+    func scrollViewWillEndDragging(_ scrollView: UIScrollView, withVelocity velocity: CGPoint, targetContentOffset: UnsafeMutablePointer<CGPoint>) {
+        guard scrollView === carouselCollectionView,
+              let targetItem = nearestCarouselItemIndex(for: targetContentOffset.pointee.x),
+              let layout = carouselCollectionView.collectionViewLayout as? UICollectionViewFlowLayout else {
+            return
+        }
+
+        let stride = layout.itemSize.width + layout.minimumLineSpacing
+        let targetOffsetX = (CGFloat(targetItem) * stride) - (carouselCollectionView.bounds.width - layout.itemSize.width) / 2
+        targetContentOffset.pointee.x = targetOffsetX
+    }
+
+    func scrollViewDidEndDragging(_ scrollView: UIScrollView, willDecelerate decelerate: Bool) {
+        guard scrollView === carouselCollectionView, !decelerate else { return }
+        updateCarouselIndexFromScrollPosition(animated: false)
+        startCarouselTimerIfNeeded()
+    }
+
     func scrollViewDidEndDecelerating(_ scrollView: UIScrollView) {
         if scrollView === carouselCollectionView {
-            updateCarouselIndexFromScrollPosition()
+            updateCarouselIndexFromScrollPosition(animated: true)
             startCarouselTimerIfNeeded()
         }
     }
 
     func scrollViewDidEndScrollingAnimation(_ scrollView: UIScrollView) {
         if scrollView === carouselCollectionView {
-            updateCarouselIndexFromScrollPosition()
+            updateCarouselIndexFromScrollPosition(animated: true)
         }
     }
 }
@@ -498,14 +744,17 @@ extension LibraryViewController {
         if scrollView === self.scrollView {
             let y = max(scrollView.contentOffset.y, 0)
             backgroundImageView.alpha = max(0.16, 0.30 - (y / 1100))
+        } else if scrollView === carouselCollectionView {
+            updateCarouselCardEmphasis()
         }
     }
 
-    private func updateCarouselIndexFromScrollPosition() {
-        let visibleCenterX = carouselCollectionView.contentOffset.x + (carouselCollectionView.bounds.width / 2)
-        guard let indexPath = carouselCollectionView.indexPathForItem(at: CGPoint(x: visibleCenterX, y: carouselCollectionView.bounds.midY)) else { return }
-        currentCarouselIndex = indexPath.item
-        updateFeaturedSummary(for: indexPath.item)
+    private func updateCarouselIndexFromScrollPosition(animated: Bool) {
+        guard let nearestItem = nearestCarouselItemIndex(for: carouselCollectionView.contentOffset.x) else { return }
+        currentCarouselItem = nearestItem
+        updateSelectedFeaturedPage(logicalIndex: logicalIndex(forCarouselItem: nearestItem), animated: animated)
+        updateCarouselCardEmphasis()
+        normalizeCarouselPositionIfNeeded()
     }
 }
 
@@ -637,6 +886,24 @@ private final class HeartQuoteHeroCell: UICollectionViewCell {
             titleLabel.trailingAnchor.constraint(lessThanOrEqualTo: cardContainerView.trailingAnchor, constant: -14),
             titleLabel.bottomAnchor.constraint(equalTo: cardContainerView.bottomAnchor, constant: -16)
         ])
+    }
+
+    func applyEmphasis(distanceRatio: CGFloat) {
+        let clampedRatio = max(0, min(distanceRatio, 1))
+        let focus = 1 - clampedRatio
+        let scale = 0.84 + (focus * 0.22)
+        let lift = 12 * clampedRatio
+
+        transform = CGAffineTransform(scaleX: scale, y: scale).translatedBy(x: 0, y: lift)
+        layer.shadowOpacity = Float(0.10 + (focus * 0.24))
+        layer.shadowRadius = 12 + (focus * 14)
+        layer.zPosition = focus * 10
+
+        backCardRear.alpha = 0.22 + (focus * 0.52)
+        backCardFront.alpha = 0.42 + (focus * 0.48)
+        cardContainerView.layer.borderColor = UIColor.white.withAlphaComponent(0.28 + (focus * 0.36)).cgColor
+        badgeLabel.alpha = badgeLabel.isHidden ? 0 : 0.66 + (focus * 0.34)
+        titleLabel.alpha = 0.78 + (focus * 0.22)
     }
 }
 
