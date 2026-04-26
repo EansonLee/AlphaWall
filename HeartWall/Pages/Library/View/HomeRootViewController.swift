@@ -43,7 +43,7 @@ final class HomeRootViewController: BaseViewController {
     private lazy var viewControllers: [Tab: UIViewController] = [
         .audio: AudioTherapyViewController(),
         .quote: LibraryViewController(),
-        .profile: PlaceholderSectionViewController(titleText: "我的", subtitleText: "一级页占位，后续接入会员、收藏与设置。")
+        .profile: ProfileViewController()
     ]
     private weak var currentViewController: UIViewController?
 
@@ -111,52 +111,6 @@ final class HomeRootViewController: BaseViewController {
         if let selectedIndex = Tab.allCases.firstIndex(of: tab) {
             tabBarView.updateSelection(index: selectedIndex)
         }
-    }
-}
-
-private final class PlaceholderSectionViewController: BaseViewController {
-
-    private let titleText: String
-    private let subtitleText: String
-
-    init(titleText: String, subtitleText: String) {
-        self.titleText = titleText
-        self.subtitleText = subtitleText
-        super.init(nibName: nil, bundle: nil)
-    }
-
-    @available(*, unavailable)
-    required init?(coder: NSCoder) {
-        fatalError("init(coder:) has not been implemented")
-    }
-
-    override func setupUI() {
-        view.backgroundColor = UIColor(red: 0.10, green: 0.11, blue: 0.15, alpha: 1)
-
-        let titleLabel = UILabel()
-        titleLabel.text = titleText
-        titleLabel.font = UIFont.systemFont(ofSize: 34, weight: .bold)
-        titleLabel.textColor = .white
-
-        let subtitleLabel = UILabel()
-        subtitleLabel.text = subtitleText
-        subtitleLabel.font = UIFont.systemFont(ofSize: 16, weight: .medium)
-        subtitleLabel.textColor = UIColor.white.withAlphaComponent(0.68)
-        subtitleLabel.numberOfLines = 0
-
-        let stackView = UIStackView(arrangedSubviews: [titleLabel, subtitleLabel])
-        stackView.axis = .vertical
-        stackView.alignment = .leading
-        stackView.spacing = 10
-
-        view.addSubview(stackView)
-        stackView.translatesAutoresizingMaskIntoConstraints = false
-
-        NSLayoutConstraint.activate([
-            stackView.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 24),
-            stackView.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -24),
-            stackView.centerYAnchor.constraint(equalTo: view.centerYAnchor)
-        ])
     }
 }
 

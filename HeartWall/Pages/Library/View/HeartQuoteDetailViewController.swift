@@ -81,6 +81,7 @@ final class HeartQuoteDetailViewController: BaseViewController {
 
     override func setupUI() {
         view.backgroundColor = UIColor(red: 0.05, green: 0.08, blue: 0.09, alpha: 1)
+        isFavorite = FavoriteWallpaperStore.shared.isFavorite(page)
         configureWallpaper()
         configureGradients()
         configureLockPreview()
@@ -441,7 +442,7 @@ final class HeartQuoteDetailViewController: BaseViewController {
 
     @objc
     private func handleFavorite() {
-        isFavorite.toggle()
+        isFavorite = FavoriteWallpaperStore.shared.toggleFavorite(page)
         UIImpactFeedbackGenerator(style: .light).impactOccurred()
         updateFavoriteButton()
     }
@@ -564,6 +565,8 @@ final class HeartQuoteDetailViewController: BaseViewController {
 
     private func applyCurrentPageTransition(verticalDirection: CGFloat) {
         titleLabel.text = page.title
+        isFavorite = FavoriteWallpaperStore.shared.isFavorite(page)
+        updateFavoriteButton()
         startPlaybackIfPossible()
 
         guard !UIAccessibility.isReduceMotionEnabled else { return }
