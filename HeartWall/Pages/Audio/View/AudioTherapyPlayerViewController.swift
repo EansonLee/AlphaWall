@@ -31,6 +31,7 @@ final class AudioTherapyPlayerViewController: BaseViewController {
     private let timerButton = UIButton(type: .system)
     private let homeIndicatorView = UIView()
     private let listOverlayView = UIVisualEffectView(effect: UIBlurEffect(style: .systemUltraThinMaterialDark))
+    private let listScrollView = UIScrollView()
     private let listGridView = UIStackView()
     private let timerPanelView = UIVisualEffectView(effect: UIBlurEffect(style: .systemUltraThinMaterialDark))
     private let timerTitleLabel = UILabel()
@@ -275,9 +276,15 @@ final class AudioTherapyPlayerViewController: BaseViewController {
         listGridView.axis = .vertical
         listGridView.spacing = 12
 
+        listScrollView.showsVerticalScrollIndicator = false
+        listScrollView.alwaysBounceVertical = true
+        listScrollView.contentInsetAdjustmentBehavior = .never
+
         view.addSubview(listOverlayView)
-        listOverlayView.contentView.addSubview(listGridView)
+        listOverlayView.contentView.addSubview(listScrollView)
+        listScrollView.addSubview(listGridView)
         listOverlayView.translatesAutoresizingMaskIntoConstraints = false
+        listScrollView.translatesAutoresizingMaskIntoConstraints = false
         listGridView.translatesAutoresizingMaskIntoConstraints = false
 
         renderListCards()
@@ -288,10 +295,16 @@ final class AudioTherapyPlayerViewController: BaseViewController {
             listOverlayView.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -34),
             listOverlayView.heightAnchor.constraint(equalTo: view.heightAnchor, multiplier: 0.46),
 
-            listGridView.topAnchor.constraint(equalTo: listOverlayView.contentView.topAnchor, constant: 14),
-            listGridView.leadingAnchor.constraint(equalTo: listOverlayView.contentView.leadingAnchor, constant: 14),
-            listGridView.trailingAnchor.constraint(equalTo: listOverlayView.contentView.trailingAnchor, constant: -14),
-            listGridView.bottomAnchor.constraint(lessThanOrEqualTo: listOverlayView.contentView.bottomAnchor, constant: -14)
+            listScrollView.topAnchor.constraint(equalTo: listOverlayView.contentView.topAnchor, constant: 14),
+            listScrollView.leadingAnchor.constraint(equalTo: listOverlayView.contentView.leadingAnchor, constant: 14),
+            listScrollView.trailingAnchor.constraint(equalTo: listOverlayView.contentView.trailingAnchor, constant: -14),
+            listScrollView.bottomAnchor.constraint(equalTo: listOverlayView.contentView.bottomAnchor, constant: -14),
+
+            listGridView.topAnchor.constraint(equalTo: listScrollView.contentLayoutGuide.topAnchor),
+            listGridView.leadingAnchor.constraint(equalTo: listScrollView.contentLayoutGuide.leadingAnchor),
+            listGridView.trailingAnchor.constraint(equalTo: listScrollView.contentLayoutGuide.trailingAnchor),
+            listGridView.bottomAnchor.constraint(equalTo: listScrollView.contentLayoutGuide.bottomAnchor),
+            listGridView.widthAnchor.constraint(equalTo: listScrollView.frameLayoutGuide.widthAnchor)
         ])
     }
 
@@ -301,7 +314,7 @@ final class AudioTherapyPlayerViewController: BaseViewController {
             row.removeFromSuperview()
         }
 
-        let visibleItems = Array(items.prefix(6))
+        let visibleItems = items
         stride(from: 0, to: visibleItems.count, by: 2).forEach { start in
             let rowView = UIStackView()
             rowView.axis = .horizontal
