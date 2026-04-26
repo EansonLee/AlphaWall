@@ -11,6 +11,7 @@ final class AudioTherapyViewController: BaseViewController {
 
     private let catalog = AudioTherapyCatalogProvider().makeCatalog()
     private var selectedCategoryID: String?
+    private var currentItem: AudioTherapyItem?
     private var thumbnailTasks: [Task<Void, Never>] = []
     private var idleCacheTask: Task<Void, Never>?
     private var initialThumbnailTimeoutTask: Task<Void, Never>?
@@ -44,9 +45,14 @@ final class AudioTherapyViewController: BaseViewController {
         catalog.categories
     }
 
+    private var displayItem: AudioTherapyItem? {
+        currentItem ?? catalog.defaultItem
+    }
+
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
-        playDefaultItem()
+        applyDisplayBackground()
+        playDisplayItem()
     }
 
     override func viewDidAppear(_ animated: Bool) {
@@ -70,12 +76,13 @@ final class AudioTherapyViewController: BaseViewController {
 
     override func setupUI() {
         view.backgroundColor = UIColor(red: 0.07, green: 0.11, blue: 0.14, alpha: 1)
-        selectedCategoryID = catalog.defaultItem?.categoryID ?? categories.first?.id
+        currentItem = catalog.defaultItem
+        selectedCategoryID = displayItem?.categoryID ?? categories.first?.id
         configureBackground()
         configureHeader()
         configureContent()
-        applyInitialBackground()
-        playDefaultItem()
+        applyDisplayBackground()
+        playDisplayItem()
         renderCategories()
         renderCards()
     }
@@ -213,22 +220,39 @@ final class AudioTherapyViewController: BaseViewController {
         ])
     }
 
-    private func applyInitialBackground() {
-        guard let firstItem = catalog.defaultItem else { return }
+    private func applyDisplayBackground() {
+        guard let item = displayItem else { return }
+        applyBackground(for: item)
+    }
+
+    private func applyBackground(for item: AudioTherapyItem) {
+        let videoURL = item.videoURL
         let task = Task { [weak self] in
-            let image = await VideoThumbnailLoader.shared.loadThumbnail(for: firstItem.videoURL)
+            let image = await VideoThumbnailLoader.shared.loadThumbnail(for: videoURL)
             guard !Task.isCancelled else { return }
             await MainActor.run {
+                guard self?.displayItem?.videoURL == videoURL else { return }
                 self?.backgroundImageView.image = image
             }
         }
         thumbnailTasks.append(task)
     }
 
-    private func playDefaultItem() {
-        guard let item = catalog.defaultItem else { return }
+    private func playDisplayItem() {
+        guard let item = displayItem else { return }
         backgroundVideoView.configure(url: item.videoURL, isMuted: false, videoGravity: .resizeAspectFill)
         backgroundVideoView.play()
+    }
+
+    private func applyCurrentItem(_ item: AudioTherapyItem, shouldPlay: Bool) {
+        currentItem = item
+        selectedCategoryID = item.categoryID
+        applyBackground(for: item)
+        if shouldPlay {
+            playDisplayItem()
+        }
+        renderCategories()
+        renderCards()
     }
 
     private func renderCategories() {
@@ -316,9 +340,13 @@ final class AudioTherapyViewController: BaseViewController {
     @objc
     private func handleItemTap(_ sender: AudioTherapyItemTapGestureRecognizer) {
         isDetailPresentationActive = true
+        applyCurrentItem(sender.item, shouldPlay: true)
         VideoCacheService.shared.recordVisitedDetailURL(sender.item.videoURL)
         cancelIdleCacheTasks()
         let playerViewController = AudioTherapyPlayerViewController(items: items, selectedItem: sender.item)
+        playerViewController.onSelectedItemChanged = { [weak self] item in
+            self?.applyCurrentItem(item, shouldPlay: false)
+        }
         playerViewController.hidesBottomBarWhenPushed = true
         navigationController?.pushViewController(playerViewController, animated: true)
     }
@@ -375,8 +403,8 @@ final class AudioTherapyViewController: BaseViewController {
     private func pendingVisibleThumbnailURLs() -> Set<URL> {
         var urls = Set<URL>()
 
-        if backgroundImageView.image == nil, let defaultItem = catalog.defaultItem {
-            urls.insert(defaultItem.videoURL)
+        if backgroundImageView.image == nil, let displayItem {
+            urls.insert(displayItem.videoURL)
         }
 
         collectPendingThumbnailURLs(in: view, into: &urls)

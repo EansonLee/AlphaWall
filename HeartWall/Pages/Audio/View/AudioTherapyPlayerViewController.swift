@@ -10,6 +10,7 @@ final class AudioTherapyPlayerViewController: BaseViewController {
 
     private let items: [AudioTherapyItem]
     private var selectedItem: AudioTherapyItem
+    var onSelectedItemChanged: ((AudioTherapyItem) -> Void)?
     private var isPlaying = true
     private var isListVisible = false
     private var isTimerPanelVisible = false
@@ -298,7 +299,7 @@ final class AudioTherapyPlayerViewController: BaseViewController {
             listOverlayView.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 26),
             listOverlayView.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -26),
             listOverlayView.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -34),
-            listOverlayView.heightAnchor.constraint(equalTo: view.heightAnchor, multiplier: 0.46),
+            listOverlayView.heightAnchor.constraint(equalTo: view.heightAnchor, multiplier: 0.34),
 
             listScrollView.topAnchor.constraint(equalTo: listOverlayView.contentView.topAnchor, constant: 14),
             listScrollView.leadingAnchor.constraint(equalTo: listOverlayView.contentView.leadingAnchor, constant: 14),
@@ -484,6 +485,7 @@ final class AudioTherapyPlayerViewController: BaseViewController {
 
     private func applySelectedItem(_ item: AudioTherapyItem) {
         selectedItem = item
+        onSelectedItemChanged?(item)
         titleLabel.text = item.title
         countLabel.text = "\(item.listenerCount)人正在听"
         isPlaying = true
