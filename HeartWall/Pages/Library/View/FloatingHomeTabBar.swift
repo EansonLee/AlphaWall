@@ -149,12 +149,14 @@ private final class FloatingHomeTabBarButton: UIButton {
         selectionBackgroundView.backgroundColor = style == .orb
             ? UIColor.white.withAlphaComponent(0.12)
             : UIColor.white.withAlphaComponent(0.14)
+        selectionBackgroundView.isUserInteractionEnabled = false
         addSubview(selectionBackgroundView)
         selectionBackgroundView.translatesAutoresizingMaskIntoConstraints = false
 
         contentStackView.axis = .vertical
         contentStackView.alignment = .center
         contentStackView.spacing = 2
+        contentStackView.isUserInteractionEnabled = false
         isExclusiveTouch = true
         addSubview(contentStackView)
         contentStackView.translatesAutoresizingMaskIntoConstraints = false

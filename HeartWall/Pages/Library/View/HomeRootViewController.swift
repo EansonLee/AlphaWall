@@ -41,7 +41,7 @@ final class HomeRootViewController: BaseViewController {
     private let tabBarView = FloatingHomeTabBar()
     private var currentTab: Tab = .quote
     private lazy var viewControllers: [Tab: UIViewController] = [
-        .audio: PlaceholderSectionViewController(titleText: "音疗", subtitleText: "一级页占位，后续接入真实音疗内容。"),
+        .audio: AudioTherapyViewController(),
         .quote: LibraryViewController(),
         .profile: PlaceholderSectionViewController(titleText: "我的", subtitleText: "一级页占位，后续接入会员、收藏与设置。")
     ]
