@@ -12,6 +12,11 @@ final class AudioTherapyPlayerViewController: BaseViewController {
     private var selectedItem: AudioTherapyItem
     private var isPlaying = true
     private var isListVisible = false
+    private var isTimerPanelVisible = false
+    private var selectedTimerMinutes = 5
+    private var countdownRemainingSeconds = 0
+    private var countdownTimer: Timer?
+    private let timerOptions = [5, 10, 15, 30, 45, 60]
 
     private let videoView = LoopingVideoView()
     private let dimView = UIView()
@@ -27,6 +32,12 @@ final class AudioTherapyPlayerViewController: BaseViewController {
     private let homeIndicatorView = UIView()
     private let listOverlayView = UIVisualEffectView(effect: UIBlurEffect(style: .systemUltraThinMaterialDark))
     private let listGridView = UIStackView()
+    private let timerPanelView = UIVisualEffectView(effect: UIBlurEffect(style: .systemUltraThinMaterialDark))
+    private let timerTitleLabel = UILabel()
+    private let timerValueLabel = UILabel()
+    private let timerPickerView = UIPickerView()
+    private let timerCloseButton = UIButton(type: .system)
+    private let timerConfirmButton = UIButton(type: .system)
 
     init(items: [AudioTherapyItem], selectedItem: AudioTherapyItem) {
         self.items = items
@@ -48,6 +59,7 @@ final class AudioTherapyPlayerViewController: BaseViewController {
     override func viewWillDisappear(_ animated: Bool) {
         super.viewWillDisappear(animated)
         videoView.pause()
+        countdownTimer?.invalidate()
     }
 
     override func viewDidLayoutSubviews() {
@@ -62,10 +74,12 @@ final class AudioTherapyPlayerViewController: BaseViewController {
         configureControls()
         configureInfo()
         configureListOverlay()
+        configureTimerPanel()
         configureHomeIndicator()
         configureTapGesture()
         updatePlayPauseButton()
         updateListVisibility(animated: false)
+        updateTimerPanelVisibility(animated: false)
     }
 
     private func configureBackground() {
@@ -312,6 +326,84 @@ final class AudioTherapyPlayerViewController: BaseViewController {
         view.addGestureRecognizer(tapGesture)
     }
 
+    private func configureTimerPanel() {
+        timerPanelView.layer.cornerRadius = 28
+        timerPanelView.layer.cornerCurve = .continuous
+        timerPanelView.layer.borderWidth = 1
+        timerPanelView.layer.borderColor = UIColor.white.withAlphaComponent(0.12).cgColor
+        timerPanelView.clipsToBounds = true
+
+        timerTitleLabel.text = "定时"
+        timerTitleLabel.font = .systemFont(ofSize: 23, weight: .heavy)
+        timerTitleLabel.textColor = .white
+        timerTitleLabel.textAlignment = .center
+
+        timerValueLabel.text = "\(selectedTimerMinutes) 分钟"
+        timerValueLabel.font = .systemFont(ofSize: 39, weight: .heavy)
+        timerValueLabel.textColor = .white
+        timerValueLabel.textAlignment = .center
+
+        timerPickerView.dataSource = self
+        timerPickerView.delegate = self
+        timerPickerView.selectRow(timerOptions.firstIndex(of: selectedTimerMinutes) ?? 0, inComponent: 0, animated: false)
+
+        var closeConfiguration = UIButton.Configuration.plain()
+        closeConfiguration.image = UIImage(systemName: "xmark")
+        closeConfiguration.baseForegroundColor = UIColor.white.withAlphaComponent(0.92)
+        closeConfiguration.contentInsets = .zero
+        closeConfiguration.preferredSymbolConfigurationForImage = UIImage.SymbolConfiguration(pointSize: 25, weight: .semibold)
+        timerCloseButton.configuration = closeConfiguration
+        timerCloseButton.addTarget(self, action: #selector(handleTimerClose), for: .touchUpInside)
+
+        var confirmConfiguration = UIButton.Configuration.filled()
+        confirmConfiguration.title = "确认"
+        confirmConfiguration.baseBackgroundColor = UIColor(red: 0.38, green: 0.72, blue: 1.00, alpha: 1)
+        confirmConfiguration.baseForegroundColor = .white
+        confirmConfiguration.cornerStyle = .capsule
+        confirmConfiguration.titleTextAttributesTransformer = UIConfigurationTextAttributesTransformer { incoming in
+            var outgoing = incoming
+            outgoing.font = .systemFont(ofSize: 20, weight: .heavy)
+            return outgoing
+        }
+        timerConfirmButton.configuration = confirmConfiguration
+        timerConfirmButton.addTarget(self, action: #selector(handleTimerConfirm), for: .touchUpInside)
+
+        view.addSubview(timerPanelView)
+        [timerTitleLabel, timerValueLabel, timerPickerView, timerCloseButton, timerConfirmButton].forEach {
+            timerPanelView.contentView.addSubview($0)
+            $0.translatesAutoresizingMaskIntoConstraints = false
+        }
+        timerPanelView.translatesAutoresizingMaskIntoConstraints = false
+
+        NSLayoutConstraint.activate([
+            timerPanelView.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
+            timerPanelView.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20),
+            timerPanelView.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -34),
+            timerPanelView.heightAnchor.constraint(equalToConstant: 328),
+
+            timerTitleLabel.topAnchor.constraint(equalTo: timerPanelView.contentView.topAnchor, constant: 30),
+            timerTitleLabel.centerXAnchor.constraint(equalTo: timerPanelView.contentView.centerXAnchor),
+
+            timerCloseButton.centerYAnchor.constraint(equalTo: timerTitleLabel.centerYAnchor),
+            timerCloseButton.trailingAnchor.constraint(equalTo: timerPanelView.contentView.trailingAnchor, constant: -26),
+            timerCloseButton.widthAnchor.constraint(equalToConstant: 44),
+            timerCloseButton.heightAnchor.constraint(equalToConstant: 44),
+
+            timerValueLabel.topAnchor.constraint(equalTo: timerTitleLabel.bottomAnchor, constant: 32),
+            timerValueLabel.centerXAnchor.constraint(equalTo: timerPanelView.contentView.centerXAnchor),
+
+            timerPickerView.topAnchor.constraint(equalTo: timerValueLabel.bottomAnchor, constant: 8),
+            timerPickerView.centerXAnchor.constraint(equalTo: timerPanelView.contentView.centerXAnchor),
+            timerPickerView.widthAnchor.constraint(equalToConstant: 220),
+            timerPickerView.heightAnchor.constraint(equalToConstant: 72),
+
+            timerConfirmButton.leadingAnchor.constraint(equalTo: timerPanelView.contentView.leadingAnchor, constant: 26),
+            timerConfirmButton.trailingAnchor.constraint(equalTo: timerPanelView.contentView.trailingAnchor, constant: -26),
+            timerConfirmButton.bottomAnchor.constraint(equalTo: timerPanelView.contentView.bottomAnchor, constant: -26),
+            timerConfirmButton.heightAnchor.constraint(equalToConstant: 64)
+        ])
+    }
+
     private func playSelectedItem() {
         videoView.configure(url: selectedItem.videoURL, isMuted: false, videoGravity: .resizeAspectFill)
         if isPlaying {
@@ -332,6 +424,23 @@ final class AudioTherapyPlayerViewController: BaseViewController {
     private func updatePlayPauseButton() {
         let imageName = isPlaying ? "pause.fill" : "play.fill"
         playPauseButton.configuration?.image = UIImage(systemName: imageName)
+    }
+
+    private func updateTimerButtonAppearance() {
+        if countdownRemainingSeconds > 0 {
+            timerButton.configuration?.image = UIImage(systemName: "timer")
+            timerButton.configuration?.title = formattedCountdown()
+            timerButton.configuration?.imagePlacement = .top
+            timerButton.configuration?.imagePadding = 2
+            timerButton.configuration?.titleTextAttributesTransformer = UIConfigurationTextAttributesTransformer { incoming in
+                var outgoing = incoming
+                outgoing.font = .monospacedDigitSystemFont(ofSize: 11, weight: .bold)
+                return outgoing
+            }
+        } else {
+            timerButton.configuration?.image = UIImage(systemName: "alarm")
+            timerButton.configuration?.title = nil
+        }
     }
 
     private func updateListVisibility(animated: Bool) {
@@ -361,6 +470,72 @@ final class AudioTherapyPlayerViewController: BaseViewController {
         }
     }
 
+    private func updateTimerPanelVisibility(animated: Bool) {
+        let changes = {
+            self.timerPanelView.alpha = self.isTimerPanelVisible ? 1 : 0
+            self.timerPanelView.transform = self.isTimerPanelVisible
+                ? .identity
+                : CGAffineTransform(translationX: 0, y: 28).scaledBy(x: 0.96, y: 0.96)
+            self.dimView.backgroundColor = UIColor.black.withAlphaComponent(self.isTimerPanelVisible ? 0.55 : (self.isListVisible ? 0.48 : 0.12))
+        }
+
+        timerPanelView.isUserInteractionEnabled = isTimerPanelVisible
+
+        guard animated, !UIAccessibility.isReduceMotionEnabled else {
+            changes()
+            return
+        }
+
+        UIView.animate(
+            withDuration: 0.24,
+            delay: 0,
+            options: [.curveEaseOut, .beginFromCurrentState]
+        ) {
+            changes()
+        }
+    }
+
+    private func startCountdown(minutes: Int) {
+        countdownTimer?.invalidate()
+        countdownRemainingSeconds = minutes * 60
+        updateTimerButtonAppearance()
+
+        countdownTimer = Timer.scheduledTimer(withTimeInterval: 1, repeats: true) { [weak self] timer in
+            guard let self else {
+                timer.invalidate()
+                return
+            }
+
+            self.countdownRemainingSeconds -= 1
+            self.updateTimerButtonAppearance()
+
+            if self.countdownRemainingSeconds <= 0 {
+                timer.invalidate()
+                self.countdownTimer = nil
+                self.pauseForCountdownCompletion()
+            }
+        }
+
+        if let countdownTimer {
+            RunLoop.main.add(countdownTimer, forMode: .common)
+        }
+    }
+
+    private func pauseForCountdownCompletion() {
+        countdownRemainingSeconds = 0
+        updateTimerButtonAppearance()
+        isPlaying = false
+        videoView.pause()
+        updatePlayPauseButton()
+        UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+    }
+
+    private func formattedCountdown() -> String {
+        let minutes = max(0, countdownRemainingSeconds) / 60
+        let seconds = max(0, countdownRemainingSeconds) % 60
+        return String(format: "%02d:%02d", minutes, seconds)
+    }
+
     @objc
     private func handleBack() {
         navigationController?.popViewController(animated: true)
@@ -387,11 +562,23 @@ final class AudioTherapyPlayerViewController: BaseViewController {
 
     @objc
     private func handleTimer() {
+        if isListVisible {
+            isListVisible = false
+            updateListVisibility(animated: true)
+        }
+        isTimerPanelVisible.toggle()
+        updateTimerPanelVisibility(animated: true)
         UIImpactFeedbackGenerator(style: .light).impactOccurred()
     }
 
     @objc
     private func handleScreenTap() {
+        guard !isTimerPanelVisible else {
+            isTimerPanelVisible = false
+            updateTimerPanelVisibility(animated: true)
+            return
+        }
+
         isListVisible.toggle()
         updateListVisibility(animated: true)
     }
@@ -399,6 +586,20 @@ final class AudioTherapyPlayerViewController: BaseViewController {
     @objc
     private func handleOverlayItemTap(_ sender: AudioTherapyPlayerItemTapGestureRecognizer) {
         applySelectedItem(sender.item)
+        UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+    }
+
+    @objc
+    private func handleTimerClose() {
+        isTimerPanelVisible = false
+        updateTimerPanelVisibility(animated: true)
+    }
+
+    @objc
+    private func handleTimerConfirm() {
+        startCountdown(minutes: selectedTimerMinutes)
+        isTimerPanelVisible = false
+        updateTimerPanelVisibility(animated: true)
         UIImpactFeedbackGenerator(style: .medium).impactOccurred()
     }
 }
@@ -413,6 +614,41 @@ extension AudioTherapyPlayerViewController: UIGestureRecognizerDelegate {
             && touchedView.isDescendant(of: playPauseButton) == false
             && touchedView.isDescendant(of: timerButton) == false
             && touchedView.isDescendant(of: listOverlayView) == false
+            && touchedView.isDescendant(of: timerPanelView) == false
+    }
+}
+
+extension AudioTherapyPlayerViewController: UIPickerViewDataSource, UIPickerViewDelegate {
+    func numberOfComponents(in pickerView: UIPickerView) -> Int {
+        1
+    }
+
+    func pickerView(_ pickerView: UIPickerView, numberOfRowsInComponent component: Int) -> Int {
+        timerOptions.count
+    }
+
+    func pickerView(_ pickerView: UIPickerView, rowHeightForComponent component: Int) -> CGFloat {
+        36
+    }
+
+    func pickerView(_ pickerView: UIPickerView, widthForComponent component: Int) -> CGFloat {
+        180
+    }
+
+    func pickerView(_ pickerView: UIPickerView, attributedTitleForRow row: Int, forComponent component: Int) -> NSAttributedString? {
+        let minutes = timerOptions[row]
+        return NSAttributedString(
+            string: "\(minutes) 分钟",
+            attributes: [
+                .font: UIFont.systemFont(ofSize: 18, weight: .semibold),
+                .foregroundColor: UIColor.white.withAlphaComponent(0.92)
+            ]
+        )
+    }
+
+    func pickerView(_ pickerView: UIPickerView, didSelectRow row: Int, inComponent component: Int) {
+        selectedTimerMinutes = timerOptions[row]
+        timerValueLabel.text = "\(selectedTimerMinutes) 分钟"
     }
 }
 
