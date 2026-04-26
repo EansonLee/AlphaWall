@@ -4,6 +4,7 @@
 //
 
 import UIKit
+import AVFoundation
 
 final class HeartQuoteDetailViewController: BaseViewController {
 
@@ -16,7 +17,7 @@ final class HeartQuoteDetailViewController: BaseViewController {
 
     // MARK: - UI
 
-    private let wallpaperImageView = UIImageView()
+    private let wallpaperVideoView = LoopingVideoView()
     private let dimOverlayView = UIView()
     private let topFadeView = UIView()
     private let topFadeLayer = CAGradientLayer()
@@ -79,25 +80,24 @@ final class HeartQuoteDetailViewController: BaseViewController {
         updateChromeVisibility(animated: false)
         updateFavoriteButton()
         updatePlayButton()
+        startPlaybackIfPossible()
     }
 
     private func configureWallpaper() {
-        wallpaperImageView.image = wallpaperImage()
-        wallpaperImageView.contentMode = .scaleAspectFill
-        wallpaperImageView.clipsToBounds = true
+        wallpaperVideoView.backgroundColor = UIColor.black
 
         dimOverlayView.backgroundColor = UIColor.black.withAlphaComponent(0.20)
 
-        view.addSubview(wallpaperImageView)
+        view.addSubview(wallpaperVideoView)
         view.addSubview(dimOverlayView)
-        wallpaperImageView.translatesAutoresizingMaskIntoConstraints = false
+        wallpaperVideoView.translatesAutoresizingMaskIntoConstraints = false
         dimOverlayView.translatesAutoresizingMaskIntoConstraints = false
 
         NSLayoutConstraint.activate([
-            wallpaperImageView.topAnchor.constraint(equalTo: view.topAnchor),
-            wallpaperImageView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
-            wallpaperImageView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
-            wallpaperImageView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
+            wallpaperVideoView.topAnchor.constraint(equalTo: view.topAnchor),
+            wallpaperVideoView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            wallpaperVideoView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+            wallpaperVideoView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
 
             dimOverlayView.topAnchor.constraint(equalTo: view.topAnchor),
             dimOverlayView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
@@ -410,16 +410,21 @@ final class HeartQuoteDetailViewController: BaseViewController {
     private func handlePlayPause() {
         isPlaying.toggle()
         UIImpactFeedbackGenerator(style: .light).impactOccurred()
+        if isPlaying {
+            wallpaperVideoView.play()
+        } else {
+            wallpaperVideoView.pause()
+        }
         updatePlayButton()
     }
 
     @objc
     private func handleShare() {
         var activityItems: [Any] = []
-        if let image = wallpaperImage() {
+        if let image = wallpaperSnapshotImage() {
             activityItems.append(image)
         }
-        activityItems.append("\(page.title)\n\(page.subtitle)")
+        activityItems.append("\(page.title)\n\(page.subtitle)\n\(page.videoURL.absoluteString)")
 
         let activityViewController = UIActivityViewController(activityItems: activityItems, applicationActivities: nil)
         activityViewController.popoverPresentationController?.sourceView = shareButton
@@ -501,9 +506,18 @@ final class HeartQuoteDetailViewController: BaseViewController {
 
     // MARK: - Helpers
 
-    private func wallpaperImage() -> UIImage? {
-        UIImage(named: page.assetName)?.cropped(toNormalizedRect: page.cropRect)
-            ?? UIImage(named: page.assetName)
+    private func startPlaybackIfPossible() {
+        wallpaperVideoView.configure(url: page.videoURL, isMuted: true, videoGravity: .resizeAspectFill)
+        isPlaying = true
+        wallpaperVideoView.play()
+        updatePlayButton()
+    }
+
+    private func wallpaperSnapshotImage() -> UIImage? {
+        let renderer = UIGraphicsImageRenderer(bounds: wallpaperVideoView.bounds)
+        return renderer.image { context in
+            wallpaperVideoView.layer.render(in: context.cgContext)
+        }
     }
 
     private func currentTimeText() -> String {
@@ -530,22 +544,5 @@ extension HeartQuoteDetailViewController: UIGestureRecognizerDelegate {
             && touchedView?.isDescendant(of: actionBarView) != true
             && touchedView?.isDescendant(of: downloadButton) != true
             && touchedView?.isDescendant(of: saveButton) != true
-    }
-}
-
-private extension UIImage {
-    func cropped(toNormalizedRect normalizedRect: CGRect) -> UIImage {
-        let safeRect = normalizedRect.intersection(CGRect(x: 0, y: 0, width: 1, height: 1))
-        guard safeRect.width > 0, safeRect.height > 0, let cgImage else { return self }
-
-        let pixelRect = CGRect(
-            x: safeRect.minX * size.width * scale,
-            y: safeRect.minY * size.height * scale,
-            width: safeRect.width * size.width * scale,
-            height: safeRect.height * size.height * scale
-        ).integral
-
-        guard let croppedImage = cgImage.cropping(to: pixelRect) else { return self }
-        return UIImage(cgImage: croppedImage, scale: scale, orientation: imageOrientation)
     }
 }

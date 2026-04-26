@@ -5,6 +5,7 @@
 
 import UIKit
 import Combine
+import Foundation
 
 final class LibraryViewController: BaseViewController {
 
@@ -25,7 +26,8 @@ final class LibraryViewController: BaseViewController {
     private var currentCarouselIndex = 0
     private var currentCarouselItem = 0
     private var appliedFeaturedLogicalIndex: Int?
-    private var currentBackgroundAssetName: String?
+    private var currentBackgroundVideoURL: URL?
+    private var backgroundImageTask: Task<Void, Never>?
     private let carouselLoopMultiplier = 400
 
     private let headerHeight: CGFloat = 84
@@ -50,6 +52,7 @@ final class LibraryViewController: BaseViewController {
     private let appBadgeView = UIView()
     private let appBadgeTextLabel = UILabel()
     private let carouselCollectionView: UICollectionView
+    private let featuredTitleLabel = UILabel()
     private let featuredSummaryLabel = UILabel()
     private let featuredTagStackView = UIStackView()
     private let bottomFadeView = UIView()
@@ -136,9 +139,10 @@ final class LibraryViewController: BaseViewController {
     // MARK: - Configuration
 
     private func configureBackground() {
-        backgroundImageView.image = UIImage(named: "HeartQuotePagePrimary")
+        backgroundImageView.image = nil
         backgroundImageView.contentMode = .scaleAspectFill
         backgroundImageView.alpha = 0.22
+        backgroundImageView.backgroundColor = UIColor.white.withAlphaComponent(0.08)
         view.addSubview(backgroundImageView)
         backgroundImageView.translatesAutoresizingMaskIntoConstraints = false
 
@@ -223,6 +227,10 @@ final class LibraryViewController: BaseViewController {
         carouselCollectionView.delegate = self
         carouselCollectionView.register(HeartQuoteHeroCell.self, forCellWithReuseIdentifier: HeartQuoteHeroCell.reuseIdentifier)
 
+        featuredTitleLabel.text = HeartQuoteTheme.banner.displayTitle
+        featuredTitleLabel.font = UIFont.systemFont(ofSize: 18, weight: .bold)
+        featuredTitleLabel.textColor = .white
+
         featuredSummaryLabel.font = UIFont.systemFont(ofSize: 13, weight: .medium)
         featuredSummaryLabel.textColor = UIColor.white.withAlphaComponent(0.74)
         featuredSummaryLabel.textAlignment = .center
@@ -235,15 +243,21 @@ final class LibraryViewController: BaseViewController {
 
         let container = UIView()
         container.clipsToBounds = false
+        container.addSubview(featuredTitleLabel)
         container.addSubview(carouselCollectionView)
         container.addSubview(featuredSummaryLabel)
         container.addSubview(featuredTagStackView)
+        featuredTitleLabel.translatesAutoresizingMaskIntoConstraints = false
         carouselCollectionView.translatesAutoresizingMaskIntoConstraints = false
         featuredSummaryLabel.translatesAutoresizingMaskIntoConstraints = false
         featuredTagStackView.translatesAutoresizingMaskIntoConstraints = false
 
         NSLayoutConstraint.activate([
-            carouselCollectionView.topAnchor.constraint(equalTo: container.topAnchor),
+            featuredTitleLabel.topAnchor.constraint(equalTo: container.topAnchor),
+            featuredTitleLabel.leadingAnchor.constraint(equalTo: container.leadingAnchor, constant: 18),
+            featuredTitleLabel.trailingAnchor.constraint(equalTo: container.trailingAnchor, constant: -18),
+
+            carouselCollectionView.topAnchor.constraint(equalTo: featuredTitleLabel.bottomAnchor, constant: 12),
             carouselCollectionView.leadingAnchor.constraint(equalTo: container.leadingAnchor),
             carouselCollectionView.trailingAnchor.constraint(equalTo: container.trailingAnchor),
             carouselCollectionView.heightAnchor.constraint(equalToConstant: 248),
@@ -365,7 +379,8 @@ final class LibraryViewController: BaseViewController {
         currentCarouselIndex = 0
         appliedFeaturedLogicalIndex = nil
         currentCarouselItem = initialCarouselItem(for: 0)
-        currentBackgroundAssetName = nil
+        currentBackgroundVideoURL = nil
+        backgroundImageTask?.cancel()
         carouselCollectionView.reloadData()
         view.layoutIfNeeded()
         scrollCarousel(toItem: currentCarouselItem, animated: false)
@@ -489,7 +504,7 @@ final class LibraryViewController: BaseViewController {
             view.removeFromSuperview()
         }
 
-        page.tags.forEach { tag in
+        page.tags.prefix(4).forEach { tag in
             let label = InsetLabel(top: 4, left: 8, bottom: 4, right: 8)
             label.text = tag
             label.font = UIFont.systemFont(ofSize: 11, weight: .medium)
@@ -594,18 +609,7 @@ final class LibraryViewController: BaseViewController {
         }
         updateGradientLayer(bottomGradientLayer, colors: [UIColor.clear.cgColor, theme.bottomFadeColor.cgColor], animated: animated)
 
-        guard currentBackgroundAssetName != page.assetName else { return }
-        currentBackgroundAssetName = page.assetName
-
-        let nextImage = UIImage(named: page.assetName)
-        guard animated else {
-            backgroundImageView.image = nextImage
-            return
-        }
-
-        UIView.transition(with: backgroundImageView, duration: backgroundTransitionDuration, options: [.transitionCrossDissolve, .beginFromCurrentState]) {
-            self.backgroundImageView.image = nextImage
-        }
+        updateBackgroundImage(for: page, animated: animated)
     }
 
     private func updateGradientLayer(_ layer: CAGradientLayer, colors: [CGColor], animated: Bool) {
@@ -673,6 +677,38 @@ final class LibraryViewController: BaseViewController {
                 bottomFadeColor: UIColor(red: 0.08, green: 0.07, blue: 0.10, alpha: 0.90),
                 glowCenter: CGPoint(x: 0.52, y: 0.10)
             )
+        }
+    }
+
+    private func updateBackgroundImage(for page: HeartQuotePage, animated: Bool) {
+        guard currentBackgroundVideoURL != page.videoURL else { return }
+        currentBackgroundVideoURL = page.videoURL
+        backgroundImageTask?.cancel()
+
+        backgroundImageTask = Task { [weak self] in
+            guard let self else { return }
+            let image = await VideoThumbnailLoader.shared.loadThumbnail(for: page.videoURL)
+            guard !Task.isCancelled else { return }
+
+            await MainActor.run {
+                guard self.currentBackgroundVideoURL == page.videoURL else { return }
+
+                let applyImage = {
+                    self.backgroundImageView.image = image
+                }
+
+                guard animated else {
+                    applyImage()
+                    return
+                }
+
+                UIView.transition(
+                    with: self.backgroundImageView,
+                    duration: self.backgroundTransitionDuration,
+                    options: [.transitionCrossDissolve, .beginFromCurrentState],
+                    animations: applyImage
+                )
+            }
         }
     }
 }
@@ -768,7 +804,7 @@ private final class HeartQuoteHeroCell: UICollectionViewCell {
     private let backCardRear = UIView()
     private let backCardFront = UIView()
     private let cardContainerView = UIView()
-    private let imageView = CroppedAssetImageView()
+    private let imageView = VideoThumbnailImageView()
     private let gradientView = UIView()
     private let gradientLayer = CAGradientLayer()
     private let badgeLabel = InsetLabel()
@@ -790,7 +826,7 @@ private final class HeartQuoteHeroCell: UICollectionViewCell {
     }
 
     func configure(page: HeartQuotePage) {
-        imageView.configure(assetName: page.assetName, cropRect: page.cropRect)
+        imageView.configure(videoURL: page.videoURL)
         titleLabel.text = page.title
         badgeLabel.text = page.badgeText
         badgeLabel.isHidden = page.badgeText == nil
@@ -824,7 +860,6 @@ private final class HeartQuoteHeroCell: UICollectionViewCell {
         contentView.addSubview(cardContainerView)
         cardContainerView.translatesAutoresizingMaskIntoConstraints = false
 
-        imageView.contentMode = .scaleAspectFill
         cardContainerView.addSubview(imageView)
         imageView.translatesAutoresizingMaskIntoConstraints = false
 
@@ -972,7 +1007,7 @@ private final class HeartQuoteSectionView: UIView {
 
 private final class HeartQuoteSmallCardView: UIView {
 
-    private let imageView = CroppedAssetImageView()
+    private let imageView = VideoThumbnailImageView()
     private let titleLabel = UILabel()
     private let subtitleLabel = UILabel()
     private let gradientView = UIView()
@@ -995,9 +1030,10 @@ private final class HeartQuoteSmallCardView: UIView {
     }
 
     private func apply(page: HeartQuotePage) {
-        imageView.configure(assetName: page.assetName, cropRect: page.cropRect)
+        imageView.configure(videoURL: page.videoURL)
         titleLabel.text = page.title
-        subtitleLabel.text = nil
+        subtitleLabel.text = page.subtitle
+        subtitleLabel.isHidden = false
         accessibilityLabel = page.title
     }
 
@@ -1028,7 +1064,6 @@ private final class HeartQuoteSmallCardView: UIView {
         subtitleLabel.font = UIFont.systemFont(ofSize: 10, weight: .medium)
         subtitleLabel.textColor = UIColor.white.withAlphaComponent(0.76)
         subtitleLabel.numberOfLines = 2
-        subtitleLabel.isHidden = true
 
         let textStack = UIStackView(arrangedSubviews: [titleLabel, subtitleLabel])
         textStack.axis = .vertical
@@ -1054,17 +1089,46 @@ private final class HeartQuoteSmallCardView: UIView {
     }
 }
 
-private final class CroppedAssetImageView: UIImageView {
+private final class VideoThumbnailImageView: UIImageView {
 
-    private var assetName: String?
-    private var cropRect: CGRect = CGRect(x: 0, y: 0, width: 1, height: 1)
+    private var videoURL: URL?
+    private var thumbnailTask: Task<Void, Never>?
 
-    func configure(assetName: String, cropRect: CGRect) {
-        self.assetName = assetName
-        self.cropRect = cropRect
-        image = UIImage(named: assetName)?.cropped(toNormalizedRect: cropRect)
+    convenience init() {
+        self.init(frame: .zero)
+    }
+
+    override init(frame: CGRect) {
+        super.init(frame: frame)
         contentMode = .scaleAspectFill
         clipsToBounds = true
+        backgroundColor = UIColor.white.withAlphaComponent(0.06)
+    }
+
+    @available(*, unavailable)
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
+
+    func configure(videoURL: URL) {
+        self.videoURL = videoURL
+        image = nil
+        thumbnailTask?.cancel()
+
+        thumbnailTask = Task { [weak self] in
+            guard let self else { return }
+            let thumbnail = await VideoThumbnailLoader.shared.loadThumbnail(for: videoURL)
+            guard !Task.isCancelled else { return }
+
+            await MainActor.run {
+                guard self.videoURL == videoURL else { return }
+                self.image = thumbnail
+            }
+        }
+    }
+
+    deinit {
+        thumbnailTask?.cancel()
     }
 }
 
@@ -1098,22 +1162,5 @@ private final class InsetLabel: UILabel {
     override var intrinsicContentSize: CGSize {
         let size = super.intrinsicContentSize
         return CGSize(width: size.width + insets.left + insets.right, height: size.height + insets.top + insets.bottom)
-    }
-}
-
-private extension UIImage {
-    func cropped(toNormalizedRect normalizedRect: CGRect) -> UIImage {
-        let safeRect = normalizedRect.intersection(CGRect(x: 0, y: 0, width: 1, height: 1))
-        guard safeRect.width > 0, safeRect.height > 0, let cgImage else { return self }
-
-        let pixelRect = CGRect(
-            x: safeRect.minX * size.width * scale,
-            y: safeRect.minY * size.height * scale,
-            width: safeRect.width * size.width * scale,
-            height: safeRect.height * size.height * scale
-        ).integral
-
-        guard let croppedImage = cgImage.cropping(to: pixelRect) else { return self }
-        return UIImage(cgImage: croppedImage, scale: scale, orientation: imageOrientation)
     }
 }
