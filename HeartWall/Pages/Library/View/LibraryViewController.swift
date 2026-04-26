@@ -6,6 +6,8 @@
 import UIKit
 import Combine
 import Foundation
+import CoreImage
+import CoreImage.CIFilterBuiltins
 
 final class LibraryViewController: BaseViewController {
 
@@ -43,6 +45,8 @@ final class LibraryViewController: BaseViewController {
     private let idleCacheStartDelay: Duration = .seconds(3)
     private let idleCacheResumeDelay: Duration = .seconds(2)
     private let initialThumbnailTimeout: Duration = .seconds(6)
+    private lazy var defaultBackgroundTheme = makeFallbackBackgroundTheme(seed: 0)
+    private var generatedBackgroundThemes: [URL: FeaturedBackgroundTheme] = [:]
 
     // MARK: - UI
 
@@ -68,6 +72,10 @@ final class LibraryViewController: BaseViewController {
     private let bottomFadeView = UIView()
     private let bottomGradientLayer = CAGradientLayer()
     private let backgroundTransitionDuration: CFTimeInterval = 0.78
+    private let colorAnalysisContext = CIContext(options: [
+        .workingColorSpace: NSNull(),
+        .outputColorSpace: NSNull()
+    ])
 
     // MARK: - Lifecycle
 
@@ -169,21 +177,21 @@ final class LibraryViewController: BaseViewController {
 
         backgroundGradientLayer.startPoint = CGPoint(x: 0.15, y: 0)
         backgroundGradientLayer.endPoint = CGPoint(x: 0.88, y: 1)
-        backgroundGradientLayer.colors = backgroundTheme(for: 0).backgroundColors.map(\.cgColor)
+        backgroundGradientLayer.colors = defaultBackgroundTheme.backgroundColors.map(\.cgColor)
         backgroundGradientView.layer.addSublayer(backgroundGradientLayer)
         view.addSubview(backgroundGradientView)
         backgroundGradientView.translatesAutoresizingMaskIntoConstraints = false
 
         backgroundGlowLayer.type = .radial
-        backgroundGlowLayer.startPoint = backgroundTheme(for: 0).glowCenter
+        backgroundGlowLayer.startPoint = defaultBackgroundTheme.glowCenter
         backgroundGlowLayer.endPoint = CGPoint(x: 1, y: 1)
-        backgroundGlowLayer.colors = backgroundTheme(for: 0).glowColors.map(\.cgColor)
+        backgroundGlowLayer.colors = defaultBackgroundTheme.glowColors.map(\.cgColor)
         backgroundGlowView.alpha = 0.9
         backgroundGlowView.layer.addSublayer(backgroundGlowLayer)
         view.addSubview(backgroundGlowView)
         backgroundGlowView.translatesAutoresizingMaskIntoConstraints = false
 
-        dimView.backgroundColor = backgroundTheme(for: 0).dimColor
+        dimView.backgroundColor = defaultBackgroundTheme.dimColor
         view.addSubview(dimView)
         dimView.translatesAutoresizingMaskIntoConstraints = false
 
@@ -377,7 +385,7 @@ final class LibraryViewController: BaseViewController {
     private func configureBottomFade() {
         bottomGradientLayer.colors = [
             UIColor.clear.cgColor,
-            backgroundTheme(for: 0).bottomFadeColor.cgColor
+            defaultBackgroundTheme.bottomFadeColor.cgColor
         ]
         bottomGradientLayer.locations = [0, 1]
         bottomFadeView.isUserInteractionEnabled = false
@@ -736,7 +744,7 @@ final class LibraryViewController: BaseViewController {
     private func applyBackgroundTheme(for logicalIndex: Int, animated: Bool) {
         guard featuredPages.indices.contains(logicalIndex) else { return }
         let page = featuredPages[logicalIndex]
-        let theme = backgroundTheme(for: logicalIndex)
+        let theme = backgroundTheme(for: page)
 
         updateGradientLayer(backgroundGradientLayer, colors: theme.backgroundColors.map(\.cgColor), animated: animated)
         updateGradientLayer(backgroundGlowLayer, colors: theme.glowColors.map(\.cgColor), animated: animated)
@@ -765,57 +773,124 @@ final class LibraryViewController: BaseViewController {
         layer.add(animation, forKey: "colors")
     }
 
-    private func backgroundTheme(for logicalIndex: Int) -> FeaturedBackgroundTheme {
-        switch logicalIndex {
-        case 0:
-            return FeaturedBackgroundTheme(
-                backgroundColors: [
-                    UIColor(red: 0.27, green: 0.26, blue: 0.30, alpha: 1),
-                    UIColor(red: 0.44, green: 0.31, blue: 0.20, alpha: 1),
-                    UIColor(red: 0.12, green: 0.11, blue: 0.12, alpha: 1)
-                ],
-                glowColors: [
-                    UIColor(red: 0.91, green: 0.72, blue: 0.45, alpha: 0.46),
-                    UIColor(red: 0.72, green: 0.48, blue: 0.28, alpha: 0.18),
-                    UIColor.clear
-                ],
-                dimColor: UIColor(red: 0.09, green: 0.09, blue: 0.10, alpha: 0.62),
-                bottomFadeColor: UIColor(red: 0.11, green: 0.11, blue: 0.12, alpha: 0.88),
-                glowCenter: CGPoint(x: 0.22, y: 0.18)
-            )
-        case 1:
-            return FeaturedBackgroundTheme(
-                backgroundColors: [
-                    UIColor(red: 0.12, green: 0.19, blue: 0.23, alpha: 1),
-                    UIColor(red: 0.30, green: 0.32, blue: 0.19, alpha: 1),
-                    UIColor(red: 0.08, green: 0.10, blue: 0.12, alpha: 1)
-                ],
-                glowColors: [
-                    UIColor(red: 0.56, green: 0.70, blue: 0.46, alpha: 0.38),
-                    UIColor(red: 0.76, green: 0.62, blue: 0.34, alpha: 0.16),
-                    UIColor.clear
-                ],
-                dimColor: UIColor(red: 0.08, green: 0.10, blue: 0.12, alpha: 0.64),
-                bottomFadeColor: UIColor(red: 0.08, green: 0.10, blue: 0.11, alpha: 0.90),
-                glowCenter: CGPoint(x: 0.78, y: 0.20)
-            )
-        default:
-            return FeaturedBackgroundTheme(
-                backgroundColors: [
-                    UIColor(red: 0.15, green: 0.14, blue: 0.24, alpha: 1),
-                    UIColor(red: 0.39, green: 0.23, blue: 0.22, alpha: 1),
-                    UIColor(red: 0.08, green: 0.07, blue: 0.10, alpha: 1)
-                ],
-                glowColors: [
-                    UIColor(red: 0.92, green: 0.54, blue: 0.31, alpha: 0.38),
-                    UIColor(red: 0.62, green: 0.41, blue: 0.78, alpha: 0.16),
-                    UIColor.clear
-                ],
-                dimColor: UIColor(red: 0.07, green: 0.07, blue: 0.10, alpha: 0.66),
-                bottomFadeColor: UIColor(red: 0.08, green: 0.07, blue: 0.10, alpha: 0.90),
-                glowCenter: CGPoint(x: 0.52, y: 0.10)
-            )
+    private func backgroundTheme(for page: HeartQuotePage) -> FeaturedBackgroundTheme {
+        if let theme = generatedBackgroundThemes[page.videoURL] {
+            return theme
         }
+
+        let theme = makeFallbackBackgroundTheme(seed: stableSeed(for: page.videoURL))
+        generatedBackgroundThemes[page.videoURL] = theme
+        return theme
+    }
+
+    private func storeExtractedBackgroundTheme(for page: HeartQuotePage, image: UIImage?) -> FeaturedBackgroundTheme {
+        guard let image, let extractedTheme = makeExtractedBackgroundTheme(from: image, seed: stableSeed(for: page.videoURL)) else {
+            return backgroundTheme(for: page)
+        }
+
+        generatedBackgroundThemes[page.videoURL] = extractedTheme
+        return extractedTheme
+    }
+
+    private func makeExtractedBackgroundTheme(from image: UIImage, seed: UInt64) -> FeaturedBackgroundTheme? {
+        guard let baseColor = averageColor(in: image),
+              let accentColor = averageColor(in: image, normalizedRect: CGRect(x: 0.22, y: 0.14, width: 0.56, height: 0.44)) else {
+            return nil
+        }
+
+        let normalizedBase = baseColor.normalizedForBackground(minSaturation: 0.22, brightnessRange: 0.28...0.52)
+        let normalizedAccent = accentColor.normalizedForBackground(minSaturation: 0.38, brightnessRange: 0.48...0.76)
+        let deepColor = normalizedBase.mixed(with: .black, amount: 0.54)
+        let midColor = normalizedAccent.mixed(with: normalizedBase, amount: 0.34)
+        let tailColor = deepColor.mixed(with: .black, amount: 0.24)
+
+        return FeaturedBackgroundTheme(
+            backgroundColors: [deepColor, midColor, tailColor],
+            glowColors: [
+                normalizedAccent.withAlphaComponent(0.40),
+                normalizedBase.withAlphaComponent(0.18),
+                UIColor.clear
+            ],
+            dimColor: tailColor.mixed(with: .black, amount: 0.16).withAlphaComponent(0.64),
+            bottomFadeColor: tailColor.withAlphaComponent(0.90),
+            glowCenter: glowCenter(seed: seed)
+        )
+    }
+
+    private func makeFallbackBackgroundTheme(seed: UInt64) -> FeaturedBackgroundTheme {
+        let primaryHue = CGFloat(seed % 360) / 360
+        let secondaryHue = CGFloat((seed / 7) % 360) / 360
+        let primary = UIColor(hue: primaryHue, saturation: 0.36, brightness: 0.34, alpha: 1)
+        let secondary = UIColor(hue: secondaryHue, saturation: 0.46, brightness: 0.48, alpha: 1)
+        let deepColor = primary.mixed(with: .black, amount: 0.52)
+        let midColor = secondary.mixed(with: primary, amount: 0.30)
+        let tailColor = deepColor.mixed(with: .black, amount: 0.20)
+
+        return FeaturedBackgroundTheme(
+            backgroundColors: [deepColor, midColor, tailColor],
+            glowColors: [
+                secondary.withAlphaComponent(0.34),
+                primary.withAlphaComponent(0.16),
+                UIColor.clear
+            ],
+            dimColor: tailColor.withAlphaComponent(0.64),
+            bottomFadeColor: tailColor.withAlphaComponent(0.90),
+            glowCenter: glowCenter(seed: seed)
+        )
+    }
+
+    private func stableSeed(for url: URL) -> UInt64 {
+        url.absoluteString.utf8.reduce(5381) { seed, byte in
+            ((seed << 5) &+ seed) &+ UInt64(byte)
+        }
+    }
+
+    private func glowCenter(seed: UInt64) -> CGPoint {
+        let x = 0.18 + CGFloat(seed % 46) / 100
+        let y = 0.12 + CGFloat((seed / 17) % 18) / 100
+        return CGPoint(x: min(max(x, 0.18), 0.68), y: min(max(y, 0.12), 0.30))
+    }
+
+    private func averageColor(in image: UIImage, normalizedRect: CGRect? = nil) -> UIColor? {
+        guard let ciImage = CIImage(image: image) else { return nil }
+
+        let extent = ciImage.extent
+        let sampleRect: CGRect
+        if let normalizedRect {
+            sampleRect = CGRect(
+                x: extent.minX + (normalizedRect.minX * extent.width),
+                y: extent.minY + (normalizedRect.minY * extent.height),
+                width: normalizedRect.width * extent.width,
+                height: normalizedRect.height * extent.height
+            ).intersection(extent)
+        } else {
+            sampleRect = extent
+        }
+
+        guard !sampleRect.isNull, !sampleRect.isEmpty else { return nil }
+
+        let filter = CIFilter.areaAverage()
+        filter.inputImage = ciImage
+        filter.extent = sampleRect
+
+        guard let outputImage = filter.outputImage else { return nil }
+
+        var bitmap = [UInt8](repeating: 0, count: 4)
+        colorAnalysisContext.render(
+            outputImage,
+            toBitmap: &bitmap,
+            rowBytes: 4,
+            bounds: CGRect(x: 0, y: 0, width: 1, height: 1),
+            format: .RGBA8,
+            colorSpace: CGColorSpaceCreateDeviceRGB()
+        )
+
+        return UIColor(
+            red: CGFloat(bitmap[0]) / 255,
+            green: CGFloat(bitmap[1]) / 255,
+            blue: CGFloat(bitmap[2]) / 255,
+            alpha: 1
+        )
     }
 
     private func updateBackgroundImage(for page: HeartQuotePage, animated: Bool) {
@@ -830,6 +905,7 @@ final class LibraryViewController: BaseViewController {
 
             await MainActor.run {
                 guard self.currentBackgroundVideoURL == page.videoURL else { return }
+                let resolvedTheme = self.storeExtractedBackgroundTheme(for: page, image: image)
 
                 let applyImage = {
                     self.backgroundImageView.image = image
@@ -840,6 +916,7 @@ final class LibraryViewController: BaseViewController {
                     return
                 }
 
+                self.applyResolvedBackgroundTheme(resolvedTheme, animated: true)
                 UIView.transition(
                     with: self.backgroundImageView,
                     duration: self.backgroundTransitionDuration,
@@ -848,6 +925,17 @@ final class LibraryViewController: BaseViewController {
                 )
             }
         }
+    }
+
+    private func applyResolvedBackgroundTheme(_ theme: FeaturedBackgroundTheme, animated: Bool) {
+        updateGradientLayer(backgroundGradientLayer, colors: theme.backgroundColors.map(\.cgColor), animated: animated)
+        updateGradientLayer(backgroundGlowLayer, colors: theme.glowColors.map(\.cgColor), animated: animated)
+        backgroundGlowLayer.startPoint = theme.glowCenter
+        UIView.animate(withDuration: animated ? backgroundTransitionDuration : 0, delay: 0, options: [.curveEaseInOut, .beginFromCurrentState]) {
+            self.dimView.backgroundColor = theme.dimColor
+            self.view.backgroundColor = theme.backgroundColors.last
+        }
+        updateGradientLayer(bottomGradientLayer, colors: [UIColor.clear.cgColor, theme.bottomFadeColor.cgColor], animated: animated)
     }
 }
 
@@ -1321,5 +1409,62 @@ private final class InsetLabel: UILabel {
     override var intrinsicContentSize: CGSize {
         let size = super.intrinsicContentSize
         return CGSize(width: size.width + insets.left + insets.right, height: size.height + insets.top + insets.bottom)
+    }
+}
+
+private extension UIColor {
+    func mixed(with other: UIColor, amount: CGFloat) -> UIColor {
+        let amount = min(max(amount, 0), 1)
+        let base = rgbaComponents
+        let target = other.rgbaComponents
+
+        return UIColor(
+            red: base.red + ((target.red - base.red) * amount),
+            green: base.green + ((target.green - base.green) * amount),
+            blue: base.blue + ((target.blue - base.blue) * amount),
+            alpha: base.alpha + ((target.alpha - base.alpha) * amount)
+        )
+    }
+
+    func normalizedForBackground(minSaturation: CGFloat, brightnessRange: ClosedRange<CGFloat>) -> UIColor {
+        var hue: CGFloat = 0
+        var saturation: CGFloat = 0
+        var brightness: CGFloat = 0
+        var alpha: CGFloat = 0
+
+        if getHue(&hue, saturation: &saturation, brightness: &brightness, alpha: &alpha) {
+            return UIColor(
+                hue: hue,
+                saturation: max(saturation, minSaturation),
+                brightness: min(max(brightness, brightnessRange.lowerBound), brightnessRange.upperBound),
+                alpha: 1
+            )
+        }
+
+        var white: CGFloat = 0
+        if getWhite(&white, alpha: &alpha) {
+            let clamped = min(max(white, brightnessRange.lowerBound), brightnessRange.upperBound)
+            return UIColor(white: clamped, alpha: 1)
+        }
+
+        return self
+    }
+
+    private var rgbaComponents: (red: CGFloat, green: CGFloat, blue: CGFloat, alpha: CGFloat) {
+        var red: CGFloat = 0
+        var green: CGFloat = 0
+        var blue: CGFloat = 0
+        var alpha: CGFloat = 0
+
+        if getRed(&red, green: &green, blue: &blue, alpha: &alpha) {
+            return (red, green, blue, alpha)
+        }
+
+        var white: CGFloat = 0
+        if getWhite(&white, alpha: &alpha) {
+            return (white, white, white, alpha)
+        }
+
+        return (0, 0, 0, 1)
     }
 }
