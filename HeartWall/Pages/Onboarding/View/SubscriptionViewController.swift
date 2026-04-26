@@ -382,7 +382,7 @@ final class SubscriptionViewController: BaseViewController {
         pauseVisibleCells()
 
         guard let navigationController else { return }
-        let homeRootViewController = HomeRootViewController()
+        let homeRootViewController = makeHomeRootViewController()
 
         UIView.transition(
             with: navigationController.view,
@@ -406,6 +406,17 @@ final class SubscriptionViewController: BaseViewController {
         let systemFont = UIFont.systemFont(ofSize: size, weight: weight)
         let descriptor = systemFont.fontDescriptor.withDesign(.serif) ?? systemFont.fontDescriptor
         return UIFont(descriptor: descriptor, size: size)
+    }
+
+    private func makeHomeRootViewController() -> UIViewController {
+        let moduleName = Bundle.main.object(forInfoDictionaryKey: "CFBundleName") as? String ?? "HeartWall"
+        let className = "\(moduleName).HomeRootViewController"
+
+        if let type = NSClassFromString(className) as? UIViewController.Type {
+            return type.init()
+        }
+
+        return UIViewController()
     }
 }
 
