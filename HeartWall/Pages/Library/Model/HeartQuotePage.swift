@@ -13,7 +13,18 @@ enum HeartQuoteTheme: String, CaseIterable {
     case anime
 
     var displayTitle: String {
-        rawValue
+        switch self {
+        case .banner:
+            return "今日臻选"
+        case .city:
+            return "城市流光"
+        case .creative:
+            return "灵感幻境"
+        case .nature:
+            return "自然诗境"
+        case .anime:
+            return "绮梦次元"
+        }
     }
 
     var resourceName: String {
