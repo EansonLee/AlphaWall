@@ -332,31 +332,31 @@ final class AudioTherapyPlayerViewController: BaseViewController {
     }
 
     private func configureTimerPanel() {
-        timerPanelView.layer.cornerRadius = 22
+        timerPanelView.layer.cornerRadius = 18
         timerPanelView.layer.cornerCurve = .continuous
         timerPanelView.layer.borderWidth = 1
         timerPanelView.layer.borderColor = UIColor.white.withAlphaComponent(0.10).cgColor
         timerPanelView.clipsToBounds = true
 
         timerTitleLabel.text = "定时"
-        timerTitleLabel.font = .systemFont(ofSize: 17, weight: .bold)
+        timerTitleLabel.font = .systemFont(ofSize: 15, weight: .bold)
         timerTitleLabel.textColor = UIColor.white.withAlphaComponent(0.92)
         timerTitleLabel.textAlignment = .center
 
         timerValueLabel.text = "\(selectedTimerMinutes) 分钟"
-        timerValueLabel.font = .systemFont(ofSize: 28, weight: .heavy)
+        timerValueLabel.font = .systemFont(ofSize: 24, weight: .heavy)
         timerValueLabel.textColor = .white
         timerValueLabel.textAlignment = .center
 
         timerPickerContainerView.backgroundColor = UIColor.white.withAlphaComponent(0.055)
-        timerPickerContainerView.layer.cornerRadius = 17
+        timerPickerContainerView.layer.cornerRadius = 14
         timerPickerContainerView.layer.cornerCurve = .continuous
         timerPickerContainerView.layer.borderWidth = 1
         timerPickerContainerView.layer.borderColor = UIColor.white.withAlphaComponent(0.08).cgColor
         timerPickerContainerView.clipsToBounds = true
 
         timerPickerSelectionView.backgroundColor = UIColor.white.withAlphaComponent(0.10)
-        timerPickerSelectionView.layer.cornerRadius = 12
+        timerPickerSelectionView.layer.cornerRadius = 10
         timerPickerSelectionView.layer.cornerCurve = .continuous
         timerPickerSelectionView.layer.borderWidth = 1
         timerPickerSelectionView.layer.borderColor = UIColor.white.withAlphaComponent(0.11).cgColor
@@ -382,7 +382,7 @@ final class AudioTherapyPlayerViewController: BaseViewController {
         closeConfiguration.image = UIImage(systemName: "xmark.circle")
         closeConfiguration.baseForegroundColor = UIColor.white.withAlphaComponent(0.72)
         closeConfiguration.contentInsets = .zero
-        closeConfiguration.preferredSymbolConfigurationForImage = UIImage.SymbolConfiguration(pointSize: 20, weight: .regular)
+        closeConfiguration.preferredSymbolConfigurationForImage = UIImage.SymbolConfiguration(pointSize: 17, weight: .regular)
         timerCloseButton.configuration = closeConfiguration
         timerCloseButton.addTarget(self, action: #selector(handleTimerClose), for: .touchUpInside)
 
@@ -393,7 +393,7 @@ final class AudioTherapyPlayerViewController: BaseViewController {
         confirmConfiguration.cornerStyle = .capsule
         confirmConfiguration.titleTextAttributesTransformer = UIConfigurationTextAttributesTransformer { incoming in
             var outgoing = incoming
-            outgoing.font = .systemFont(ofSize: 15, weight: .bold)
+            outgoing.font = .systemFont(ofSize: 13, weight: .bold)
             return outgoing
         }
         timerConfirmButton.configuration = confirmConfiguration
@@ -413,46 +413,46 @@ final class AudioTherapyPlayerViewController: BaseViewController {
         timerPanelView.translatesAutoresizingMaskIntoConstraints = false
 
         NSLayoutConstraint.activate([
-            timerPanelView.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 28),
-            timerPanelView.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -28),
-            timerPanelView.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -30),
-            timerPanelView.heightAnchor.constraint(equalToConstant: 260),
+            timerPanelView.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 48),
+            timerPanelView.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -48),
+            timerPanelView.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -24),
+            timerPanelView.heightAnchor.constraint(equalToConstant: 218),
 
-            timerTitleLabel.topAnchor.constraint(equalTo: timerPanelView.contentView.topAnchor, constant: 21),
+            timerTitleLabel.topAnchor.constraint(equalTo: timerPanelView.contentView.topAnchor, constant: 17),
             timerTitleLabel.centerXAnchor.constraint(equalTo: timerPanelView.contentView.centerXAnchor),
 
             timerCloseButton.centerYAnchor.constraint(equalTo: timerTitleLabel.centerYAnchor),
-            timerCloseButton.trailingAnchor.constraint(equalTo: timerPanelView.contentView.trailingAnchor, constant: -18),
-            timerCloseButton.widthAnchor.constraint(equalToConstant: 32),
-            timerCloseButton.heightAnchor.constraint(equalToConstant: 32),
+            timerCloseButton.trailingAnchor.constraint(equalTo: timerPanelView.contentView.trailingAnchor, constant: -14),
+            timerCloseButton.widthAnchor.constraint(equalToConstant: 28),
+            timerCloseButton.heightAnchor.constraint(equalToConstant: 28),
 
-            timerValueLabel.topAnchor.constraint(equalTo: timerTitleLabel.bottomAnchor, constant: 18),
+            timerValueLabel.topAnchor.constraint(equalTo: timerTitleLabel.bottomAnchor, constant: 14),
             timerValueLabel.centerXAnchor.constraint(equalTo: timerPanelView.contentView.centerXAnchor),
 
-            timerPickerContainerView.topAnchor.constraint(equalTo: timerValueLabel.bottomAnchor, constant: 12),
+            timerPickerContainerView.topAnchor.constraint(equalTo: timerValueLabel.bottomAnchor, constant: 10),
             timerPickerContainerView.centerXAnchor.constraint(equalTo: timerPanelView.contentView.centerXAnchor),
-            timerPickerContainerView.widthAnchor.constraint(equalToConstant: 168),
-            timerPickerContainerView.heightAnchor.constraint(equalToConstant: 74),
+            timerPickerContainerView.widthAnchor.constraint(equalToConstant: 146),
+            timerPickerContainerView.heightAnchor.constraint(equalToConstant: 62),
 
-            timerPickerSelectionView.leadingAnchor.constraint(equalTo: timerPickerContainerView.leadingAnchor, constant: 12),
-            timerPickerSelectionView.trailingAnchor.constraint(equalTo: timerPickerContainerView.trailingAnchor, constant: -12),
+            timerPickerSelectionView.leadingAnchor.constraint(equalTo: timerPickerContainerView.leadingAnchor, constant: 10),
+            timerPickerSelectionView.trailingAnchor.constraint(equalTo: timerPickerContainerView.trailingAnchor, constant: -10),
             timerPickerSelectionView.centerYAnchor.constraint(equalTo: timerPickerContainerView.centerYAnchor),
-            timerPickerSelectionView.heightAnchor.constraint(equalToConstant: 32),
+            timerPickerSelectionView.heightAnchor.constraint(equalToConstant: 28),
 
-            timerPickerView.topAnchor.constraint(equalTo: timerPickerContainerView.topAnchor, constant: -40),
+            timerPickerView.topAnchor.constraint(equalTo: timerPickerContainerView.topAnchor, constant: -34),
             timerPickerView.leadingAnchor.constraint(equalTo: timerPickerContainerView.leadingAnchor),
             timerPickerView.trailingAnchor.constraint(equalTo: timerPickerContainerView.trailingAnchor),
-            timerPickerView.bottomAnchor.constraint(equalTo: timerPickerContainerView.bottomAnchor, constant: 40),
+            timerPickerView.bottomAnchor.constraint(equalTo: timerPickerContainerView.bottomAnchor, constant: 34),
 
             timerPickerFadeView.topAnchor.constraint(equalTo: timerPickerContainerView.topAnchor),
             timerPickerFadeView.leadingAnchor.constraint(equalTo: timerPickerContainerView.leadingAnchor),
             timerPickerFadeView.trailingAnchor.constraint(equalTo: timerPickerContainerView.trailingAnchor),
             timerPickerFadeView.bottomAnchor.constraint(equalTo: timerPickerContainerView.bottomAnchor),
 
-            timerConfirmButton.leadingAnchor.constraint(equalTo: timerPanelView.contentView.leadingAnchor, constant: 22),
-            timerConfirmButton.trailingAnchor.constraint(equalTo: timerPanelView.contentView.trailingAnchor, constant: -22),
-            timerConfirmButton.bottomAnchor.constraint(equalTo: timerPanelView.contentView.bottomAnchor, constant: -18),
-            timerConfirmButton.heightAnchor.constraint(equalToConstant: 46)
+            timerConfirmButton.leadingAnchor.constraint(equalTo: timerPanelView.contentView.leadingAnchor, constant: 18),
+            timerConfirmButton.trailingAnchor.constraint(equalTo: timerPanelView.contentView.trailingAnchor, constant: -18),
+            timerConfirmButton.bottomAnchor.constraint(equalTo: timerPanelView.contentView.bottomAnchor, constant: -14),
+            timerConfirmButton.heightAnchor.constraint(equalToConstant: 38)
         ])
     }
 
@@ -486,7 +486,7 @@ final class AudioTherapyPlayerViewController: BaseViewController {
             timerButton.configuration?.imagePadding = 2
             timerButton.configuration?.titleTextAttributesTransformer = UIConfigurationTextAttributesTransformer { incoming in
                 var outgoing = incoming
-                outgoing.font = .monospacedDigitSystemFont(ofSize: 10, weight: .bold)
+                outgoing.font = .monospacedDigitSystemFont(ofSize: 9, weight: .bold)
                 return outgoing
             }
         } else {
@@ -681,11 +681,11 @@ extension AudioTherapyPlayerViewController: UIPickerViewDataSource, UIPickerView
     }
 
     func pickerView(_ pickerView: UIPickerView, rowHeightForComponent component: Int) -> CGFloat {
-        30
+        26
     }
 
     func pickerView(_ pickerView: UIPickerView, widthForComponent component: Int) -> CGFloat {
-        136
+        116
     }
 
     func pickerView(_ pickerView: UIPickerView, attributedTitleForRow row: Int, forComponent component: Int) -> NSAttributedString? {
@@ -694,7 +694,7 @@ extension AudioTherapyPlayerViewController: UIPickerViewDataSource, UIPickerView
         return NSAttributedString(
             string: "\(minutes) 分钟",
             attributes: [
-                .font: UIFont.monospacedDigitSystemFont(ofSize: isSelected ? 16 : 14, weight: isSelected ? .semibold : .medium),
+                .font: UIFont.monospacedDigitSystemFont(ofSize: isSelected ? 14 : 12, weight: isSelected ? .semibold : .medium),
                 .foregroundColor: UIColor.white.withAlphaComponent(isSelected ? 0.94 : 0.48)
             ]
         )
