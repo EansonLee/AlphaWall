@@ -1,7 +1,7 @@
 {
     "title":  "语音场景分类",
     "generatedAt":  "2026-04-26",
-    "baseUrl":  "http://121.199.171.187:4000/api/uploads/voices/",
+    "baseUrl":  "http://121.199.171.187:4000/api/uploads/",
     "categories":  [
                        {
                            "category":  "rain",

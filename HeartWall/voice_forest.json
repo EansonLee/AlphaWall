@@ -1,7 +1,7 @@
 [
     {
         "title":  "树叶沙沙作响",
-        "url":  "http://121.199.171.187:4000/api/uploads/voices/shu_ye_sha_sha_zuo_xiang_171715.mp4",
+        "url":  "http://121.199.171.187:4000/api/uploads/shu_ye_sha_sha_zuo_xiang_171715.mp4",
         "originalName":  "树叶沙沙作响_171715.mp4",
         "fileName":  "shu_ye_sha_sha_zuo_xiang_171715.mp4",
         "category":  "forest",
@@ -9,7 +9,7 @@
     },
     {
         "title":  "树叶间隙之风",
-        "url":  "http://121.199.171.187:4000/api/uploads/voices/shu_ye_jian_xi_zhi_feng_171711.mp4",
+        "url":  "http://121.199.171.187:4000/api/uploads/shu_ye_jian_xi_zhi_feng_171711.mp4",
         "originalName":  "树叶间隙之风_171711.mp4",
         "fileName":  "shu_ye_jian_xi_zhi_feng_171711.mp4",
         "category":  "forest",
@@ -17,7 +17,7 @@
     },
     {
         "title":  "田野中的虫鸣",
-        "url":  "http://121.199.171.187:4000/api/uploads/voices/tian_ye_zhong_de_chong_ming_171717.mp4",
+        "url":  "http://121.199.171.187:4000/api/uploads/tian_ye_zhong_de_chong_ming_171717.mp4",
         "originalName":  "田野中的虫鸣_171717.mp4",
         "fileName":  "tian_ye_zhong_de_chong_ming_171717.mp4",
         "category":  "forest",
@@ -25,7 +25,7 @@
     },
     {
         "title":  "白噪音 风 解压",
-        "url":  "http://121.199.171.187:4000/api/uploads/voices/bai_zao_yin_feng_jie_ya_171835.mp4",
+        "url":  "http://121.199.171.187:4000/api/uploads/bai_zao_yin_feng_jie_ya_171835.mp4",
         "originalName":  "白噪音,风,解压_171835.mp4",
         "fileName":  "bai_zao_yin_feng_jie_ya_171835.mp4",
         "category":  "forest",
