@@ -310,7 +310,7 @@ final class SubscriptionViewController: BaseViewController {
         guard !videoResources.isEmpty else { return }
         guard let url = resource(for: currentLoopIndex).bundleURL() else { return }
 
-        backgroundVideoView.configure(url: url, isMuted: true)
+        backgroundVideoView.configure(url: url, isMuted: false)
         backgroundVideoView.play()
     }
 
@@ -558,7 +558,7 @@ private final class VideoCarouselCell: UICollectionViewCell {
 
         if let url = resource.bundleURL() {
             videoView.isHidden = false
-            videoView.configure(url: url, isMuted: true)
+            videoView.configure(url: url, isMuted: false)
         } else {
             videoView.isHidden = true
             pause()

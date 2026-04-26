@@ -52,7 +52,7 @@ final class LaunchViewController: BaseViewController {
         view.backgroundColor = .black
 
         if let videoURL = videoResource.bundleURL() {
-            backgroundVideoView.configure(url: videoURL, isMuted: true)
+            backgroundVideoView.configure(url: videoURL, isMuted: false)
         }
 
         dimOverlayView.backgroundColor = UIColor.black.withAlphaComponent(0.18)
