@@ -1,0 +1,37 @@
+{
+    "title":  "语音场景分类",
+    "generatedAt":  "2026-04-26",
+    "baseUrl":  "http://121.199.171.187:4000/api/uploads/voices/",
+    "categories":  [
+                       {
+                           "category":  "rain",
+                           "title":  "雨声助眠",
+                           "file":  "voice_rain.json",
+                           "count":  5
+                       },
+                       {
+                           "category":  "water",
+                           "title":  "水声海浪",
+                           "file":  "voice_water.json",
+                           "count":  6
+                       },
+                       {
+                           "category":  "forest",
+                           "title":  "森林风声",
+                           "file":  "voice_forest.json",
+                           "count":  4
+                       },
+                       {
+                           "category":  "fire_night",
+                           "title":  "篝火夜晚",
+                           "file":  "voice_fire_night.json",
+                           "count":  4
+                       },
+                       {
+                           "category":  "indoor_travel",
+                           "title":  "室内通勤",
+                           "file":  "voice_indoor_travel.json",
+                           "count":  3
+                       }
+                   ]
+}

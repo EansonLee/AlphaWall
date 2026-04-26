@@ -1,0 +1,42 @@
+[
+    {
+        "title":  "窗畔雨眠",
+        "url":  "http://121.199.171.187:4000/api/uploads/voices/chuang_pan_yu_mian_171636.mp4",
+        "originalName":  "窗畔雨眠_171636.mp4",
+        "fileName":  "chuang_pan_yu_mian_171636.mp4",
+        "category":  "rain",
+        "categoryTitle":  "雨声助眠"
+    },
+    {
+        "title":  "漫步雨境",
+        "url":  "http://121.199.171.187:4000/api/uploads/voices/man_bu_yu_jing_171642.mp4",
+        "originalName":  "漫步雨境_171642.mp4",
+        "fileName":  "man_bu_yu_jing_171642.mp4",
+        "category":  "rain",
+        "categoryTitle":  "雨声助眠"
+    },
+    {
+        "title":  "倾盆大雨",
+        "url":  "http://121.199.171.187:4000/api/uploads/voices/qing_pen_da_yu_171643.mp4",
+        "originalName":  "倾盆大雨_171643.mp4",
+        "fileName":  "qing_pen_da_yu_171643.mp4",
+        "category":  "rain",
+        "categoryTitle":  "雨声助眠"
+    },
+    {
+        "title":  "大雨淅沥沥沥",
+        "url":  "http://121.199.171.187:4000/api/uploads/voices/da_yu_xi_li_li_li_171832.mp4",
+        "originalName":  "大雨淅沥沥沥_171832.mp4",
+        "fileName":  "da_yu_xi_li_li_li_171832.mp4",
+        "category":  "rain",
+        "categoryTitle":  "雨声助眠"
+    },
+    {
+        "title":  "车窗雨幕",
+        "url":  "http://121.199.171.187:4000/api/uploads/voices/che_chuang_yu_mu_171635.mp4",
+        "originalName":  "车窗雨幕_171635.mp4",
+        "fileName":  "che_chuang_yu_mu_171635.mp4",
+        "category":  "rain",
+        "categoryTitle":  "雨声助眠"
+    }
+]

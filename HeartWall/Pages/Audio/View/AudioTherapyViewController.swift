@@ -7,8 +7,8 @@ import UIKit
 
 final class AudioTherapyViewController: BaseViewController {
 
-    private let items = AudioTherapyCatalogProvider().makeItems()
-    private var selectedCategory: AudioTherapyCategory = .recommended
+    private let catalog = AudioTherapyCatalogProvider().makeCatalog()
+    private var selectedCategoryID: String?
     private var thumbnailTasks: [Task<Void, Never>] = []
 
     private let backgroundImageView = UIImageView()
@@ -26,6 +26,14 @@ final class AudioTherapyViewController: BaseViewController {
     private let cardsGridView = UIStackView()
     private var categoryButtons: [UIButton] = []
 
+    private var items: [AudioTherapyItem] {
+        catalog.items
+    }
+
+    private var categories: [AudioTherapyCategory] {
+        catalog.categories
+    }
+
     override func viewWillDisappear(_ animated: Bool) {
         super.viewWillDisappear(animated)
         thumbnailTasks.forEach { $0.cancel() }
@@ -39,6 +47,7 @@ final class AudioTherapyViewController: BaseViewController {
 
     override func setupUI() {
         view.backgroundColor = UIColor(red: 0.07, green: 0.11, blue: 0.14, alpha: 1)
+        selectedCategoryID = categories.first?.id
         configureBackground()
         configureHeader()
         configureContent()
@@ -212,7 +221,7 @@ final class AudioTherapyViewController: BaseViewController {
     }
 
     private func applyInitialBackground() {
-        guard let firstItem = items.first else { return }
+        guard let firstItem = catalog.defaultItem else { return }
         let task = Task { [weak self] in
             let image = await VideoThumbnailLoader.shared.loadThumbnail(for: firstItem.videoURL)
             guard !Task.isCancelled else { return }
@@ -227,11 +236,12 @@ final class AudioTherapyViewController: BaseViewController {
         categoryButtons.forEach { $0.removeFromSuperview() }
         categoryButtons = []
 
-        AudioTherapyCategory.allCases.enumerated().forEach { index, category in
+        categories.enumerated().forEach { index, category in
+            let isSelected = category.id == selectedCategoryID
             let button = UIButton(type: .system)
             button.tag = index
-            button.setTitle(category.rawValue, for: .normal)
-            button.titleLabel?.font = .systemFont(ofSize: 21, weight: category == selectedCategory ? .heavy : .medium)
+            button.setTitle(category.title, for: .normal)
+            button.titleLabel?.font = .systemFont(ofSize: 21, weight: isSelected ? .heavy : .medium)
             button.tintColor = .white
             button.addTarget(self, action: #selector(handleCategoryTap(_:)), for: .touchUpInside)
             button.heightAnchor.constraint(equalToConstant: 58).isActive = true
@@ -242,7 +252,7 @@ final class AudioTherapyViewController: BaseViewController {
             underline.layer.cornerCurve = .continuous
             underline.isUserInteractionEnabled = false
             underline.tag = 2001
-            underline.isHidden = category != selectedCategory
+            underline.isHidden = !isSelected
             button.addSubview(underline)
             underline.translatesAutoresizingMaskIntoConstraints = false
 
@@ -288,18 +298,15 @@ final class AudioTherapyViewController: BaseViewController {
     }
 
     private func itemsForSelectedCategory() -> [AudioTherapyItem] {
-        if selectedCategory == .recommended {
-            return items
-        }
-
-        let categoryItems = items.filter { $0.category == selectedCategory }
+        guard let selectedCategoryID else { return items }
+        let categoryItems = items.filter { $0.categoryID == selectedCategoryID }
         return categoryItems.isEmpty ? items : categoryItems
     }
 
     @objc
     private func handleCategoryTap(_ sender: UIButton) {
-        guard let category = AudioTherapyCategory.allCases[safe: sender.tag] else { return }
-        selectedCategory = category
+        guard let category = categories[safe: sender.tag] else { return }
+        selectedCategoryID = category.id
         UIImpactFeedbackGenerator(style: .light).impactOccurred()
         renderCategories()
         renderCards()

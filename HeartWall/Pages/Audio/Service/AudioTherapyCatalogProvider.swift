@@ -5,48 +5,104 @@
 
 import UIKit
 
+struct AudioTherapyCatalog {
+    let categories: [AudioTherapyCategory]
+    let items: [AudioTherapyItem]
+
+    var defaultItem: AudioTherapyItem? {
+        items.first { $0.categoryID == "water" } ?? items.first
+    }
+}
+
 struct AudioTherapyCatalogProvider {
 
-    func makeItems() -> [AudioTherapyItem] {
-        let loader = ThemeCatalogLoader()
-        let catalog = (try? loader.loadAllThemes()) ?? [:]
-        let pages = [
-            catalog[.nature] ?? [],
-            catalog[.banner] ?? [],
-            catalog[.creative] ?? [],
-            catalog[.city] ?? [],
-            catalog[.anime] ?? []
-        ].flatMap { $0 }
+    func makeCatalog() -> AudioTherapyCatalog {
+        guard let directory = decodeResource(AudioTherapyDirectory.self, named: "voice_categories") else {
+            return AudioTherapyCatalog(categories: [], items: [])
+        }
 
-        let fallbackURL = OnboardingVideoProvider.shared.selectedURL
-        let seeds: [(title: String, count: Int, category: AudioTherapyCategory, color: UIColor)] = [
-            ("篝火旁", 1050, .recommended, UIColor(red: 0.39, green: 0.52, blue: 0.72, alpha: 1)),
-            ("林中篝火", 1171, .recommended, UIColor(red: 0.34, green: 0.37, blue: 0.39, alpha: 1)),
-            ("浪花朵朵", 872, .sleep, UIColor(red: 0.50, green: 0.64, blue: 0.38, alpha: 1)),
-            ("深蓝秘境", 1279, .focus, UIColor(red: 0.43, green: 0.60, blue: 0.39, alpha: 1)),
-            ("白噪音,水声,轻松", 1539, .relief, UIColor(red: 0.39, green: 0.51, blue: 0.54, alpha: 1)),
-            ("挪威瀑布", 1436, .meditation, UIColor(red: 0.60, green: 0.57, blue: 0.47, alpha: 1)),
-            ("檐下听雨", 1196, .rain, UIColor(red: 0.42, green: 0.49, blue: 0.58, alpha: 1)),
-            ("山谷清晨", 986, .scene, UIColor(red: 0.54, green: 0.62, blue: 0.35, alpha: 1))
-        ]
-
-        return seeds.enumerated().compactMap { index, seed in
-            let pageURL = pages[safe: index]?.videoURL ?? fallbackURL
-            guard let videoURL = pageURL else { return nil }
-            return AudioTherapyItem(
-                title: seed.title,
-                listenerCount: seed.count,
-                category: seed.category,
-                videoURL: videoURL,
-                accentColor: seed.color
+        let categories = directory.categories.map {
+            AudioTherapyCategory(
+                id: $0.category,
+                title: $0.title,
+                file: $0.file,
+                count: $0.count
             )
+        }
+
+        let items = directory.categories.enumerated().flatMap { categoryIndex, category in
+            let resourceName = (category.file as NSString).deletingPathExtension
+            let rawItems = decodeResource([AudioTherapyRawItem].self, named: resourceName) ?? []
+
+            return rawItems.enumerated().compactMap { itemIndex, rawItem -> AudioTherapyItem? in
+                guard let videoURL = URL(string: rawItem.url) else { return nil }
+                let categoryID = rawItem.category.isEmpty ? category.category : rawItem.category
+                let categoryTitle = rawItem.categoryTitle.isEmpty ? category.title : rawItem.categoryTitle
+
+                return AudioTherapyItem(
+                    id: rawItem.fileName,
+                    title: rawItem.title,
+                    listenerCount: listenerCount(categoryIndex: categoryIndex, itemIndex: itemIndex),
+                    categoryID: categoryID,
+                    categoryTitle: categoryTitle,
+                    videoURL: videoURL,
+                    accentColor: accentColor(for: categoryID)
+                )
+            }
+        }
+
+        return AudioTherapyCatalog(categories: categories, items: items)
+    }
+
+    private func decodeResource<T: Decodable>(_ type: T.Type, named resourceName: String) -> T? {
+        guard let url = Bundle.main.url(forResource: resourceName, withExtension: "json") else { return nil }
+
+        do {
+            let data = try Data(contentsOf: url)
+            return try JSONDecoder().decode(T.self, from: data)
+        } catch {
+            assertionFailure("Failed to load audio therapy resource \(resourceName): \(error)")
+            return nil
+        }
+    }
+
+    private func listenerCount(categoryIndex: Int, itemIndex: Int) -> Int {
+        860 + categoryIndex * 137 + itemIndex * 83
+    }
+
+    private func accentColor(for categoryID: String) -> UIColor {
+        switch categoryID {
+        case "rain":
+            UIColor(red: 0.31, green: 0.42, blue: 0.51, alpha: 1)
+        case "water":
+            UIColor(red: 0.24, green: 0.49, blue: 0.57, alpha: 1)
+        case "forest":
+            UIColor(red: 0.35, green: 0.47, blue: 0.33, alpha: 1)
+        case "fire_night":
+            UIColor(red: 0.55, green: 0.37, blue: 0.25, alpha: 1)
+        case "indoor_travel":
+            UIColor(red: 0.46, green: 0.42, blue: 0.54, alpha: 1)
+        default:
+            UIColor(red: 0.38, green: 0.47, blue: 0.55, alpha: 1)
         }
     }
 }
 
-private extension Array {
-    subscript(safe index: Int) -> Element? {
-        guard indices.contains(index) else { return nil }
-        return self[index]
-    }
+private struct AudioTherapyDirectory: Decodable {
+    let categories: [AudioTherapyRawCategory]
+}
+
+private struct AudioTherapyRawCategory: Decodable {
+    let category: String
+    let title: String
+    let file: String
+    let count: Int
+}
+
+private struct AudioTherapyRawItem: Decodable {
+    let title: String
+    let url: String
+    let fileName: String
+    let category: String
+    let categoryTitle: String
 }
