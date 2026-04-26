@@ -216,7 +216,7 @@ final class AudioTherapyViewController: BaseViewController {
             cardsGridView.topAnchor.constraint(equalTo: categoryScrollView.bottomAnchor, constant: 12),
             cardsGridView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 22),
             cardsGridView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -22),
-            cardsGridView.bottomAnchor.constraint(equalTo: contentView.bottomAnchor)
+            cardsGridView.bottomAnchor.constraint(lessThanOrEqualTo: contentView.bottomAnchor)
         ])
     }
 
