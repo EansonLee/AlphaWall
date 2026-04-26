@@ -12,7 +12,9 @@ final class LoopingVideoView: UIView {
 
     private var player: AVPlayer?
     private var endObserver: NSObjectProtocol?
-    private var configuredURL: URL?
+    private var requestedURL: URL?
+    private var resolvedPlaybackURL: URL?
+    private var configureTask: Task<Void, Never>?
     private var shouldPlay = false
 
     private var playerLayer: AVPlayerLayer {
@@ -44,36 +46,49 @@ final class LoopingVideoView: UIView {
     // MARK: - Playback
 
     func configure(url: URL, isMuted: Bool = true, videoGravity: AVLayerVideoGravity = .resizeAspectFill) {
-        if configuredURL != url || player == nil {
-            tearDown()
+        requestedURL = url
+        playerLayer.videoGravity = videoGravity
+        configureTask?.cancel()
 
-            let item = AVPlayerItem(url: url)
-            let player = AVPlayer(playerItem: item)
-            player.actionAtItemEnd = .none
-            player.isMuted = isMuted
+        configureTask = Task { [weak self] in
+            let resolvedURL = url.isFileURL ? url : await VideoCacheService.shared.resolvedURL(for: url)
+            guard !Task.isCancelled else { return }
 
-            endObserver = NotificationCenter.default.addObserver(
-                forName: .AVPlayerItemDidPlayToEndTime,
-                object: item,
-                queue: .main
-            ) { [weak self] _ in
-                guard let self else { return }
-                self.player?.seek(to: .zero)
-                if self.shouldPlay {
+            await MainActor.run { [weak self] in
+                guard let self, self.requestedURL == url else { return }
+
+                if self.player == nil || self.resolvedPlaybackURL != resolvedURL {
+                    self.resetPlayer()
+
+                    let item = AVPlayerItem(url: resolvedURL)
+                    let player = AVPlayer(playerItem: item)
+                    player.actionAtItemEnd = .none
+                    player.isMuted = isMuted
+
+                    self.endObserver = NotificationCenter.default.addObserver(
+                        forName: .AVPlayerItemDidPlayToEndTime,
+                        object: item,
+                        queue: .main
+                    ) { [weak self] _ in
+                        guard let self else { return }
+                        self.player?.seek(to: .zero)
+                        if self.shouldPlay {
+                            self.player?.play()
+                        }
+                    }
+
+                    self.player = player
+                    self.playerLayer.player = player
+                    self.resolvedPlaybackURL = resolvedURL
+                }
+
+                self.player?.isMuted = isMuted
+                self.playerLayer.videoGravity = videoGravity
+
+                if self.shouldPlay, self.window != nil {
                     self.player?.play()
                 }
             }
-
-            configuredURL = url
-            self.player = player
-            playerLayer.player = player
-        }
-
-        player?.isMuted = isMuted
-        playerLayer.videoGravity = videoGravity
-
-        if shouldPlay {
-            player?.play()
         }
     }
 
@@ -87,7 +102,7 @@ final class LoopingVideoView: UIView {
         player?.pause()
     }
 
-    private func tearDown() {
+    private func resetPlayer() {
         if let endObserver {
             NotificationCenter.default.removeObserver(endObserver)
         }
@@ -96,6 +111,13 @@ final class LoopingVideoView: UIView {
         player?.pause()
         playerLayer.player = nil
         player = nil
-        configuredURL = nil
+        resolvedPlaybackURL = nil
+    }
+
+    private func tearDown() {
+        configureTask?.cancel()
+        configureTask = nil
+        requestedURL = nil
+        resetPlayer()
     }
 }
