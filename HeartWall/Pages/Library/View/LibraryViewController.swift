@@ -28,11 +28,21 @@ final class LibraryViewController: BaseViewController {
     private var appliedFeaturedLogicalIndex: Int?
     private var currentBackgroundVideoURL: URL?
     private var backgroundImageTask: Task<Void, Never>?
+    private var idleCacheTask: Task<Void, Never>?
+    private var initialThumbnailTimeoutTask: Task<Void, Never>?
+    private var pendingInitialThumbnailURLs = Set<URL>()
+    private var hasInitialThumbnailDisplaySettled = false
+    private var isDetailPresentationActive = false
+    private var isPrimaryScrollInteracting = false
+    private var isCarouselScrollInteracting = false
     private let carouselLoopMultiplier = 400
 
     private let headerHeight: CGFloat = 84
     private let contentHorizontalInset: CGFloat = 16
     private let tabBarReservedHeight: CGFloat = 112
+    private let idleCacheStartDelay: Duration = .seconds(3)
+    private let idleCacheResumeDelay: Duration = .seconds(2)
+    private let initialThumbnailTimeout: Duration = .seconds(6)
 
     // MARK: - UI
 
@@ -87,12 +97,15 @@ final class LibraryViewController: BaseViewController {
 
     override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
+        isDetailPresentationActive = false
         startCarouselTimerIfNeeded()
+        beginInitialThumbnailTrackingIfNeeded()
     }
 
     override func viewWillDisappear(_ animated: Bool) {
         super.viewWillDisappear(animated)
         stopCarouselTimer()
+        cancelIdleCacheTasks()
     }
 
     override func viewDidLayoutSubviews() {
@@ -132,6 +145,14 @@ final class LibraryViewController: BaseViewController {
             .sink { [weak self] sections in
                 self?.sections = sections
                 self?.renderSections(sections)
+            }
+            .store(in: &cancellables)
+
+        NotificationCenter.default.publisher(for: VideoThumbnailLoader.thumbnailDidLoadNotification)
+            .compactMap { $0.userInfo?[VideoThumbnailLoader.thumbnailURLUserInfoKey] as? URL }
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] url in
+                self?.handleThumbnailDidLoad(for: url)
             }
             .store(in: &cancellables)
     }
@@ -385,6 +406,7 @@ final class LibraryViewController: BaseViewController {
         view.layoutIfNeeded()
         scrollCarousel(toItem: currentCarouselItem, animated: false)
         startCarouselTimerIfNeeded()
+        scheduleInitialThumbnailTrackingRefresh()
     }
 
     private func renderSections(_ sections: [HeartQuoteSection]) {
@@ -396,6 +418,8 @@ final class LibraryViewController: BaseViewController {
         sections.forEach { section in
             stackView.addArrangedSubview(HeartQuoteSectionView(section: section, target: self, action: #selector(handleCardTap(_:))))
         }
+
+        scheduleInitialThumbnailTrackingRefresh()
     }
 
     private func updateCarouselLayout() {
@@ -455,9 +479,123 @@ final class LibraryViewController: BaseViewController {
     }
 
     private func showDetail(page: HeartQuotePage) {
+        isDetailPresentationActive = true
+        VideoCacheService.shared.recordVisitedDetailURL(page.videoURL)
+        cancelIdleCacheTasks()
         let detailViewController = HeartQuoteDetailViewController(page: page)
         detailViewController.hidesBottomBarWhenPushed = true
         navigationController?.pushViewController(detailViewController, animated: true)
+    }
+
+    private func scheduleInitialThumbnailTrackingRefresh() {
+        guard isViewLoaded, view.window != nil else { return }
+
+        DispatchQueue.main.async { [weak self] in
+            self?.beginInitialThumbnailTrackingIfNeeded()
+        }
+    }
+
+    private func beginInitialThumbnailTrackingIfNeeded() {
+        guard view.window != nil else { return }
+
+        cancelIdleCacheTasks()
+        hasInitialThumbnailDisplaySettled = false
+        pendingInitialThumbnailURLs = pendingVisibleThumbnailURLs()
+
+        guard !pendingInitialThumbnailURLs.isEmpty else {
+            completeInitialThumbnailDisplayIfNeeded()
+            return
+        }
+
+        initialThumbnailTimeoutTask = Task { [weak self] in
+            guard let self else { return }
+            try? await Task.sleep(for: self.initialThumbnailTimeout)
+            guard !Task.isCancelled else { return }
+
+            await MainActor.run {
+                self.completeInitialThumbnailDisplayIfNeeded()
+            }
+        }
+    }
+
+    private func completeInitialThumbnailDisplayIfNeeded() {
+        guard !hasInitialThumbnailDisplaySettled else { return }
+
+        hasInitialThumbnailDisplaySettled = true
+        pendingInitialThumbnailURLs.removeAll()
+        initialThumbnailTimeoutTask?.cancel()
+        initialThumbnailTimeoutTask = nil
+        armIdleCacheTask(after: idleCacheStartDelay)
+    }
+
+    private func handleThumbnailDidLoad(for url: URL) {
+        guard pendingInitialThumbnailURLs.remove(url) != nil else { return }
+
+        if pendingInitialThumbnailURLs.isEmpty {
+            completeInitialThumbnailDisplayIfNeeded()
+        }
+    }
+
+    private func pendingVisibleThumbnailURLs() -> Set<URL> {
+        var urls = Set<URL>()
+
+        if backgroundImageView.image == nil, let currentBackgroundVideoURL {
+            urls.insert(currentBackgroundVideoURL)
+        }
+
+        collectPendingThumbnailURLs(in: view, into: &urls)
+        return urls
+    }
+
+    private func collectPendingThumbnailURLs(in rootView: UIView, into urls: inout Set<URL>) {
+        if let thumbnailView = rootView as? VideoThumbnailImageView,
+           thumbnailView.image == nil,
+           let currentVideoURL = thumbnailView.currentVideoURL,
+           thumbnailView.window != nil {
+            let frame = thumbnailView.convert(thumbnailView.bounds, to: view)
+            if view.bounds.intersects(frame) {
+                urls.insert(currentVideoURL)
+            }
+        }
+
+        rootView.subviews.forEach { subview in
+            collectPendingThumbnailURLs(in: subview, into: &urls)
+        }
+    }
+
+    private func armIdleCacheTask(after delay: Duration) {
+        idleCacheTask?.cancel()
+
+        guard hasInitialThumbnailDisplaySettled else { return }
+
+        idleCacheTask = Task(priority: .background) { [weak self] in
+            guard let self else { return }
+            try? await Task.sleep(for: delay)
+            guard !Task.isCancelled else { return }
+
+            let canStartCaching = await MainActor.run {
+                self.canStartIdleCaching()
+            }
+            guard canStartCaching else { return }
+
+            await VideoCacheService.shared.cacheVisitedDetailVideosIfNeeded()
+        }
+    }
+
+    private func canStartIdleCaching() -> Bool {
+        hasInitialThumbnailDisplaySettled
+            && view.window != nil
+            && !isDetailPresentationActive
+            && !isPrimaryScrollInteracting
+            && !isCarouselScrollInteracting
+            && presentedViewController == nil
+    }
+
+    private func cancelIdleCacheTasks() {
+        idleCacheTask?.cancel()
+        idleCacheTask = nil
+        initialThumbnailTimeoutTask?.cancel()
+        initialThumbnailTimeoutTask = nil
     }
 
     private func currentMonthText() -> String {
@@ -738,7 +876,12 @@ extension LibraryViewController: UICollectionViewDelegate {
 
     func scrollViewWillBeginDragging(_ scrollView: UIScrollView) {
         if scrollView === carouselCollectionView {
+            isCarouselScrollInteracting = true
             stopCarouselTimer()
+            idleCacheTask?.cancel()
+        } else if scrollView === self.scrollView {
+            isPrimaryScrollInteracting = true
+            idleCacheTask?.cancel()
         }
     }
 
@@ -755,15 +898,27 @@ extension LibraryViewController: UICollectionViewDelegate {
     }
 
     func scrollViewDidEndDragging(_ scrollView: UIScrollView, willDecelerate decelerate: Bool) {
-        guard scrollView === carouselCollectionView, !decelerate else { return }
-        updateCarouselIndexFromScrollPosition(animated: false)
-        startCarouselTimerIfNeeded()
+        if scrollView === carouselCollectionView {
+            guard !decelerate else { return }
+            isCarouselScrollInteracting = false
+            updateCarouselIndexFromScrollPosition(animated: false)
+            startCarouselTimerIfNeeded()
+            armIdleCacheTask(after: idleCacheResumeDelay)
+        } else if scrollView === self.scrollView, !decelerate {
+            isPrimaryScrollInteracting = false
+            armIdleCacheTask(after: idleCacheResumeDelay)
+        }
     }
 
     func scrollViewDidEndDecelerating(_ scrollView: UIScrollView) {
         if scrollView === carouselCollectionView {
+            isCarouselScrollInteracting = false
             updateCarouselIndexFromScrollPosition(animated: true)
             startCarouselTimerIfNeeded()
+            armIdleCacheTask(after: idleCacheResumeDelay)
+        } else if scrollView === self.scrollView {
+            isPrimaryScrollInteracting = false
+            armIdleCacheTask(after: idleCacheResumeDelay)
         }
     }
 
@@ -1108,6 +1263,10 @@ private final class VideoThumbnailImageView: UIImageView {
     @available(*, unavailable)
     required init?(coder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
+    }
+
+    var currentVideoURL: URL? {
+        videoURL
     }
 
     func configure(videoURL: URL) {

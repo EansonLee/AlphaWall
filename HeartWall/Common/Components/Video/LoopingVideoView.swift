@@ -44,10 +44,12 @@ final class LoopingVideoView: UIView {
     // MARK: - Playback
 
     func configure(url: URL, isMuted: Bool = true, videoGravity: AVLayerVideoGravity = .resizeAspectFill) {
-        if configuredURL != url || player == nil {
+        let playbackURL = url.isFileURL ? url : VideoCacheService.shared.playbackURL(for: url)
+
+        if configuredURL != playbackURL || player == nil {
             resetPlayer()
 
-            let item = AVPlayerItem(url: url)
+            let item = AVPlayerItem(url: playbackURL)
             let player = AVPlayer(playerItem: item)
             player.actionAtItemEnd = .none
             player.isMuted = isMuted
@@ -64,7 +66,7 @@ final class LoopingVideoView: UIView {
                 }
             }
 
-            configuredURL = url
+            configuredURL = playbackURL
             self.player = player
             playerLayer.player = player
         }

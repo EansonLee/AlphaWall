@@ -507,6 +507,7 @@ final class HeartQuoteDetailViewController: BaseViewController {
     // MARK: - Helpers
 
     private func startPlaybackIfPossible() {
+        VideoCacheService.shared.recordVisitedDetailURL(page.videoURL)
         wallpaperVideoView.configure(url: page.videoURL, isMuted: false, videoGravity: .resizeAspectFill)
         isPlaying = true
         wallpaperVideoView.play()
