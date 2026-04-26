@@ -5,12 +5,23 @@
 
 import UIKit
 import AVFoundation
+import Combine
 
 final class AudioTherapyViewController: BaseViewController {
 
     private let catalog = AudioTherapyCatalogProvider().makeCatalog()
     private var selectedCategoryID: String?
     private var thumbnailTasks: [Task<Void, Never>] = []
+    private var idleCacheTask: Task<Void, Never>?
+    private var initialThumbnailTimeoutTask: Task<Void, Never>?
+    private var pendingInitialThumbnailURLs = Set<URL>()
+    private var hasInitialThumbnailDisplaySettled = false
+    private var isDetailPresentationActive = false
+    private var isPrimaryScrollInteracting = false
+
+    private let idleCacheStartDelay: Duration = .seconds(3)
+    private let idleCacheResumeDelay: Duration = .seconds(2)
+    private let initialThumbnailTimeout: Duration = .seconds(6)
 
     private let backgroundImageView = UIImageView()
     private let backgroundVideoView = LoopingVideoView()
@@ -38,11 +49,18 @@ final class AudioTherapyViewController: BaseViewController {
         playDefaultItem()
     }
 
+    override func viewDidAppear(_ animated: Bool) {
+        super.viewDidAppear(animated)
+        isDetailPresentationActive = false
+        beginInitialThumbnailTrackingIfNeeded()
+    }
+
     override func viewWillDisappear(_ animated: Bool) {
         super.viewWillDisappear(animated)
         backgroundVideoView.pause()
         thumbnailTasks.forEach { $0.cancel() }
         thumbnailTasks.removeAll()
+        cancelIdleCacheTasks()
     }
 
     override func viewDidLayoutSubviews() {
@@ -60,6 +78,16 @@ final class AudioTherapyViewController: BaseViewController {
         playDefaultItem()
         renderCategories()
         renderCards()
+    }
+
+    override func setupBindings() {
+        NotificationCenter.default.publisher(for: VideoThumbnailLoader.thumbnailDidLoadNotification)
+            .compactMap { $0.userInfo?[VideoThumbnailLoader.thumbnailURLUserInfoKey] as? URL }
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] url in
+                self?.handleThumbnailDidLoad(for: url)
+            }
+            .store(in: &cancellables)
     }
 
     private func configureBackground() {
@@ -130,6 +158,7 @@ final class AudioTherapyViewController: BaseViewController {
     }
 
     private func configureContent() {
+        scrollView.delegate = self
         scrollView.showsVerticalScrollIndicator = false
         scrollView.contentInsetAdjustmentBehavior = .never
         view.addSubview(scrollView)
@@ -265,6 +294,8 @@ final class AudioTherapyViewController: BaseViewController {
 
             cardsGridView.addArrangedSubview(rowView)
         }
+
+        scheduleInitialThumbnailTrackingRefresh()
     }
 
     private func itemsForSelectedCategory() -> [AudioTherapyItem] {
@@ -284,9 +315,142 @@ final class AudioTherapyViewController: BaseViewController {
 
     @objc
     private func handleItemTap(_ sender: AudioTherapyItemTapGestureRecognizer) {
+        isDetailPresentationActive = true
+        VideoCacheService.shared.recordVisitedDetailURL(sender.item.videoURL)
+        cancelIdleCacheTasks()
         let playerViewController = AudioTherapyPlayerViewController(items: items, selectedItem: sender.item)
         playerViewController.hidesBottomBarWhenPushed = true
         navigationController?.pushViewController(playerViewController, animated: true)
+    }
+
+    private func scheduleInitialThumbnailTrackingRefresh() {
+        guard isViewLoaded, view.window != nil else { return }
+
+        DispatchQueue.main.async { [weak self] in
+            self?.beginInitialThumbnailTrackingIfNeeded()
+        }
+    }
+
+    private func beginInitialThumbnailTrackingIfNeeded() {
+        guard view.window != nil else { return }
+
+        cancelIdleCacheTasks()
+        hasInitialThumbnailDisplaySettled = false
+        pendingInitialThumbnailURLs = pendingVisibleThumbnailURLs()
+
+        guard !pendingInitialThumbnailURLs.isEmpty else {
+            completeInitialThumbnailDisplayIfNeeded()
+            return
+        }
+
+        initialThumbnailTimeoutTask = Task { [weak self] in
+            guard let self else { return }
+            try? await Task.sleep(for: self.initialThumbnailTimeout)
+            guard !Task.isCancelled else { return }
+
+            await MainActor.run {
+                self.completeInitialThumbnailDisplayIfNeeded()
+            }
+        }
+    }
+
+    private func completeInitialThumbnailDisplayIfNeeded() {
+        guard !hasInitialThumbnailDisplaySettled else { return }
+
+        hasInitialThumbnailDisplaySettled = true
+        pendingInitialThumbnailURLs.removeAll()
+        initialThumbnailTimeoutTask?.cancel()
+        initialThumbnailTimeoutTask = nil
+        armIdleCacheTask(after: idleCacheStartDelay)
+    }
+
+    private func handleThumbnailDidLoad(for url: URL) {
+        guard pendingInitialThumbnailURLs.remove(url) != nil else { return }
+
+        if pendingInitialThumbnailURLs.isEmpty {
+            completeInitialThumbnailDisplayIfNeeded()
+        }
+    }
+
+    private func pendingVisibleThumbnailURLs() -> Set<URL> {
+        var urls = Set<URL>()
+
+        if backgroundImageView.image == nil, let defaultItem = catalog.defaultItem {
+            urls.insert(defaultItem.videoURL)
+        }
+
+        collectPendingThumbnailURLs(in: view, into: &urls)
+        return urls
+    }
+
+    private func collectPendingThumbnailURLs(in rootView: UIView, into urls: inout Set<URL>) {
+        if let thumbnailView = rootView as? VideoThumbnailImageView,
+           thumbnailView.image == nil,
+           let currentVideoURL = thumbnailView.currentVideoURL,
+           thumbnailView.window != nil {
+            let frame = thumbnailView.convert(thumbnailView.bounds, to: view)
+            if view.bounds.intersects(frame) {
+                urls.insert(currentVideoURL)
+            }
+        }
+
+        rootView.subviews.forEach { subview in
+            collectPendingThumbnailURLs(in: subview, into: &urls)
+        }
+    }
+
+    private func armIdleCacheTask(after delay: Duration) {
+        idleCacheTask?.cancel()
+
+        guard hasInitialThumbnailDisplaySettled else { return }
+
+        idleCacheTask = Task(priority: .background) { [weak self] in
+            guard let self else { return }
+            try? await Task.sleep(for: delay)
+            guard !Task.isCancelled else { return }
+
+            let canStartCaching = await MainActor.run {
+                self.canStartIdleCaching()
+            }
+            guard canStartCaching else { return }
+
+            await VideoCacheService.shared.cacheVisitedDetailVideosIfNeeded()
+        }
+    }
+
+    private func canStartIdleCaching() -> Bool {
+        hasInitialThumbnailDisplaySettled
+            && view.window != nil
+            && !isDetailPresentationActive
+            && !isPrimaryScrollInteracting
+            && presentedViewController == nil
+    }
+
+    private func cancelIdleCacheTasks() {
+        idleCacheTask?.cancel()
+        idleCacheTask = nil
+        initialThumbnailTimeoutTask?.cancel()
+        initialThumbnailTimeoutTask = nil
+    }
+}
+
+extension AudioTherapyViewController: UIScrollViewDelegate {
+    func scrollViewWillBeginDragging(_ scrollView: UIScrollView) {
+        guard scrollView === self.scrollView else { return }
+        isPrimaryScrollInteracting = true
+        idleCacheTask?.cancel()
+    }
+
+    func scrollViewDidEndDragging(_ scrollView: UIScrollView, willDecelerate decelerate: Bool) {
+        guard scrollView === self.scrollView, !decelerate else { return }
+        isPrimaryScrollInteracting = false
+        armIdleCacheTask(after: idleCacheResumeDelay)
+    }
+
+    func scrollViewDidEndDecelerating(_ scrollView: UIScrollView) {
+        guard scrollView === self.scrollView else { return }
+        isPrimaryScrollInteracting = false
+        armIdleCacheTask(after: idleCacheResumeDelay)
     }
 }
 
@@ -420,6 +584,10 @@ private final class VideoThumbnailImageView: UIImageView {
     @available(*, unavailable)
     required init?(coder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
+    }
+
+    var currentVideoURL: URL? {
+        videoURL
     }
 
     func configure(videoURL: URL) {

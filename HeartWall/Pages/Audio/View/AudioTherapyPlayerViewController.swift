@@ -457,6 +457,7 @@ final class AudioTherapyPlayerViewController: BaseViewController {
     }
 
     private func playSelectedItem() {
+        VideoCacheService.shared.recordVisitedDetailURL(selectedItem.videoURL)
         videoView.configure(url: selectedItem.videoURL, isMuted: false, videoGravity: .resizeAspectFill)
         if isPlaying {
             videoView.play()
