@@ -55,6 +55,11 @@ final class AudioTherapyPlayerViewController: BaseViewController {
         fatalError("init(coder:) has not been implemented")
     }
 
+    private var currentCategoryItems: [AudioTherapyItem] {
+        let categoryItems = items.filter { $0.categoryID == selectedItem.categoryID }
+        return categoryItems.isEmpty ? [selectedItem] : categoryItems
+    }
+
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
         navigationController?.setNavigationBarHidden(true, animated: animated)
@@ -314,7 +319,7 @@ final class AudioTherapyPlayerViewController: BaseViewController {
             row.removeFromSuperview()
         }
 
-        let visibleItems = items
+        let visibleItems = currentCategoryItems
         stride(from: 0, to: visibleItems.count, by: 2).forEach { start in
             let rowView = UIStackView()
             rowView.axis = .horizontal
@@ -484,6 +489,8 @@ final class AudioTherapyPlayerViewController: BaseViewController {
         isPlaying = true
         playSelectedItem()
         updatePlayPauseButton()
+        renderListCards()
+        listScrollView.setContentOffset(.zero, animated: false)
         updateListVisibility(animated: true)
     }
 
