@@ -4,6 +4,7 @@
 //
 
 import UIKit
+import AVFoundation
 
 final class AudioTherapyViewController: BaseViewController {
 
@@ -12,13 +13,12 @@ final class AudioTherapyViewController: BaseViewController {
     private var thumbnailTasks: [Task<Void, Never>] = []
 
     private let backgroundImageView = UIImageView()
+    private let backgroundVideoView = LoopingVideoView()
     private let topDimView = UIView()
     private let bottomFadeView = UIView()
     private let bottomFadeLayer = CAGradientLayer()
     private let scrollView = UIScrollView()
     private let contentView = UIView()
-    private let backButton = UIButton(type: .system)
-    private let titleLabel = UILabel()
     private let soundBadgeView = UIVisualEffectView(effect: UIBlurEffect(style: .systemThinMaterialDark))
     private let soundBadgeStackView = UIStackView()
     private let categoryScrollView = UIScrollView()
@@ -34,8 +34,14 @@ final class AudioTherapyViewController: BaseViewController {
         catalog.categories
     }
 
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
+        playDefaultItem()
+    }
+
     override func viewWillDisappear(_ animated: Bool) {
         super.viewWillDisappear(animated)
+        backgroundVideoView.pause()
         thumbnailTasks.forEach { $0.cancel() }
         thumbnailTasks.removeAll()
     }
@@ -47,11 +53,12 @@ final class AudioTherapyViewController: BaseViewController {
 
     override func setupUI() {
         view.backgroundColor = UIColor(red: 0.07, green: 0.11, blue: 0.14, alpha: 1)
-        selectedCategoryID = categories.first?.id
+        selectedCategoryID = catalog.defaultItem?.categoryID ?? categories.first?.id
         configureBackground()
         configureHeader()
         configureContent()
         applyInitialBackground()
+        playDefaultItem()
         renderCategories()
         renderCards()
     }
@@ -61,6 +68,11 @@ final class AudioTherapyViewController: BaseViewController {
         backgroundImageView.backgroundColor = UIColor(red: 0.16, green: 0.29, blue: 0.35, alpha: 1)
         view.addSubview(backgroundImageView)
         backgroundImageView.translatesAutoresizingMaskIntoConstraints = false
+
+        backgroundVideoView.backgroundColor = UIColor(red: 0.10, green: 0.24, blue: 0.28, alpha: 1)
+        backgroundVideoView.isUserInteractionEnabled = false
+        view.addSubview(backgroundVideoView)
+        backgroundVideoView.translatesAutoresizingMaskIntoConstraints = false
 
         topDimView.backgroundColor = UIColor.black.withAlphaComponent(0.18)
         view.addSubview(topDimView)
@@ -83,6 +95,11 @@ final class AudioTherapyViewController: BaseViewController {
             backgroundImageView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
             backgroundImageView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
 
+            backgroundVideoView.topAnchor.constraint(equalTo: view.topAnchor),
+            backgroundVideoView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            backgroundVideoView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+            backgroundVideoView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
+
             topDimView.topAnchor.constraint(equalTo: view.topAnchor),
             topDimView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
             topDimView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
@@ -96,43 +113,23 @@ final class AudioTherapyViewController: BaseViewController {
     }
 
     private func configureHeader() {
-        var backConfiguration = UIButton.Configuration.plain()
-        backConfiguration.baseForegroundColor = UIColor.white.withAlphaComponent(0.94)
-        backConfiguration.contentInsets = .zero
-        backConfiguration.preferredSymbolConfigurationForImage = UIImage.SymbolConfiguration(pointSize: 24, weight: .semibold)
-        backButton.configuration = backConfiguration
-        backButton.setImage(UIImage(systemName: "chevron.left"), for: .normal)
-        backButton.backgroundColor = UIColor.white.withAlphaComponent(0.18)
-        backButton.layer.cornerRadius = 28
-        backButton.layer.cornerCurve = .continuous
-        backButton.addTarget(self, action: #selector(handleBack), for: .touchUpInside)
-        view.addSubview(backButton)
-        backButton.translatesAutoresizingMaskIntoConstraints = false
-
-        titleLabel.text = "音疗专区"
-        titleLabel.font = .systemFont(ofSize: 25, weight: .heavy)
-        titleLabel.textColor = .white
-        titleLabel.textAlignment = .center
-        view.addSubview(titleLabel)
-        titleLabel.translatesAutoresizingMaskIntoConstraints = false
-
-        soundBadgeView.layer.cornerRadius = 18
+        soundBadgeView.layer.cornerRadius = 15
         soundBadgeView.layer.cornerCurve = .continuous
         soundBadgeView.clipsToBounds = true
-        soundBadgeView.alpha = 0.92
+        soundBadgeView.alpha = 0.86
 
-        let iconView = UIImageView(image: UIImage(systemName: "waveform"))
+        let iconView = UIImageView(image: UIImage(systemName: "waveform.path.ecg"))
         iconView.tintColor = UIColor.white.withAlphaComponent(0.82)
-        iconView.preferredSymbolConfiguration = UIImage.SymbolConfiguration(pointSize: 16, weight: .medium)
+        iconView.preferredSymbolConfiguration = UIImage.SymbolConfiguration(pointSize: 13, weight: .medium)
 
         let badgeLabel = UILabel()
-        badgeLabel.text = "白噪音,水声,轻松"
-        badgeLabel.font = .systemFont(ofSize: 17, weight: .semibold)
+        badgeLabel.text = catalog.defaultItem?.title ?? "音疗播放中"
+        badgeLabel.font = .systemFont(ofSize: 14, weight: .semibold)
         badgeLabel.textColor = UIColor.white.withAlphaComponent(0.82)
 
         soundBadgeStackView.axis = .horizontal
         soundBadgeStackView.alignment = .center
-        soundBadgeStackView.spacing = 8
+        soundBadgeStackView.spacing = 7
         soundBadgeStackView.addArrangedSubview(iconView)
         soundBadgeStackView.addArrangedSubview(badgeLabel)
 
@@ -142,26 +139,16 @@ final class AudioTherapyViewController: BaseViewController {
         soundBadgeStackView.translatesAutoresizingMaskIntoConstraints = false
 
         NSLayoutConstraint.activate([
-            backButton.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 18),
-            backButton.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 30),
-            backButton.widthAnchor.constraint(equalToConstant: 56),
-            backButton.heightAnchor.constraint(equalToConstant: 56),
-
-            titleLabel.centerXAnchor.constraint(equalTo: view.centerXAnchor),
-            titleLabel.centerYAnchor.constraint(equalTo: backButton.centerYAnchor),
-            titleLabel.leadingAnchor.constraint(greaterThanOrEqualTo: backButton.trailingAnchor, constant: 18),
-            titleLabel.trailingAnchor.constraint(lessThanOrEqualTo: view.trailingAnchor, constant: -92),
-
-            soundBadgeView.topAnchor.constraint(equalTo: titleLabel.bottomAnchor, constant: 28),
+            soundBadgeView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 112),
             soundBadgeView.centerXAnchor.constraint(equalTo: view.centerXAnchor),
-            soundBadgeView.heightAnchor.constraint(equalToConstant: 48),
-            soundBadgeView.widthAnchor.constraint(greaterThanOrEqualToConstant: 230),
-            soundBadgeView.widthAnchor.constraint(lessThanOrEqualTo: view.widthAnchor, constant: -80),
+            soundBadgeView.heightAnchor.constraint(equalToConstant: 38),
+            soundBadgeView.widthAnchor.constraint(greaterThanOrEqualToConstant: 176),
+            soundBadgeView.widthAnchor.constraint(lessThanOrEqualTo: view.widthAnchor, constant: -120),
 
             soundBadgeStackView.centerXAnchor.constraint(equalTo: soundBadgeView.contentView.centerXAnchor),
             soundBadgeStackView.centerYAnchor.constraint(equalTo: soundBadgeView.contentView.centerYAnchor),
-            soundBadgeStackView.leadingAnchor.constraint(greaterThanOrEqualTo: soundBadgeView.contentView.leadingAnchor, constant: 20),
-            soundBadgeStackView.trailingAnchor.constraint(lessThanOrEqualTo: soundBadgeView.contentView.trailingAnchor, constant: -20)
+            soundBadgeStackView.leadingAnchor.constraint(greaterThanOrEqualTo: soundBadgeView.contentView.leadingAnchor, constant: 16),
+            soundBadgeStackView.trailingAnchor.constraint(lessThanOrEqualTo: soundBadgeView.contentView.trailingAnchor, constant: -16)
         ])
     }
 
@@ -178,12 +165,12 @@ final class AudioTherapyViewController: BaseViewController {
         categoryScrollView.contentInsetAdjustmentBehavior = .never
         categoryStackView.axis = .horizontal
         categoryStackView.alignment = .center
-        categoryStackView.spacing = 24
+        categoryStackView.spacing = 18
         categoryScrollView.addSubview(categoryStackView)
         categoryStackView.translatesAutoresizingMaskIntoConstraints = false
 
         cardsGridView.axis = .vertical
-        cardsGridView.spacing = 16
+        cardsGridView.spacing = 14
 
         contentView.addSubview(categoryScrollView)
         contentView.addSubview(cardsGridView)
@@ -201,21 +188,21 @@ final class AudioTherapyViewController: BaseViewController {
             contentView.trailingAnchor.constraint(equalTo: scrollView.contentLayoutGuide.trailingAnchor),
             contentView.bottomAnchor.constraint(equalTo: scrollView.contentLayoutGuide.bottomAnchor, constant: -116),
             contentView.widthAnchor.constraint(equalTo: scrollView.frameLayoutGuide.widthAnchor),
-            contentView.heightAnchor.constraint(greaterThanOrEqualTo: scrollView.frameLayoutGuide.heightAnchor, constant: 260),
+            contentView.heightAnchor.constraint(greaterThanOrEqualTo: scrollView.frameLayoutGuide.heightAnchor, constant: 180),
 
             categoryScrollView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor),
             categoryScrollView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor),
-            categoryScrollView.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 650),
-            categoryScrollView.heightAnchor.constraint(equalToConstant: 58),
+            categoryScrollView.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 610),
+            categoryScrollView.heightAnchor.constraint(equalToConstant: 46),
 
-            categoryStackView.leadingAnchor.constraint(equalTo: categoryScrollView.contentLayoutGuide.leadingAnchor, constant: 28),
-            categoryStackView.trailingAnchor.constraint(equalTo: categoryScrollView.contentLayoutGuide.trailingAnchor, constant: -28),
+            categoryStackView.leadingAnchor.constraint(equalTo: categoryScrollView.contentLayoutGuide.leadingAnchor, constant: 22),
+            categoryStackView.trailingAnchor.constraint(equalTo: categoryScrollView.contentLayoutGuide.trailingAnchor, constant: -22),
             categoryStackView.centerYAnchor.constraint(equalTo: categoryScrollView.frameLayoutGuide.centerYAnchor),
             categoryStackView.heightAnchor.constraint(equalTo: categoryScrollView.frameLayoutGuide.heightAnchor),
 
-            cardsGridView.topAnchor.constraint(equalTo: categoryScrollView.bottomAnchor, constant: 18),
-            cardsGridView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 20),
-            cardsGridView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -20),
+            cardsGridView.topAnchor.constraint(equalTo: categoryScrollView.bottomAnchor, constant: 14),
+            cardsGridView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 18),
+            cardsGridView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -18),
             cardsGridView.bottomAnchor.constraint(equalTo: contentView.bottomAnchor)
         ])
     }
@@ -232,6 +219,12 @@ final class AudioTherapyViewController: BaseViewController {
         thumbnailTasks.append(task)
     }
 
+    private func playDefaultItem() {
+        guard let item = catalog.defaultItem else { return }
+        backgroundVideoView.configure(url: item.videoURL, isMuted: false, videoGravity: .resizeAspectFill)
+        backgroundVideoView.play()
+    }
+
     private func renderCategories() {
         categoryButtons.forEach { $0.removeFromSuperview() }
         categoryButtons = []
@@ -241,10 +234,10 @@ final class AudioTherapyViewController: BaseViewController {
             let button = UIButton(type: .system)
             button.tag = index
             button.setTitle(category.title, for: .normal)
-            button.titleLabel?.font = .systemFont(ofSize: 21, weight: isSelected ? .heavy : .medium)
+            button.titleLabel?.font = .systemFont(ofSize: 18, weight: isSelected ? .heavy : .medium)
             button.tintColor = .white
             button.addTarget(self, action: #selector(handleCategoryTap(_:)), for: .touchUpInside)
-            button.heightAnchor.constraint(equalToConstant: 58).isActive = true
+            button.heightAnchor.constraint(equalToConstant: 46).isActive = true
 
             let underline = UIView()
             underline.backgroundColor = UIColor(red: 0.33, green: 0.75, blue: 1.00, alpha: 1)
@@ -259,8 +252,8 @@ final class AudioTherapyViewController: BaseViewController {
             NSLayoutConstraint.activate([
                 underline.centerXAnchor.constraint(equalTo: button.centerXAnchor),
                 underline.bottomAnchor.constraint(equalTo: button.bottomAnchor, constant: -2),
-                underline.widthAnchor.constraint(equalToConstant: 34),
-                underline.heightAnchor.constraint(equalToConstant: 4)
+                underline.widthAnchor.constraint(equalToConstant: 27),
+                underline.heightAnchor.constraint(equalToConstant: 3)
             ])
 
             categoryStackView.addArrangedSubview(button)
@@ -280,8 +273,8 @@ final class AudioTherapyViewController: BaseViewController {
             rowView.axis = .horizontal
             rowView.alignment = .fill
             rowView.distribution = .fillEqually
-            rowView.spacing = 18
-            rowView.heightAnchor.constraint(equalToConstant: 240).isActive = true
+            rowView.spacing = 14
+            rowView.heightAnchor.constraint(equalToConstant: 204).isActive = true
 
             [start, start + 1].forEach { index in
                 if filtered.indices.contains(index) {
@@ -318,11 +311,6 @@ final class AudioTherapyViewController: BaseViewController {
         playerViewController.hidesBottomBarWhenPushed = true
         navigationController?.pushViewController(playerViewController, animated: true)
     }
-
-    @objc
-    private func handleBack() {
-        navigationController?.popViewController(animated: true)
-    }
 }
 
 private final class AudioTherapyCardView: UIView {
@@ -357,32 +345,32 @@ private final class AudioTherapyCardView: UIView {
         backgroundColor = item.accentColor.withAlphaComponent(0.90)
         isUserInteractionEnabled = true
 
-        imageView.layer.cornerRadius = 52
+        imageView.layer.cornerRadius = 44
         imageView.layer.cornerCurve = .continuous
         imageView.layer.masksToBounds = true
         imageView.layer.borderWidth = 1
         imageView.layer.borderColor = UIColor.white.withAlphaComponent(0.16).cgColor
 
-        playBadgeView.backgroundColor = UIColor(red: 0.36, green: 0.35, blue: 0.44, alpha: 0.92)
-        playBadgeView.layer.cornerRadius = 27
+        playBadgeView.backgroundColor = UIColor(red: 0.36, green: 0.35, blue: 0.44, alpha: 0.90)
+        playBadgeView.layer.cornerRadius = 22
         playBadgeView.layer.cornerCurve = .continuous
-        playBadgeView.layer.borderWidth = 6
+        playBadgeView.layer.borderWidth = 5
         playBadgeView.layer.borderColor = UIColor.white.withAlphaComponent(0.20).cgColor
 
         let playIcon = UIImageView(image: UIImage(systemName: "play.fill"))
         playIcon.tintColor = .white
-        playIcon.preferredSymbolConfiguration = UIImage.SymbolConfiguration(pointSize: 17, weight: .bold)
+        playIcon.preferredSymbolConfiguration = UIImage.SymbolConfiguration(pointSize: 14, weight: .bold)
         playBadgeView.addSubview(playIcon)
         playIcon.translatesAutoresizingMaskIntoConstraints = false
 
-        titleLabel.font = .systemFont(ofSize: 20, weight: .heavy)
+        titleLabel.font = .systemFont(ofSize: 17, weight: .heavy)
         titleLabel.textColor = .white
         titleLabel.textAlignment = .center
         titleLabel.numberOfLines = 2
         titleLabel.adjustsFontSizeToFitWidth = true
         titleLabel.minimumScaleFactor = 0.78
 
-        countLabel.font = .systemFont(ofSize: 16, weight: .medium)
+        countLabel.font = .systemFont(ofSize: 13, weight: .medium)
         countLabel.textColor = UIColor.white.withAlphaComponent(0.92)
         countLabel.textAlignment = .center
 
@@ -397,25 +385,25 @@ private final class AudioTherapyCardView: UIView {
 
         NSLayoutConstraint.activate([
             imageView.centerXAnchor.constraint(equalTo: centerXAnchor),
-            imageView.topAnchor.constraint(equalTo: topAnchor, constant: 40),
-            imageView.widthAnchor.constraint(equalToConstant: 104),
-            imageView.heightAnchor.constraint(equalToConstant: 104),
+            imageView.topAnchor.constraint(equalTo: topAnchor, constant: 30),
+            imageView.widthAnchor.constraint(equalToConstant: 88),
+            imageView.heightAnchor.constraint(equalToConstant: 88),
 
-            playBadgeView.trailingAnchor.constraint(equalTo: imageView.trailingAnchor, constant: 19),
-            playBadgeView.bottomAnchor.constraint(equalTo: imageView.bottomAnchor, constant: 7),
-            playBadgeView.widthAnchor.constraint(equalToConstant: 54),
-            playBadgeView.heightAnchor.constraint(equalToConstant: 54),
+            playBadgeView.trailingAnchor.constraint(equalTo: imageView.trailingAnchor, constant: 15),
+            playBadgeView.bottomAnchor.constraint(equalTo: imageView.bottomAnchor, constant: 6),
+            playBadgeView.widthAnchor.constraint(equalToConstant: 44),
+            playBadgeView.heightAnchor.constraint(equalToConstant: 44),
 
             playIcon.centerXAnchor.constraint(equalTo: playBadgeView.centerXAnchor, constant: 2),
             playIcon.centerYAnchor.constraint(equalTo: playBadgeView.centerYAnchor),
 
-            titleLabel.topAnchor.constraint(equalTo: imageView.bottomAnchor, constant: 26),
-            titleLabel.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 14),
-            titleLabel.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -14),
+            titleLabel.topAnchor.constraint(equalTo: imageView.bottomAnchor, constant: 20),
+            titleLabel.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 12),
+            titleLabel.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -12),
 
-            countLabel.topAnchor.constraint(equalTo: titleLabel.bottomAnchor, constant: 8),
-            countLabel.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 14),
-            countLabel.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -14)
+            countLabel.topAnchor.constraint(equalTo: titleLabel.bottomAnchor, constant: 6),
+            countLabel.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 12),
+            countLabel.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -12)
         ])
     }
 
