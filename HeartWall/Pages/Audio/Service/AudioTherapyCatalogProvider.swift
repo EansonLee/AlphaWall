@@ -10,7 +10,7 @@ struct AudioTherapyCatalog {
     let items: [AudioTherapyItem]
 
     var defaultItem: AudioTherapyItem? {
-        items.first { $0.categoryID == "water" } ?? items.first
+        items.first
     }
 }
 

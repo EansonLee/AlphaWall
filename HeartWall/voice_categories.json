@@ -4,16 +4,16 @@
     "baseUrl":  "http://121.199.171.187:4000/api/uploads/",
     "categories":  [
                        {
-                           "category":  "rain",
-                           "title":  "雨声助眠",
-                           "file":  "voice_rain.json",
-                           "count":  5
-                       },
-                       {
                            "category":  "water",
                            "title":  "水声海浪",
                            "file":  "voice_water.json",
                            "count":  6
+                       },
+                       {
+                           "category":  "rain",
+                           "title":  "雨声助眠",
+                           "file":  "voice_rain.json",
+                           "count":  5
                        },
                        {
                            "category":  "forest",
