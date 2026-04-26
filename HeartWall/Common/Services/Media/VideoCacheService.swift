@@ -30,7 +30,6 @@ final class VideoCacheService {
             return cachedURL
         }
 
-        warmCacheIfNeeded(for: remoteURL)
         return remoteURL
     }
 

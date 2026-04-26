@@ -14,6 +14,7 @@ final class HeartQuoteDetailViewController: BaseViewController {
     private var isChromeVisible = false
     private var isFavorite = false
     private var isPlaying = false
+    private var cacheWarmupTask: Task<Void, Never>?
 
     // MARK: - UI
 
@@ -54,6 +55,12 @@ final class HeartQuoteDetailViewController: BaseViewController {
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
         navigationController?.setNavigationBarHidden(true, animated: animated)
+    }
+
+    override func viewDidDisappear(_ animated: Bool) {
+        super.viewDidDisappear(animated)
+        cacheWarmupTask?.cancel()
+        cacheWarmupTask = nil
     }
 
     override func viewDidLayoutSubviews() {
@@ -511,6 +518,18 @@ final class HeartQuoteDetailViewController: BaseViewController {
         isPlaying = true
         wallpaperVideoView.play()
         updatePlayButton()
+        scheduleCacheWarmupIfNeeded()
+    }
+
+    private func scheduleCacheWarmupIfNeeded() {
+        guard !page.videoURL.isFileURL else { return }
+
+        cacheWarmupTask?.cancel()
+        cacheWarmupTask = Task(priority: .background) { [videoURL = page.videoURL] in
+            try? await Task.sleep(for: .seconds(2))
+            guard !Task.isCancelled else { return }
+            _ = await VideoCacheService.shared.resolvedURL(for: videoURL)
+        }
     }
 
     private func wallpaperSnapshotImage() -> UIImage? {
