@@ -122,13 +122,13 @@ final class AudioTherapyPlayerViewController: BaseViewController {
 
     private func configureHeader() {
         var configuration = UIButton.Configuration.plain()
-        configuration.baseForegroundColor = UIColor.white.withAlphaComponent(0.72)
+        configuration.baseForegroundColor = UIColor.white.withAlphaComponent(0.76)
         configuration.contentInsets = .zero
-        configuration.preferredSymbolConfigurationForImage = UIImage.SymbolConfiguration(pointSize: 24, weight: .semibold)
+        configuration.image = UIImage(systemName: "chevron.backward")
+        configuration.preferredSymbolConfigurationForImage = UIImage.SymbolConfiguration(pointSize: 19, weight: .medium)
         backButton.configuration = configuration
-        backButton.setImage(UIImage(systemName: "chevron.left"), for: .normal)
-        backButton.backgroundColor = UIColor.white.withAlphaComponent(0.16)
-        backButton.layer.cornerRadius = 28
+        backButton.backgroundColor = UIColor.white.withAlphaComponent(0.12)
+        backButton.layer.cornerRadius = 23
         backButton.layer.cornerCurve = .continuous
         backButton.addTarget(self, action: #selector(handleBack), for: .touchUpInside)
 
@@ -136,36 +136,36 @@ final class AudioTherapyPlayerViewController: BaseViewController {
         backButton.translatesAutoresizingMaskIntoConstraints = false
 
         NSLayoutConstraint.activate([
-            backButton.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 18),
-            backButton.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 30),
-            backButton.widthAnchor.constraint(equalToConstant: 56),
-            backButton.heightAnchor.constraint(equalToConstant: 56)
+            backButton.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 22),
+            backButton.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 22),
+            backButton.widthAnchor.constraint(equalToConstant: 46),
+            backButton.heightAnchor.constraint(equalToConstant: 46)
         ])
     }
 
     private func configureInfo() {
         titleLabel.text = selectedItem.title
-        titleLabel.font = .systemFont(ofSize: 27, weight: .heavy)
+        titleLabel.font = .systemFont(ofSize: 23, weight: .heavy)
         titleLabel.textColor = .white
         titleLabel.numberOfLines = 2
 
-        countPillView.layer.cornerRadius = 10
+        countPillView.layer.cornerRadius = 9
         countPillView.layer.cornerCurve = .continuous
         countPillView.clipsToBounds = true
         countPillView.backgroundColor = UIColor.black.withAlphaComponent(0.14)
 
-        let headphoneIcon = UIImageView(image: UIImage(systemName: "headphones"))
-        headphoneIcon.tintColor = UIColor.white.withAlphaComponent(0.88)
-        headphoneIcon.preferredSymbolConfiguration = UIImage.SymbolConfiguration(pointSize: 17, weight: .semibold)
+        let headphoneIcon = UIImageView(image: UIImage(systemName: "waveform.path.ecg"))
+        headphoneIcon.tintColor = UIColor.white.withAlphaComponent(0.84)
+        headphoneIcon.preferredSymbolConfiguration = UIImage.SymbolConfiguration(pointSize: 14, weight: .medium)
 
         countLabel.text = "\(selectedItem.listenerCount)人正在听"
-        countLabel.font = .systemFont(ofSize: 16, weight: .semibold)
+        countLabel.font = .systemFont(ofSize: 14, weight: .semibold)
         countLabel.textColor = UIColor.white.withAlphaComponent(0.82)
 
         let countStack = UIStackView(arrangedSubviews: [headphoneIcon, countLabel])
         countStack.axis = .horizontal
         countStack.alignment = .center
-        countStack.spacing = 8
+        countStack.spacing = 7
 
         view.addSubview(titleLabel)
         view.addSubview(countPillView)
@@ -175,34 +175,34 @@ final class AudioTherapyPlayerViewController: BaseViewController {
         countStack.translatesAutoresizingMaskIntoConstraints = false
 
         NSLayoutConstraint.activate([
-            titleLabel.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 28),
-            titleLabel.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -28),
-            titleLabel.bottomAnchor.constraint(equalTo: countPillView.topAnchor, constant: -18),
+            titleLabel.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 24),
+            titleLabel.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -24),
+            titleLabel.bottomAnchor.constraint(equalTo: countPillView.topAnchor, constant: -12),
 
-            countPillView.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 28),
-            countPillView.bottomAnchor.constraint(equalTo: playPauseButton.topAnchor, constant: -54),
-            countPillView.heightAnchor.constraint(equalToConstant: 45),
+            countPillView.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 24),
+            countPillView.bottomAnchor.constraint(equalTo: playPauseButton.topAnchor, constant: -38),
+            countPillView.heightAnchor.constraint(equalToConstant: 36),
 
-            countStack.leadingAnchor.constraint(equalTo: countPillView.contentView.leadingAnchor, constant: 14),
-            countStack.trailingAnchor.constraint(equalTo: countPillView.contentView.trailingAnchor, constant: -14),
+            countStack.leadingAnchor.constraint(equalTo: countPillView.contentView.leadingAnchor, constant: 12),
+            countStack.trailingAnchor.constraint(equalTo: countPillView.contentView.trailingAnchor, constant: -12),
             countStack.centerYAnchor.constraint(equalTo: countPillView.contentView.centerYAnchor)
         ])
     }
 
     private func configureControls() {
-        configureSecondaryControl(listButton, systemImageName: "square.grid.2x2")
-        configureSecondaryControl(timerButton, systemImageName: "alarm")
+        configureSecondaryControl(listButton, systemImageName: "square.grid.3x3")
+        configureSecondaryControl(timerButton, systemImageName: "timer.circle")
 
         var playConfiguration = UIButton.Configuration.filled()
-        playConfiguration.baseBackgroundColor = UIColor(red: 0.22, green: 0.18, blue: 0.15, alpha: 0.88)
+        playConfiguration.baseBackgroundColor = UIColor(red: 0.22, green: 0.18, blue: 0.15, alpha: 0.86)
         playConfiguration.baseForegroundColor = .white
         playConfiguration.contentInsets = .zero
-        playConfiguration.preferredSymbolConfigurationForImage = UIImage.SymbolConfiguration(pointSize: 29, weight: .bold)
+        playConfiguration.preferredSymbolConfigurationForImage = UIImage.SymbolConfiguration(pointSize: 24, weight: .semibold)
         playPauseButton.configuration = playConfiguration
-        playPauseButton.layer.cornerRadius = 67
+        playPauseButton.layer.cornerRadius = 52
         playPauseButton.layer.cornerCurve = .continuous
-        playPauseButton.layer.borderWidth = 3
-        playPauseButton.layer.borderColor = UIColor.white.withAlphaComponent(0.34).cgColor
+        playPauseButton.layer.borderWidth = 2
+        playPauseButton.layer.borderColor = UIColor.white.withAlphaComponent(0.28).cgColor
         playPauseButton.clipsToBounds = true
         playPauseButton.addTarget(self, action: #selector(handlePlayPause), for: .touchUpInside)
 
@@ -218,28 +218,28 @@ final class AudioTherapyPlayerViewController: BaseViewController {
 
         NSLayoutConstraint.activate([
             playPauseButton.centerXAnchor.constraint(equalTo: view.centerXAnchor),
-            playPauseButton.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -72),
-            playPauseButton.widthAnchor.constraint(equalToConstant: 134),
-            playPauseButton.heightAnchor.constraint(equalToConstant: 134),
+            playPauseButton.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -64),
+            playPauseButton.widthAnchor.constraint(equalToConstant: 104),
+            playPauseButton.heightAnchor.constraint(equalToConstant: 104),
 
-            listButton.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 28),
+            listButton.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 30),
             listButton.centerYAnchor.constraint(equalTo: playPauseButton.centerYAnchor),
-            listButton.widthAnchor.constraint(equalToConstant: 56),
-            listButton.heightAnchor.constraint(equalToConstant: 56),
+            listButton.widthAnchor.constraint(equalToConstant: 48),
+            listButton.heightAnchor.constraint(equalToConstant: 48),
 
-            timerButton.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -28),
+            timerButton.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -30),
             timerButton.centerYAnchor.constraint(equalTo: playPauseButton.centerYAnchor),
             timerButton.widthAnchor.constraint(equalToConstant: 56),
-            timerButton.heightAnchor.constraint(equalToConstant: 56)
+            timerButton.heightAnchor.constraint(equalToConstant: 48)
         ])
     }
 
     private func configureSecondaryControl(_ button: UIButton, systemImageName: String) {
         var configuration = UIButton.Configuration.plain()
-        configuration.baseForegroundColor = UIColor.white.withAlphaComponent(0.78)
+        configuration.baseForegroundColor = UIColor.white.withAlphaComponent(0.80)
         configuration.contentInsets = .zero
         configuration.image = UIImage(systemName: systemImageName)
-        configuration.preferredSymbolConfigurationForImage = UIImage.SymbolConfiguration(pointSize: 34, weight: .medium)
+        configuration.preferredSymbolConfigurationForImage = UIImage.SymbolConfiguration(pointSize: 25, weight: .regular)
         button.configuration = configuration
     }
 
@@ -255,20 +255,20 @@ final class AudioTherapyPlayerViewController: BaseViewController {
         NSLayoutConstraint.activate([
             homeIndicatorView.centerXAnchor.constraint(equalTo: view.centerXAnchor),
             homeIndicatorView.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -2),
-            homeIndicatorView.widthAnchor.constraint(equalToConstant: 134),
+            homeIndicatorView.widthAnchor.constraint(equalToConstant: 118),
             homeIndicatorView.heightAnchor.constraint(equalToConstant: 4)
         ])
     }
 
     private func configureListOverlay() {
-        listOverlayView.layer.cornerRadius = 26
+        listOverlayView.layer.cornerRadius = 22
         listOverlayView.layer.cornerCurve = .continuous
         listOverlayView.layer.borderWidth = 1
         listOverlayView.layer.borderColor = UIColor.white.withAlphaComponent(0.12).cgColor
         listOverlayView.clipsToBounds = true
 
         listGridView.axis = .vertical
-        listGridView.spacing = 18
+        listGridView.spacing = 14
 
         view.addSubview(listOverlayView)
         listOverlayView.contentView.addSubview(listGridView)
@@ -278,15 +278,15 @@ final class AudioTherapyPlayerViewController: BaseViewController {
         renderListCards()
 
         NSLayoutConstraint.activate([
-            listOverlayView.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
-            listOverlayView.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20),
-            listOverlayView.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -44),
-            listOverlayView.heightAnchor.constraint(equalTo: view.heightAnchor, multiplier: 0.58),
+            listOverlayView.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 22),
+            listOverlayView.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -22),
+            listOverlayView.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -38),
+            listOverlayView.heightAnchor.constraint(equalTo: view.heightAnchor, multiplier: 0.52),
 
-            listGridView.topAnchor.constraint(equalTo: listOverlayView.contentView.topAnchor, constant: 18),
-            listGridView.leadingAnchor.constraint(equalTo: listOverlayView.contentView.leadingAnchor, constant: 20),
-            listGridView.trailingAnchor.constraint(equalTo: listOverlayView.contentView.trailingAnchor, constant: -20),
-            listGridView.bottomAnchor.constraint(lessThanOrEqualTo: listOverlayView.contentView.bottomAnchor, constant: -18)
+            listGridView.topAnchor.constraint(equalTo: listOverlayView.contentView.topAnchor, constant: 16),
+            listGridView.leadingAnchor.constraint(equalTo: listOverlayView.contentView.leadingAnchor, constant: 16),
+            listGridView.trailingAnchor.constraint(equalTo: listOverlayView.contentView.trailingAnchor, constant: -16),
+            listGridView.bottomAnchor.constraint(lessThanOrEqualTo: listOverlayView.contentView.bottomAnchor, constant: -16)
         ])
     }
 
@@ -302,8 +302,8 @@ final class AudioTherapyPlayerViewController: BaseViewController {
             rowView.axis = .horizontal
             rowView.alignment = .fill
             rowView.distribution = .fillEqually
-            rowView.spacing = 18
-            rowView.heightAnchor.constraint(equalToConstant: 180).isActive = true
+            rowView.spacing = 14
+            rowView.heightAnchor.constraint(equalToConstant: 152).isActive = true
 
             [start, start + 1].forEach { index in
                 if visibleItems.indices.contains(index) {
@@ -327,19 +327,19 @@ final class AudioTherapyPlayerViewController: BaseViewController {
     }
 
     private func configureTimerPanel() {
-        timerPanelView.layer.cornerRadius = 28
+        timerPanelView.layer.cornerRadius = 24
         timerPanelView.layer.cornerCurve = .continuous
         timerPanelView.layer.borderWidth = 1
         timerPanelView.layer.borderColor = UIColor.white.withAlphaComponent(0.12).cgColor
         timerPanelView.clipsToBounds = true
 
         timerTitleLabel.text = "定时"
-        timerTitleLabel.font = .systemFont(ofSize: 23, weight: .heavy)
+        timerTitleLabel.font = .systemFont(ofSize: 20, weight: .heavy)
         timerTitleLabel.textColor = .white
         timerTitleLabel.textAlignment = .center
 
         timerValueLabel.text = "\(selectedTimerMinutes) 分钟"
-        timerValueLabel.font = .systemFont(ofSize: 39, weight: .heavy)
+        timerValueLabel.font = .systemFont(ofSize: 32, weight: .heavy)
         timerValueLabel.textColor = .white
         timerValueLabel.textAlignment = .center
 
@@ -348,10 +348,10 @@ final class AudioTherapyPlayerViewController: BaseViewController {
         timerPickerView.selectRow(timerOptions.firstIndex(of: selectedTimerMinutes) ?? 0, inComponent: 0, animated: false)
 
         var closeConfiguration = UIButton.Configuration.plain()
-        closeConfiguration.image = UIImage(systemName: "xmark")
+        closeConfiguration.image = UIImage(systemName: "xmark.circle")
         closeConfiguration.baseForegroundColor = UIColor.white.withAlphaComponent(0.92)
         closeConfiguration.contentInsets = .zero
-        closeConfiguration.preferredSymbolConfigurationForImage = UIImage.SymbolConfiguration(pointSize: 25, weight: .semibold)
+        closeConfiguration.preferredSymbolConfigurationForImage = UIImage.SymbolConfiguration(pointSize: 22, weight: .regular)
         timerCloseButton.configuration = closeConfiguration
         timerCloseButton.addTarget(self, action: #selector(handleTimerClose), for: .touchUpInside)
 
@@ -362,7 +362,7 @@ final class AudioTherapyPlayerViewController: BaseViewController {
         confirmConfiguration.cornerStyle = .capsule
         confirmConfiguration.titleTextAttributesTransformer = UIConfigurationTextAttributesTransformer { incoming in
             var outgoing = incoming
-            outgoing.font = .systemFont(ofSize: 20, weight: .heavy)
+            outgoing.font = .systemFont(ofSize: 17, weight: .heavy)
             return outgoing
         }
         timerConfirmButton.configuration = confirmConfiguration
@@ -376,31 +376,31 @@ final class AudioTherapyPlayerViewController: BaseViewController {
         timerPanelView.translatesAutoresizingMaskIntoConstraints = false
 
         NSLayoutConstraint.activate([
-            timerPanelView.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
-            timerPanelView.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20),
-            timerPanelView.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -34),
-            timerPanelView.heightAnchor.constraint(equalToConstant: 328),
+            timerPanelView.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 22),
+            timerPanelView.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -22),
+            timerPanelView.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -32),
+            timerPanelView.heightAnchor.constraint(equalToConstant: 286),
 
-            timerTitleLabel.topAnchor.constraint(equalTo: timerPanelView.contentView.topAnchor, constant: 30),
+            timerTitleLabel.topAnchor.constraint(equalTo: timerPanelView.contentView.topAnchor, constant: 24),
             timerTitleLabel.centerXAnchor.constraint(equalTo: timerPanelView.contentView.centerXAnchor),
 
             timerCloseButton.centerYAnchor.constraint(equalTo: timerTitleLabel.centerYAnchor),
-            timerCloseButton.trailingAnchor.constraint(equalTo: timerPanelView.contentView.trailingAnchor, constant: -26),
-            timerCloseButton.widthAnchor.constraint(equalToConstant: 44),
-            timerCloseButton.heightAnchor.constraint(equalToConstant: 44),
+            timerCloseButton.trailingAnchor.constraint(equalTo: timerPanelView.contentView.trailingAnchor, constant: -22),
+            timerCloseButton.widthAnchor.constraint(equalToConstant: 38),
+            timerCloseButton.heightAnchor.constraint(equalToConstant: 38),
 
-            timerValueLabel.topAnchor.constraint(equalTo: timerTitleLabel.bottomAnchor, constant: 32),
+            timerValueLabel.topAnchor.constraint(equalTo: timerTitleLabel.bottomAnchor, constant: 24),
             timerValueLabel.centerXAnchor.constraint(equalTo: timerPanelView.contentView.centerXAnchor),
 
-            timerPickerView.topAnchor.constraint(equalTo: timerValueLabel.bottomAnchor, constant: 8),
+            timerPickerView.topAnchor.constraint(equalTo: timerValueLabel.bottomAnchor, constant: 4),
             timerPickerView.centerXAnchor.constraint(equalTo: timerPanelView.contentView.centerXAnchor),
-            timerPickerView.widthAnchor.constraint(equalToConstant: 220),
-            timerPickerView.heightAnchor.constraint(equalToConstant: 72),
+            timerPickerView.widthAnchor.constraint(equalToConstant: 190),
+            timerPickerView.heightAnchor.constraint(equalToConstant: 66),
 
-            timerConfirmButton.leadingAnchor.constraint(equalTo: timerPanelView.contentView.leadingAnchor, constant: 26),
-            timerConfirmButton.trailingAnchor.constraint(equalTo: timerPanelView.contentView.trailingAnchor, constant: -26),
-            timerConfirmButton.bottomAnchor.constraint(equalTo: timerPanelView.contentView.bottomAnchor, constant: -26),
-            timerConfirmButton.heightAnchor.constraint(equalToConstant: 64)
+            timerConfirmButton.leadingAnchor.constraint(equalTo: timerPanelView.contentView.leadingAnchor, constant: 24),
+            timerConfirmButton.trailingAnchor.constraint(equalTo: timerPanelView.contentView.trailingAnchor, constant: -24),
+            timerConfirmButton.bottomAnchor.constraint(equalTo: timerPanelView.contentView.bottomAnchor, constant: -22),
+            timerConfirmButton.heightAnchor.constraint(equalToConstant: 54)
         ])
     }
 
@@ -428,18 +428,19 @@ final class AudioTherapyPlayerViewController: BaseViewController {
 
     private func updateTimerButtonAppearance() {
         if countdownRemainingSeconds > 0 {
-            timerButton.configuration?.image = UIImage(systemName: "timer")
+            timerButton.configuration?.image = UIImage(systemName: "timer.circle.fill")
             timerButton.configuration?.title = formattedCountdown()
             timerButton.configuration?.imagePlacement = .top
             timerButton.configuration?.imagePadding = 2
             timerButton.configuration?.titleTextAttributesTransformer = UIConfigurationTextAttributesTransformer { incoming in
                 var outgoing = incoming
-                outgoing.font = .monospacedDigitSystemFont(ofSize: 11, weight: .bold)
+                outgoing.font = .monospacedDigitSystemFont(ofSize: 10, weight: .bold)
                 return outgoing
             }
         } else {
-            timerButton.configuration?.image = UIImage(systemName: "alarm")
+            timerButton.configuration?.image = UIImage(systemName: "timer.circle")
             timerButton.configuration?.title = nil
+            timerButton.configuration?.imagePlacement = .top
         }
     }
 
@@ -628,11 +629,11 @@ extension AudioTherapyPlayerViewController: UIPickerViewDataSource, UIPickerView
     }
 
     func pickerView(_ pickerView: UIPickerView, rowHeightForComponent component: Int) -> CGFloat {
-        36
+        32
     }
 
     func pickerView(_ pickerView: UIPickerView, widthForComponent component: Int) -> CGFloat {
-        180
+        160
     }
 
     func pickerView(_ pickerView: UIPickerView, attributedTitleForRow row: Int, forComponent component: Int) -> NSAttributedString? {
@@ -640,7 +641,7 @@ extension AudioTherapyPlayerViewController: UIPickerViewDataSource, UIPickerView
         return NSAttributedString(
             string: "\(minutes) 分钟",
             attributes: [
-                .font: UIFont.systemFont(ofSize: 18, weight: .semibold),
+                .font: UIFont.systemFont(ofSize: 16, weight: .semibold),
                 .foregroundColor: UIColor.white.withAlphaComponent(0.92)
             ]
         )
@@ -681,30 +682,30 @@ private final class AudioTherapyPlayerListCardView: UIView {
         clipsToBounds = true
         isUserInteractionEnabled = true
 
-        imageView.layer.cornerRadius = 50
+        imageView.layer.cornerRadius = 40
         imageView.layer.cornerCurve = .continuous
         imageView.layer.masksToBounds = true
 
         playBadgeView.backgroundColor = item.accentColor.withAlphaComponent(0.78)
-        playBadgeView.layer.cornerRadius = 24
+        playBadgeView.layer.cornerRadius = 19
         playBadgeView.layer.cornerCurve = .continuous
-        playBadgeView.layer.borderWidth = 5
+        playBadgeView.layer.borderWidth = 4
         playBadgeView.layer.borderColor = UIColor.white.withAlphaComponent(0.42).cgColor
 
         let playIcon = UIImageView(image: UIImage(systemName: "play.fill"))
         playIcon.tintColor = .white
-        playIcon.preferredSymbolConfiguration = UIImage.SymbolConfiguration(pointSize: 15, weight: .bold)
+        playIcon.preferredSymbolConfiguration = UIImage.SymbolConfiguration(pointSize: 13, weight: .semibold)
         playBadgeView.addSubview(playIcon)
         playIcon.translatesAutoresizingMaskIntoConstraints = false
 
-        titleLabel.font = .systemFont(ofSize: 19, weight: .heavy)
+        titleLabel.font = .systemFont(ofSize: 16, weight: .heavy)
         titleLabel.textColor = .white
         titleLabel.textAlignment = .center
         titleLabel.numberOfLines = 2
         titleLabel.adjustsFontSizeToFitWidth = true
         titleLabel.minimumScaleFactor = 0.78
 
-        countLabel.font = .systemFont(ofSize: 15, weight: .medium)
+        countLabel.font = .systemFont(ofSize: 13, weight: .medium)
         countLabel.textColor = UIColor.white.withAlphaComponent(0.92)
         countLabel.textAlignment = .center
 
@@ -719,23 +720,23 @@ private final class AudioTherapyPlayerListCardView: UIView {
 
         NSLayoutConstraint.activate([
             imageView.centerXAnchor.constraint(equalTo: centerXAnchor),
-            imageView.topAnchor.constraint(equalTo: topAnchor, constant: 24),
-            imageView.widthAnchor.constraint(equalToConstant: 100),
-            imageView.heightAnchor.constraint(equalToConstant: 100),
+            imageView.topAnchor.constraint(equalTo: topAnchor, constant: 20),
+            imageView.widthAnchor.constraint(equalToConstant: 80),
+            imageView.heightAnchor.constraint(equalToConstant: 80),
 
-            playBadgeView.trailingAnchor.constraint(equalTo: imageView.trailingAnchor, constant: 18),
+            playBadgeView.trailingAnchor.constraint(equalTo: imageView.trailingAnchor, constant: 13),
             playBadgeView.bottomAnchor.constraint(equalTo: imageView.bottomAnchor, constant: 5),
-            playBadgeView.widthAnchor.constraint(equalToConstant: 48),
-            playBadgeView.heightAnchor.constraint(equalToConstant: 48),
+            playBadgeView.widthAnchor.constraint(equalToConstant: 38),
+            playBadgeView.heightAnchor.constraint(equalToConstant: 38),
 
             playIcon.centerXAnchor.constraint(equalTo: playBadgeView.centerXAnchor, constant: 2),
             playIcon.centerYAnchor.constraint(equalTo: playBadgeView.centerYAnchor),
 
-            titleLabel.topAnchor.constraint(equalTo: imageView.bottomAnchor, constant: 18),
+            titleLabel.topAnchor.constraint(equalTo: imageView.bottomAnchor, constant: 14),
             titleLabel.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 10),
             titleLabel.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -10),
 
-            countLabel.topAnchor.constraint(equalTo: titleLabel.bottomAnchor, constant: 7),
+            countLabel.topAnchor.constraint(equalTo: titleLabel.bottomAnchor, constant: 5),
             countLabel.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 10),
             countLabel.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -10)
         ])
