@@ -16,6 +16,7 @@ final class LibraryViewModel: BaseViewModel {
 
     @Published private(set) var featuredPages: [HeartQuotePage] = []
     @Published private(set) var sections: [HeartQuoteSection] = []
+    @Published private(set) var allPages: [HeartQuotePage] = []
 
     private let loader = ThemeCatalogLoader()
 
@@ -41,6 +42,7 @@ final class LibraryViewModel: BaseViewModel {
             let catalog = try loader.loadAllThemes()
 
             featuredPages = catalog[.banner] ?? []
+            allPages = HeartQuoteTheme.allCases.flatMap { catalog[$0] ?? [] }
 
             sections = [
                 makeSection(theme: .city, pages: catalog[.city] ?? []),
@@ -51,6 +53,7 @@ final class LibraryViewModel: BaseViewModel {
         } catch {
             featuredPages = []
             sections = []
+            allPages = []
             setError(error.localizedDescription)
         }
     }

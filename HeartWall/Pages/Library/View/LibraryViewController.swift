@@ -24,6 +24,7 @@ final class LibraryViewController: BaseViewController {
     private let viewModel = LibraryViewModel()
     private var featuredPages: [HeartQuotePage] = []
     private var sections: [HeartQuoteSection] = []
+    private var allPages: [HeartQuotePage] = []
     private var carouselTimer: Timer?
     private var currentCarouselIndex = 0
     private var currentCarouselItem = 0
@@ -153,6 +154,13 @@ final class LibraryViewController: BaseViewController {
             .sink { [weak self] sections in
                 self?.sections = sections
                 self?.renderSections(sections)
+            }
+            .store(in: &cancellables)
+
+        viewModel.$allPages
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] pages in
+                self?.allPages = pages
             }
             .store(in: &cancellables)
 
@@ -490,9 +498,15 @@ final class LibraryViewController: BaseViewController {
         isDetailPresentationActive = true
         VideoCacheService.shared.recordVisitedDetailURL(page.videoURL)
         cancelIdleCacheTasks()
-        let detailViewController = HeartQuoteDetailViewController(page: page)
+        let detailPages = allDetailPages()
+        let initialIndex = detailPages.firstIndex { $0.videoURL == page.videoURL } ?? 0
+        let detailViewController = HeartQuoteDetailViewController(pages: detailPages, initialIndex: initialIndex)
         detailViewController.hidesBottomBarWhenPushed = true
         navigationController?.pushViewController(detailViewController, animated: true)
+    }
+
+    private func allDetailPages() -> [HeartQuotePage] {
+        allPages.isEmpty ? featuredPages + sections.flatMap(\.items) : allPages
     }
 
     private func scheduleInitialThumbnailTrackingRefresh() {

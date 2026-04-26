@@ -10,7 +10,11 @@ final class HeartQuoteDetailViewController: BaseViewController {
 
     // MARK: - Properties
 
-    private let page: HeartQuotePage
+    private let pages: [HeartQuotePage]
+    private var currentPageIndex: Int
+    private var page: HeartQuotePage {
+        pages[currentPageIndex]
+    }
     private var isChromeVisible = false
     private var isFavorite = false
     private var isPlaying = false
@@ -42,7 +46,15 @@ final class HeartQuoteDetailViewController: BaseViewController {
     // MARK: - Lifecycle
 
     init(page: HeartQuotePage) {
-        self.page = page
+        pages = [page]
+        currentPageIndex = 0
+        super.init(nibName: nil, bundle: nil)
+    }
+
+    init(pages: [HeartQuotePage], initialIndex: Int) {
+        precondition(!pages.isEmpty, "HeartQuoteDetailViewController requires at least one page.")
+        self.pages = pages
+        currentPageIndex = min(max(initialIndex, 0), pages.count - 1)
         super.init(nibName: nil, bundle: nil)
     }
 
@@ -77,6 +89,7 @@ final class HeartQuoteDetailViewController: BaseViewController {
         configureSaveButton()
         configureHomeIndicator()
         configureTapGesture()
+        configureSwipeGestures()
         updateChromeVisibility(animated: false)
         updateFavoriteButton()
         updatePlayButton()
@@ -386,12 +399,39 @@ final class HeartQuoteDetailViewController: BaseViewController {
         view.addGestureRecognizer(tapGesture)
     }
 
+    private func configureSwipeGestures() {
+        let swipeUpGesture = UISwipeGestureRecognizer(target: self, action: #selector(handleWallpaperSwipe(_:)))
+        swipeUpGesture.direction = .up
+        swipeUpGesture.delegate = self
+
+        let swipeDownGesture = UISwipeGestureRecognizer(target: self, action: #selector(handleWallpaperSwipe(_:)))
+        swipeDownGesture.direction = .down
+        swipeDownGesture.delegate = self
+
+        view.addGestureRecognizer(swipeUpGesture)
+        view.addGestureRecognizer(swipeDownGesture)
+    }
+
     // MARK: - Actions
 
     @objc
     private func handlePreviewTap() {
         isChromeVisible.toggle()
         updateChromeVisibility(animated: true)
+    }
+
+    @objc
+    private func handleWallpaperSwipe(_ gesture: UISwipeGestureRecognizer) {
+        guard pages.count > 1 else { return }
+
+        switch gesture.direction {
+        case .up:
+            showAdjacentWallpaper(offset: 1)
+        case .down:
+            showAdjacentWallpaper(offset: -1)
+        default:
+            break
+        }
     }
 
     @objc
@@ -505,6 +545,45 @@ final class HeartQuoteDetailViewController: BaseViewController {
     }
 
     // MARK: - Helpers
+
+    private func showAdjacentWallpaper(offset: Int) {
+        let nextIndex = wrappedPageIndex(from: currentPageIndex + offset)
+        guard nextIndex != currentPageIndex else { return }
+
+        let previousDirection: CGFloat = offset > 0 ? -1 : 1
+        currentPageIndex = nextIndex
+        UIImpactFeedbackGenerator(style: .light).impactOccurred()
+        applyCurrentPageTransition(verticalDirection: previousDirection)
+    }
+
+    private func wrappedPageIndex(from index: Int) -> Int {
+        let count = pages.count
+        let remainder = index % count
+        return remainder >= 0 ? remainder : remainder + count
+    }
+
+    private func applyCurrentPageTransition(verticalDirection: CGFloat) {
+        titleLabel.text = page.title
+        startPlaybackIfPossible()
+
+        guard !UIAccessibility.isReduceMotionEnabled else { return }
+
+        let offsetY = verticalDirection * view.bounds.height * 0.08
+        let originalTransform = wallpaperVideoView.transform
+        wallpaperVideoView.alpha = 0.35
+        wallpaperVideoView.transform = CGAffineTransform(translationX: 0, y: -offsetY)
+        dimOverlayView.alpha = 0.72
+
+        UIView.animate(
+            withDuration: 0.24,
+            delay: 0,
+            options: [.curveEaseOut, .beginFromCurrentState]
+        ) {
+            self.wallpaperVideoView.alpha = 1
+            self.wallpaperVideoView.transform = originalTransform
+            self.dimOverlayView.alpha = 1
+        }
+    }
 
     private func startPlaybackIfPossible() {
         VideoCacheService.shared.recordVisitedDetailURL(page.videoURL)
