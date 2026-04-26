@@ -202,9 +202,9 @@ final class AudioTherapyPlayerViewController: BaseViewController {
         playConfiguration.baseBackgroundColor = UIColor(red: 0.22, green: 0.18, blue: 0.15, alpha: 0.86)
         playConfiguration.baseForegroundColor = .white
         playConfiguration.contentInsets = .zero
-        playConfiguration.preferredSymbolConfigurationForImage = UIImage.SymbolConfiguration(pointSize: 20, weight: .semibold)
+        playConfiguration.preferredSymbolConfigurationForImage = UIImage.SymbolConfiguration(pointSize: 17, weight: .semibold)
         playPauseButton.configuration = playConfiguration
-        playPauseButton.layer.cornerRadius = 42
+        playPauseButton.layer.cornerRadius = 26
         playPauseButton.layer.cornerCurve = .continuous
         playPauseButton.layer.borderWidth = 1
         playPauseButton.layer.borderColor = UIColor.white.withAlphaComponent(0.24).cgColor
@@ -223,19 +223,19 @@ final class AudioTherapyPlayerViewController: BaseViewController {
 
         NSLayoutConstraint.activate([
             playPauseButton.centerXAnchor.constraint(equalTo: view.centerXAnchor),
-            playPauseButton.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -56),
-            playPauseButton.widthAnchor.constraint(equalToConstant: 84),
-            playPauseButton.heightAnchor.constraint(equalToConstant: 84),
+            playPauseButton.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -34),
+            playPauseButton.widthAnchor.constraint(equalToConstant: 52),
+            playPauseButton.heightAnchor.constraint(equalToConstant: 52),
 
             listButton.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 28),
             listButton.centerYAnchor.constraint(equalTo: playPauseButton.centerYAnchor),
-            listButton.widthAnchor.constraint(equalToConstant: 40),
-            listButton.heightAnchor.constraint(equalToConstant: 40),
+            listButton.widthAnchor.constraint(equalToConstant: 52),
+            listButton.heightAnchor.constraint(equalToConstant: 52),
 
             timerButton.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -28),
             timerButton.centerYAnchor.constraint(equalTo: playPauseButton.centerYAnchor),
-            timerButton.widthAnchor.constraint(equalToConstant: 48),
-            timerButton.heightAnchor.constraint(equalToConstant: 40)
+            timerButton.widthAnchor.constraint(equalToConstant: 52),
+            timerButton.heightAnchor.constraint(equalToConstant: 52)
         ])
     }
 
@@ -244,7 +244,7 @@ final class AudioTherapyPlayerViewController: BaseViewController {
         configuration.baseForegroundColor = UIColor.white.withAlphaComponent(0.80)
         configuration.contentInsets = .zero
         configuration.image = UIImage(systemName: systemImageName)
-        configuration.preferredSymbolConfigurationForImage = UIImage.SymbolConfiguration(pointSize: 21, weight: .regular)
+        configuration.preferredSymbolConfigurationForImage = UIImage.SymbolConfiguration(pointSize: 17, weight: .semibold)
         button.configuration = configuration
     }
 
