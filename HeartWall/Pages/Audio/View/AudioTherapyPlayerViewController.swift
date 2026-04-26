@@ -11,6 +11,7 @@ final class AudioTherapyPlayerViewController: BaseViewController {
     private let items: [AudioTherapyItem]
     private var selectedItem: AudioTherapyItem
     private var isPlaying = true
+    private var isListVisible = false
 
     private let videoView = LoopingVideoView()
     private let dimView = UIView()
@@ -24,6 +25,8 @@ final class AudioTherapyPlayerViewController: BaseViewController {
     private let playPauseButton = UIButton(type: .system)
     private let timerButton = UIButton(type: .system)
     private let homeIndicatorView = UIView()
+    private let listOverlayView = UIVisualEffectView(effect: UIBlurEffect(style: .systemUltraThinMaterialDark))
+    private let listGridView = UIStackView()
 
     init(items: [AudioTherapyItem], selectedItem: AudioTherapyItem) {
         self.items = items
@@ -58,8 +61,11 @@ final class AudioTherapyPlayerViewController: BaseViewController {
         configureHeader()
         configureControls()
         configureInfo()
+        configureListOverlay()
         configureHomeIndicator()
+        configureTapGesture()
         updatePlayPauseButton()
+        updateListVisibility(animated: false)
     }
 
     private func configureBackground() {
@@ -240,6 +246,72 @@ final class AudioTherapyPlayerViewController: BaseViewController {
         ])
     }
 
+    private func configureListOverlay() {
+        listOverlayView.layer.cornerRadius = 26
+        listOverlayView.layer.cornerCurve = .continuous
+        listOverlayView.layer.borderWidth = 1
+        listOverlayView.layer.borderColor = UIColor.white.withAlphaComponent(0.12).cgColor
+        listOverlayView.clipsToBounds = true
+
+        listGridView.axis = .vertical
+        listGridView.spacing = 18
+
+        view.addSubview(listOverlayView)
+        listOverlayView.contentView.addSubview(listGridView)
+        listOverlayView.translatesAutoresizingMaskIntoConstraints = false
+        listGridView.translatesAutoresizingMaskIntoConstraints = false
+
+        renderListCards()
+
+        NSLayoutConstraint.activate([
+            listOverlayView.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
+            listOverlayView.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20),
+            listOverlayView.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -44),
+            listOverlayView.heightAnchor.constraint(equalTo: view.heightAnchor, multiplier: 0.58),
+
+            listGridView.topAnchor.constraint(equalTo: listOverlayView.contentView.topAnchor, constant: 18),
+            listGridView.leadingAnchor.constraint(equalTo: listOverlayView.contentView.leadingAnchor, constant: 20),
+            listGridView.trailingAnchor.constraint(equalTo: listOverlayView.contentView.trailingAnchor, constant: -20),
+            listGridView.bottomAnchor.constraint(lessThanOrEqualTo: listOverlayView.contentView.bottomAnchor, constant: -18)
+        ])
+    }
+
+    private func renderListCards() {
+        listGridView.arrangedSubviews.forEach { row in
+            listGridView.removeArrangedSubview(row)
+            row.removeFromSuperview()
+        }
+
+        let visibleItems = Array(items.prefix(6))
+        stride(from: 0, to: visibleItems.count, by: 2).forEach { start in
+            let rowView = UIStackView()
+            rowView.axis = .horizontal
+            rowView.alignment = .fill
+            rowView.distribution = .fillEqually
+            rowView.spacing = 18
+            rowView.heightAnchor.constraint(equalToConstant: 180).isActive = true
+
+            [start, start + 1].forEach { index in
+                if visibleItems.indices.contains(index) {
+                    let cardView = AudioTherapyPlayerListCardView(item: visibleItems[index])
+                    cardView.addGestureRecognizer(AudioTherapyPlayerItemTapGestureRecognizer(item: visibleItems[index], target: self, action: #selector(handleOverlayItemTap(_:))))
+                    rowView.addArrangedSubview(cardView)
+                } else {
+                    rowView.addArrangedSubview(UIView())
+                }
+            }
+
+            listGridView.addArrangedSubview(rowView)
+        }
+    }
+
+    private func configureTapGesture() {
+        let tapGesture = UITapGestureRecognizer(target: self, action: #selector(handleScreenTap))
+        tapGesture.cancelsTouchesInView = false
+        tapGesture.delegate = self
+        view.addGestureRecognizer(tapGesture)
+    }
+
     private func playSelectedItem() {
         videoView.configure(url: selectedItem.videoURL, isMuted: false, videoGravity: .resizeAspectFill)
         if isPlaying {
@@ -247,9 +319,46 @@ final class AudioTherapyPlayerViewController: BaseViewController {
         }
     }
 
+    private func applySelectedItem(_ item: AudioTherapyItem) {
+        selectedItem = item
+        titleLabel.text = item.title
+        countLabel.text = "\(item.listenerCount)人正在听"
+        isPlaying = true
+        playSelectedItem()
+        updatePlayPauseButton()
+        updateListVisibility(animated: true)
+    }
+
     private func updatePlayPauseButton() {
         let imageName = isPlaying ? "pause.fill" : "play.fill"
         playPauseButton.configuration?.image = UIImage(systemName: imageName)
+    }
+
+    private func updateListVisibility(animated: Bool) {
+        let changes = {
+            self.listOverlayView.alpha = self.isListVisible ? 1 : 0
+            self.listOverlayView.transform = self.isListVisible
+                ? .identity
+                : CGAffineTransform(translationX: 0, y: 24).scaledBy(x: 0.96, y: 0.96)
+            self.dimView.backgroundColor = UIColor.black.withAlphaComponent(self.isListVisible ? 0.48 : 0.12)
+            self.titleLabel.alpha = self.isListVisible ? 0.18 : 1
+            self.countPillView.alpha = self.isListVisible ? 0.18 : 1
+        }
+
+        listOverlayView.isUserInteractionEnabled = isListVisible
+
+        guard animated, !UIAccessibility.isReduceMotionEnabled else {
+            changes()
+            return
+        }
+
+        UIView.animate(
+            withDuration: 0.24,
+            delay: 0,
+            options: [.curveEaseOut, .beginFromCurrentState]
+        ) {
+            changes()
+        }
     }
 
     @objc
@@ -271,11 +380,184 @@ final class AudioTherapyPlayerViewController: BaseViewController {
 
     @objc
     private func handleList() {
+        isListVisible.toggle()
+        updateListVisibility(animated: true)
         UIImpactFeedbackGenerator(style: .light).impactOccurred()
     }
 
     @objc
     private func handleTimer() {
         UIImpactFeedbackGenerator(style: .light).impactOccurred()
+    }
+
+    @objc
+    private func handleScreenTap() {
+        isListVisible.toggle()
+        updateListVisibility(animated: true)
+    }
+
+    @objc
+    private func handleOverlayItemTap(_ sender: AudioTherapyPlayerItemTapGestureRecognizer) {
+        applySelectedItem(sender.item)
+        UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+    }
+}
+
+extension AudioTherapyPlayerViewController: UIGestureRecognizerDelegate {
+    func gestureRecognizer(_ gestureRecognizer: UIGestureRecognizer, shouldReceive touch: UITouch) -> Bool {
+        guard gestureRecognizer is UITapGestureRecognizer else { return true }
+        guard let touchedView = touch.view else { return true }
+
+        return touchedView.isDescendant(of: backButton) == false
+            && touchedView.isDescendant(of: listButton) == false
+            && touchedView.isDescendant(of: playPauseButton) == false
+            && touchedView.isDescendant(of: timerButton) == false
+            && touchedView.isDescendant(of: listOverlayView) == false
+    }
+}
+
+private final class AudioTherapyPlayerListCardView: UIView {
+
+    private let item: AudioTherapyItem
+    private let imageView = PlayerVideoThumbnailImageView()
+    private let playBadgeView = UIView()
+    private let titleLabel = UILabel()
+    private let countLabel = UILabel()
+
+    init(item: AudioTherapyItem) {
+        self.item = item
+        super.init(frame: .zero)
+        configure()
+        apply(item: item)
+    }
+
+    @available(*, unavailable)
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
+
+    private func configure() {
+        backgroundColor = item.accentColor.withAlphaComponent(0.92)
+        layer.cornerRadius = 8
+        layer.cornerCurve = .continuous
+        layer.borderWidth = 1
+        layer.borderColor = UIColor.white.withAlphaComponent(0.13).cgColor
+        clipsToBounds = true
+        isUserInteractionEnabled = true
+
+        imageView.layer.cornerRadius = 50
+        imageView.layer.cornerCurve = .continuous
+        imageView.layer.masksToBounds = true
+
+        playBadgeView.backgroundColor = item.accentColor.withAlphaComponent(0.78)
+        playBadgeView.layer.cornerRadius = 24
+        playBadgeView.layer.cornerCurve = .continuous
+        playBadgeView.layer.borderWidth = 5
+        playBadgeView.layer.borderColor = UIColor.white.withAlphaComponent(0.42).cgColor
+
+        let playIcon = UIImageView(image: UIImage(systemName: "play.fill"))
+        playIcon.tintColor = .white
+        playIcon.preferredSymbolConfiguration = UIImage.SymbolConfiguration(pointSize: 15, weight: .bold)
+        playBadgeView.addSubview(playIcon)
+        playIcon.translatesAutoresizingMaskIntoConstraints = false
+
+        titleLabel.font = .systemFont(ofSize: 19, weight: .heavy)
+        titleLabel.textColor = .white
+        titleLabel.textAlignment = .center
+        titleLabel.numberOfLines = 2
+        titleLabel.adjustsFontSizeToFitWidth = true
+        titleLabel.minimumScaleFactor = 0.78
+
+        countLabel.font = .systemFont(ofSize: 15, weight: .medium)
+        countLabel.textColor = UIColor.white.withAlphaComponent(0.92)
+        countLabel.textAlignment = .center
+
+        addSubview(imageView)
+        addSubview(playBadgeView)
+        addSubview(titleLabel)
+        addSubview(countLabel)
+        imageView.translatesAutoresizingMaskIntoConstraints = false
+        playBadgeView.translatesAutoresizingMaskIntoConstraints = false
+        titleLabel.translatesAutoresizingMaskIntoConstraints = false
+        countLabel.translatesAutoresizingMaskIntoConstraints = false
+
+        NSLayoutConstraint.activate([
+            imageView.centerXAnchor.constraint(equalTo: centerXAnchor),
+            imageView.topAnchor.constraint(equalTo: topAnchor, constant: 24),
+            imageView.widthAnchor.constraint(equalToConstant: 100),
+            imageView.heightAnchor.constraint(equalToConstant: 100),
+
+            playBadgeView.trailingAnchor.constraint(equalTo: imageView.trailingAnchor, constant: 18),
+            playBadgeView.bottomAnchor.constraint(equalTo: imageView.bottomAnchor, constant: 5),
+            playBadgeView.widthAnchor.constraint(equalToConstant: 48),
+            playBadgeView.heightAnchor.constraint(equalToConstant: 48),
+
+            playIcon.centerXAnchor.constraint(equalTo: playBadgeView.centerXAnchor, constant: 2),
+            playIcon.centerYAnchor.constraint(equalTo: playBadgeView.centerYAnchor),
+
+            titleLabel.topAnchor.constraint(equalTo: imageView.bottomAnchor, constant: 18),
+            titleLabel.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 10),
+            titleLabel.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -10),
+
+            countLabel.topAnchor.constraint(equalTo: titleLabel.bottomAnchor, constant: 7),
+            countLabel.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 10),
+            countLabel.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -10)
+        ])
+    }
+
+    private func apply(item: AudioTherapyItem) {
+        imageView.configure(videoURL: item.videoURL)
+        titleLabel.text = item.title
+        countLabel.text = "\(item.listenerCount)人正在听"
+    }
+}
+
+private final class AudioTherapyPlayerItemTapGestureRecognizer: UITapGestureRecognizer {
+    let item: AudioTherapyItem
+
+    init(item: AudioTherapyItem, target: AnyObject?, action: Selector?) {
+        self.item = item
+        super.init(target: target, action: action)
+    }
+}
+
+private final class PlayerVideoThumbnailImageView: UIImageView {
+
+    private var videoURL: URL?
+    private var thumbnailTask: Task<Void, Never>?
+
+    convenience init() {
+        self.init(frame: .zero)
+    }
+
+    override init(frame: CGRect) {
+        super.init(frame: frame)
+        contentMode = .scaleAspectFill
+        clipsToBounds = true
+        backgroundColor = UIColor.white.withAlphaComponent(0.08)
+    }
+
+    @available(*, unavailable)
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
+
+    func configure(videoURL: URL) {
+        self.videoURL = videoURL
+        image = nil
+        thumbnailTask?.cancel()
+
+        thumbnailTask = Task { [weak self] in
+            let image = await VideoThumbnailLoader.shared.loadThumbnail(for: videoURL)
+            guard !Task.isCancelled else { return }
+            await MainActor.run {
+                guard self?.videoURL == videoURL else { return }
+                self?.image = image
+            }
+        }
+    }
+
+    deinit {
+        thumbnailTask?.cancel()
     }
 }
