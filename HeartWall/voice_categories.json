@@ -7,19 +7,19 @@
                            "category":  "water",
                            "title":  "水声海浪",
                            "file":  "voice_water.json",
-                           "count":  6
+                           "count":  4
                        },
                        {
                            "category":  "rain",
                            "title":  "雨声助眠",
                            "file":  "voice_rain.json",
-                           "count":  5
+                           "count":  4
                        },
                        {
                            "category":  "forest",
                            "title":  "森林风声",
                            "file":  "voice_forest.json",
-                           "count":  4
+                           "count":  3
                        },
                        {
                            "category":  "fire_night",
@@ -31,7 +31,7 @@
                            "category":  "indoor_travel",
                            "title":  "室内通勤",
                            "file":  "voice_indoor_travel.json",
-                           "count":  3
+                           "count":  2
                        }
                    ]
 }

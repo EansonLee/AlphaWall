@@ -16,26 +16,10 @@
         "categoryTitle":  "水声海浪"
     },
     {
-        "title":  "挪威瀑布",
-        "url":  "http://121.199.171.187:4000/api/uploads/nuo_wei_pu_bu_171834.mp4",
-        "originalName":  "挪威瀑布_171834.mp4",
-        "fileName":  "nuo_wei_pu_bu_171834.mp4",
-        "category":  "water",
-        "categoryTitle":  "水声海浪"
-    },
-    {
         "title":  "深蓝秘境",
         "url":  "http://121.199.171.187:4000/api/uploads/shen_lan_mi_jing_171644.mp4",
         "originalName":  "深蓝秘境_171644.mp4",
         "fileName":  "shen_lan_mi_jing_171644.mp4",
-        "category":  "water",
-        "categoryTitle":  "水声海浪"
-    },
-    {
-        "title":  "白噪音 水声 轻松",
-        "url":  "http://121.199.171.187:4000/api/uploads/bai_zao_yin_shui_sheng_qing_song_171836.mp4",
-        "originalName":  "白噪音,水声,轻松_171836.mp4",
-        "fileName":  "bai_zao_yin_shui_sheng_qing_song_171836.mp4",
         "category":  "water",
         "categoryTitle":  "水声海浪"
     },
