@@ -21,8 +21,7 @@ final class VideoThumbnailLoader {
             return cachedImage
         }
 
-        let playbackURL = url.isFileURL ? url : VideoCacheService.shared.playbackURL(for: url)
-        let asset = AVURLAsset(url: playbackURL)
+        let asset = AVURLAsset(url: url)
         let generator = AVAssetImageGenerator(asset: asset)
         generator.appliesPreferredTrackTransform = true
         generator.maximumSize = CGSize(width: 720, height: 1280)
