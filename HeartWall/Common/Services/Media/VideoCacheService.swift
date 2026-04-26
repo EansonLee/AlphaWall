@@ -24,31 +24,54 @@ final class VideoCacheService {
         try? fileManager.createDirectory(at: cacheDirectoryURL, withIntermediateDirectories: true)
     }
 
+    func playbackURL(for remoteURL: URL) -> URL {
+        if let cachedURL = cachedFileURLIfExists(for: remoteURL) {
+            touchFileIfNeeded(at: cachedURL)
+            return cachedURL
+        }
+
+        warmCacheIfNeeded(for: remoteURL)
+        return remoteURL
+    }
+
     func resolvedURL(for remoteURL: URL) async -> URL {
         if let cachedURL = cachedFileURLIfExists(for: remoteURL) {
             touchFileIfNeeded(at: cachedURL)
             return cachedURL
         }
 
+        return await cacheFile(for: remoteURL) ?? remoteURL
+    }
+
+    func warmCacheIfNeeded(for remoteURL: URL) {
+        guard cachedFileURLIfExists(for: remoteURL) == nil else {
+            return
+        }
+
+        guard inflightTask(for: remoteURL) == nil else {
+            return
+        }
+
+        let task = makeDownloadTask(for: remoteURL)
+        storeInflightTask(task, for: remoteURL)
+    }
+
+    private func cacheFile(for remoteURL: URL) async -> URL? {
         if let inflightTask = inflightTask(for: remoteURL) {
             do {
                 return try await inflightTask.value
             } catch {
-                return remoteURL
+                return nil
             }
         }
 
-        let downloadTask = Task<URL, Error> { [weak self] in
-            guard let self else { return remoteURL }
-            defer { self.removeInflightTask(for: remoteURL) }
-            return try await self.downloadAndStore(remoteURL: remoteURL)
-        }
+        let downloadTask = makeDownloadTask(for: remoteURL)
         storeInflightTask(downloadTask, for: remoteURL)
 
         do {
             return try await downloadTask.value
         } catch {
-            return remoteURL
+            return nil
         }
     }
 
@@ -121,6 +144,14 @@ final class VideoCacheService {
             if totalSize <= maxCacheSizeInBytes {
                 break
             }
+        }
+    }
+
+    private func makeDownloadTask(for remoteURL: URL) -> Task<URL, Error> {
+        Task<URL, Error> { [weak self] in
+            guard let self else { throw CancellationError() }
+            defer { self.removeInflightTask(for: remoteURL) }
+            return try await self.downloadAndStore(remoteURL: remoteURL)
         }
     }
 

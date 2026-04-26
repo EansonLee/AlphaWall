@@ -51,16 +51,16 @@ final class LoopingVideoView: UIView {
         configureTask?.cancel()
 
         configureTask = Task { [weak self] in
-            let resolvedURL = url.isFileURL ? url : await VideoCacheService.shared.resolvedURL(for: url)
+            let playbackURL = url.isFileURL ? url : VideoCacheService.shared.playbackURL(for: url)
             guard !Task.isCancelled else { return }
 
             await MainActor.run { [weak self] in
                 guard let self, self.requestedURL == url else { return }
 
-                if self.player == nil || self.resolvedPlaybackURL != resolvedURL {
+                if self.player == nil || self.resolvedPlaybackURL != playbackURL {
                     self.resetPlayer()
 
-                    let item = AVPlayerItem(url: resolvedURL)
+                    let item = AVPlayerItem(url: playbackURL)
                     let player = AVPlayer(playerItem: item)
                     player.actionAtItemEnd = .none
                     player.isMuted = isMuted
@@ -79,7 +79,7 @@ final class LoopingVideoView: UIView {
 
                     self.player = player
                     self.playerLayer.player = player
-                    self.resolvedPlaybackURL = resolvedURL
+                    self.resolvedPlaybackURL = playbackURL
                 }
 
                 self.player?.isMuted = isMuted
