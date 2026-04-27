@@ -15,22 +15,22 @@ final class HomeRootViewController: BaseViewController {
         var title: String {
             switch self {
             case .audio:
-                return "音疗"
+                return "声境"
             case .quote:
-                return "心语"
+                return "灵感"
             case .profile:
-                return "我的"
+                return "私藏"
             }
         }
 
         var iconName: String {
             switch self {
             case .audio:
-                return "waveform.circle"
+                return "speaker.wave.2.fill"
             case .quote:
-                return "book.closed"
+                return "sparkles"
             case .profile:
-                return "person.crop.circle"
+                return "heart.circle.fill"
             }
         }
     }
