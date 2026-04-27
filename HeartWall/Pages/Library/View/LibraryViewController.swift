@@ -64,8 +64,6 @@ final class LibraryViewController: BaseViewController {
     private let dayLabel = UILabel()
     private let greetingLabel = UILabel()
     private let subtitleLabel = UILabel()
-    private let appBadgeView = UIView()
-    private let appBadgeTextLabel = UILabel()
     private let carouselCollectionView: UICollectionView
     private let featuredTitleLabel = UILabel()
     private let featuredSummaryLabel = UILabel()
@@ -122,9 +120,6 @@ final class LibraryViewController: BaseViewController {
         backgroundGradientLayer.frame = backgroundGradientView.bounds
         backgroundGlowLayer.frame = backgroundGlowView.bounds
         bottomGradientLayer.frame = bottomFadeView.bounds
-        if let badgeGradient = appBadgeView.layer.sublayers?.first as? CAGradientLayer {
-            badgeGradient.frame = appBadgeView.bounds
-        }
         updateCarouselLayout()
         updateCarouselCardEmphasis()
     }
@@ -332,22 +327,6 @@ final class LibraryViewController: BaseViewController {
         subtitleLabel.font = UIFont.systemFont(ofSize: 12, weight: .semibold)
         subtitleLabel.textColor = UIColor.white.withAlphaComponent(0.66)
 
-        appBadgeView.layer.cornerRadius = 10
-        appBadgeView.layer.cornerCurve = .continuous
-        appBadgeView.layer.masksToBounds = true
-        let badgeGradient = CAGradientLayer()
-        badgeGradient.colors = [
-            UIColor(red: 1.0, green: 0.88, blue: 0.60, alpha: 1).cgColor,
-            UIColor(red: 0.98, green: 0.64, blue: 0.37, alpha: 1).cgColor
-        ]
-        badgeGradient.startPoint = CGPoint(x: 0, y: 0)
-        badgeGradient.endPoint = CGPoint(x: 1, y: 1)
-        appBadgeView.layer.insertSublayer(badgeGradient, at: 0)
-
-        appBadgeTextLabel.text = "V"
-        appBadgeTextLabel.font = UIFont.systemFont(ofSize: 14, weight: .black)
-        appBadgeTextLabel.textColor = UIColor(red: 0.70, green: 0.42, blue: 0.27, alpha: 1)
-
         let dateStack = UIStackView(arrangedSubviews: [monthLabel, dayLabel])
         dateStack.axis = .vertical
         dateStack.alignment = .leading
@@ -360,13 +339,9 @@ final class LibraryViewController: BaseViewController {
 
         topHeaderView.addSubview(dateStack)
         topHeaderView.addSubview(greetingStack)
-        topHeaderView.addSubview(appBadgeView)
-        appBadgeView.addSubview(appBadgeTextLabel)
 
         dateStack.translatesAutoresizingMaskIntoConstraints = false
         greetingStack.translatesAutoresizingMaskIntoConstraints = false
-        appBadgeView.translatesAutoresizingMaskIntoConstraints = false
-        appBadgeTextLabel.translatesAutoresizingMaskIntoConstraints = false
 
         NSLayoutConstraint.activate([
             topHeaderView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 4),
@@ -379,15 +354,7 @@ final class LibraryViewController: BaseViewController {
 
             greetingStack.leadingAnchor.constraint(equalTo: dateStack.trailingAnchor, constant: 14),
             greetingStack.centerYAnchor.constraint(equalTo: topHeaderView.centerYAnchor, constant: 2),
-            greetingStack.trailingAnchor.constraint(lessThanOrEqualTo: appBadgeView.leadingAnchor, constant: -12),
-
-            appBadgeView.trailingAnchor.constraint(equalTo: topHeaderView.trailingAnchor),
-            appBadgeView.centerYAnchor.constraint(equalTo: topHeaderView.centerYAnchor, constant: 2),
-            appBadgeView.widthAnchor.constraint(equalToConstant: 26),
-            appBadgeView.heightAnchor.constraint(equalToConstant: 26),
-
-            appBadgeTextLabel.centerXAnchor.constraint(equalTo: appBadgeView.centerXAnchor),
-            appBadgeTextLabel.centerYAnchor.constraint(equalTo: appBadgeView.centerYAnchor)
+            greetingStack.trailingAnchor.constraint(lessThanOrEqualTo: topHeaderView.trailingAnchor)
         ])
     }
 
