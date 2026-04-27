@@ -226,41 +226,41 @@ final class AudioTherapyPlayerViewController: BaseViewController {
         configureSecondaryControl(listButton, systemImageName: "square.grid.3x3")
         configureSecondaryControl(timerButton, systemImageName: "timer.circle")
 
-        controlDockShadowView.backgroundColor = UIColor.black.withAlphaComponent(0.18)
+        controlDockShadowView.backgroundColor = UIColor.black.withAlphaComponent(0.12)
         controlDockShadowView.layer.shadowColor = UIColor.black.cgColor
-        controlDockShadowView.layer.shadowOpacity = 0.36
+        controlDockShadowView.layer.shadowOpacity = 0.22
         controlDockShadowView.layer.shadowRadius = 26
         controlDockShadowView.layer.shadowOffset = CGSize(width: 0, height: 14)
         controlDockShadowView.isUserInteractionEnabled = false
 
-        controlDockView.layer.cornerRadius = 38
+        controlDockView.layer.cornerRadius = 30
         controlDockView.layer.cornerCurve = .continuous
         controlDockView.layer.borderWidth = 1
-        controlDockView.layer.borderColor = UIColor.white.withAlphaComponent(0.18).cgColor
+        controlDockView.layer.borderColor = UIColor.white.withAlphaComponent(0.16).cgColor
         controlDockView.clipsToBounds = true
-        controlDockView.backgroundColor = UIColor.black.withAlphaComponent(0.16)
+        controlDockView.backgroundColor = UIColor.black.withAlphaComponent(0.14)
 
-        playGlowView.backgroundColor = UIColor(red: 0.20, green: 0.88, blue: 0.76, alpha: 0.24)
+        playGlowView.backgroundColor = UIColor(red: 0.20, green: 0.88, blue: 0.76, alpha: 0.12)
         playGlowView.layer.shadowColor = UIColor(red: 0.20, green: 0.88, blue: 0.76, alpha: 1).cgColor
-        playGlowView.layer.shadowOpacity = 0.42
-        playGlowView.layer.shadowRadius = 18
+        playGlowView.layer.shadowOpacity = 0.20
+        playGlowView.layer.shadowRadius = 10
         playGlowView.layer.shadowOffset = .zero
         playGlowView.isUserInteractionEnabled = false
 
         var playConfiguration = UIButton.Configuration.filled()
-        playConfiguration.baseBackgroundColor = UIColor(red: 0.07, green: 0.70, blue: 0.60, alpha: 0.96)
+        playConfiguration.baseBackgroundColor = UIColor(red: 0.07, green: 0.68, blue: 0.58, alpha: 0.88)
         playConfiguration.baseForegroundColor = .white
         playConfiguration.contentInsets = .zero
-        playConfiguration.preferredSymbolConfigurationForImage = UIImage.SymbolConfiguration(pointSize: 19, weight: .bold)
+        playConfiguration.preferredSymbolConfigurationForImage = UIImage.SymbolConfiguration(pointSize: 16, weight: .bold)
         playPauseButton.configuration = playConfiguration
-        playPauseButton.layer.cornerRadius = 31
+        playPauseButton.layer.cornerRadius = 24
         playPauseButton.layer.cornerCurve = .continuous
         playPauseButton.layer.borderWidth = 1
-        playPauseButton.layer.borderColor = UIColor.white.withAlphaComponent(0.28).cgColor
+        playPauseButton.layer.borderColor = UIColor.white.withAlphaComponent(0.22).cgColor
         playPauseButton.layer.shadowColor = UIColor(red: 0.20, green: 0.88, blue: 0.76, alpha: 1).cgColor
-        playPauseButton.layer.shadowOpacity = 0.30
-        playPauseButton.layer.shadowRadius = 14
-        playPauseButton.layer.shadowOffset = CGSize(width: 0, height: 8)
+        playPauseButton.layer.shadowOpacity = 0.16
+        playPauseButton.layer.shadowRadius = 8
+        playPauseButton.layer.shadowOffset = CGSize(width: 0, height: 5)
         playPauseButton.clipsToBounds = true
         playPauseButton.addTarget(self, action: #selector(handlePlayPause), for: .touchUpInside)
 
@@ -285,29 +285,29 @@ final class AudioTherapyPlayerViewController: BaseViewController {
             controlDockShadowView.heightAnchor.constraint(equalTo: controlDockView.heightAnchor),
 
             controlDockView.centerXAnchor.constraint(equalTo: view.centerXAnchor),
-            controlDockView.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -24),
-            controlDockView.widthAnchor.constraint(equalToConstant: 258),
-            controlDockView.heightAnchor.constraint(equalToConstant: 76),
+            controlDockView.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -28),
+            controlDockView.widthAnchor.constraint(equalToConstant: 224),
+            controlDockView.heightAnchor.constraint(equalToConstant: 60),
 
             playGlowView.centerXAnchor.constraint(equalTo: playPauseButton.centerXAnchor),
             playGlowView.centerYAnchor.constraint(equalTo: playPauseButton.centerYAnchor),
-            playGlowView.widthAnchor.constraint(equalToConstant: 72),
-            playGlowView.heightAnchor.constraint(equalToConstant: 72),
+            playGlowView.widthAnchor.constraint(equalToConstant: 54),
+            playGlowView.heightAnchor.constraint(equalToConstant: 54),
 
             playPauseButton.centerXAnchor.constraint(equalTo: controlDockView.contentView.centerXAnchor),
             playPauseButton.centerYAnchor.constraint(equalTo: controlDockView.contentView.centerYAnchor),
-            playPauseButton.widthAnchor.constraint(equalToConstant: 62),
-            playPauseButton.heightAnchor.constraint(equalToConstant: 62),
+            playPauseButton.widthAnchor.constraint(equalToConstant: 48),
+            playPauseButton.heightAnchor.constraint(equalToConstant: 48),
 
-            listButton.leadingAnchor.constraint(equalTo: controlDockView.contentView.leadingAnchor, constant: 22),
+            listButton.leadingAnchor.constraint(equalTo: controlDockView.contentView.leadingAnchor, constant: 18),
             listButton.centerYAnchor.constraint(equalTo: playPauseButton.centerYAnchor),
-            listButton.widthAnchor.constraint(equalToConstant: 50),
-            listButton.heightAnchor.constraint(equalToConstant: 50),
+            listButton.widthAnchor.constraint(equalToConstant: 42),
+            listButton.heightAnchor.constraint(equalToConstant: 42),
 
-            timerButton.trailingAnchor.constraint(equalTo: controlDockView.contentView.trailingAnchor, constant: -22),
+            timerButton.trailingAnchor.constraint(equalTo: controlDockView.contentView.trailingAnchor, constant: -18),
             timerButton.centerYAnchor.constraint(equalTo: playPauseButton.centerYAnchor),
-            timerButton.widthAnchor.constraint(equalToConstant: 50),
-            timerButton.heightAnchor.constraint(equalToConstant: 50)
+            timerButton.widthAnchor.constraint(equalToConstant: 42),
+            timerButton.heightAnchor.constraint(equalToConstant: 42)
         ])
     }
 
@@ -317,9 +317,9 @@ final class AudioTherapyPlayerViewController: BaseViewController {
         configuration.baseForegroundColor = UIColor.white.withAlphaComponent(0.82)
         configuration.contentInsets = .zero
         configuration.image = UIImage(systemName: systemImageName)
-        configuration.preferredSymbolConfigurationForImage = UIImage.SymbolConfiguration(pointSize: 17, weight: .bold)
+        configuration.preferredSymbolConfigurationForImage = UIImage.SymbolConfiguration(pointSize: 15, weight: .semibold)
         button.configuration = configuration
-        button.layer.cornerRadius = 25
+        button.layer.cornerRadius = 21
         button.layer.cornerCurve = .continuous
         button.layer.borderWidth = 1
         button.layer.borderColor = UIColor.white.withAlphaComponent(0.10).cgColor
@@ -568,8 +568,8 @@ final class AudioTherapyPlayerViewController: BaseViewController {
     private func updatePlayPauseButton() {
         let imageName = isPlaying ? "pause.fill" : "play.fill"
         playPauseButton.configuration?.image = UIImage(systemName: imageName)
-        playGlowView.alpha = isPlaying ? 1 : 0.45
-        playPauseButton.layer.shadowOpacity = isPlaying ? 0.30 : 0.12
+        playGlowView.alpha = isPlaying ? 0.78 : 0.30
+        playPauseButton.layer.shadowOpacity = isPlaying ? 0.16 : 0.08
     }
 
     private func updateTimerButtonAppearance() {
@@ -598,7 +598,7 @@ final class AudioTherapyPlayerViewController: BaseViewController {
 
     private func applySecondaryControlState(button: UIButton, isActive: Bool) {
         button.configuration?.baseBackgroundColor = isActive
-            ? UIColor(red: 0.14, green: 0.72, blue: 0.64, alpha: 0.24)
+            ? UIColor(red: 0.14, green: 0.72, blue: 0.64, alpha: 0.18)
             : UIColor.white.withAlphaComponent(0.075)
         button.configuration?.baseForegroundColor = isActive
             ? UIColor(red: 0.74, green: 1.00, blue: 0.94, alpha: 0.95)
