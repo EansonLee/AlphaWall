@@ -151,7 +151,7 @@ final class ProfileViewController: BaseViewController {
         headerStackView.spacing = 4
         headerStackView.isUserInteractionEnabled = false
 
-        eyebrowLabel.text = "HEARTWALL"
+        eyebrowLabel.text = "心境壁纸"
         eyebrowLabel.font = .monospacedSystemFont(ofSize: 11, weight: .semibold)
         eyebrowLabel.textColor = UIColor(red: 1.00, green: 0.86, blue: 0.62, alpha: 0.86)
 
