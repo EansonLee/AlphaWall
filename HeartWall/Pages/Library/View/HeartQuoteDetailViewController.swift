@@ -534,12 +534,15 @@ final class HeartQuoteDetailViewController: BaseViewController {
     private func updateChromeVisibility(animated: Bool) {
         let changes = {
             self.headerView.alpha = 1
-            self.curationCardView.alpha = 1
+            self.titleLabel.alpha = self.isChromeVisible ? 1 : 0
+            self.pageCounterLabel.alpha = self.isChromeVisible ? 1 : 0
+            self.vipBadgeView.alpha = self.isChromeVisible ? 1 : 0
+            self.curationCardView.alpha = self.isChromeVisible ? 1 : 0
             self.actionBarView.alpha = self.isChromeVisible ? 1 : 0
-            self.lockStatusLabel.alpha = self.isChromeVisible ? 0.18 : 1
-            self.dateLabel.alpha = self.isChromeVisible ? 0.18 : 1
-            self.timeLabel.alpha = self.isChromeVisible ? 0.18 : 1
-            self.dimOverlayView.backgroundColor = UIColor.black.withAlphaComponent(self.isChromeVisible ? 0.22 : 0.16)
+            self.lockStatusLabel.alpha = self.isChromeVisible ? 1 : 0
+            self.dateLabel.alpha = self.isChromeVisible ? 1 : 0
+            self.timeLabel.alpha = self.isChromeVisible ? 1 : 0
+            self.dimOverlayView.backgroundColor = UIColor.black.withAlphaComponent(self.isChromeVisible ? 0.22 : 0.06)
         }
 
         guard animated, !UIAccessibility.isReduceMotionEnabled else {
@@ -551,6 +554,7 @@ final class HeartQuoteDetailViewController: BaseViewController {
         let hiddenBottomTransform = CGAffineTransform(translationX: 0, y: 16)
 
         if isChromeVisible {
+            curationCardView.transform = hiddenBottomTransform
             actionBarView.transform = hiddenBottomTransform
         }
 
@@ -561,7 +565,7 @@ final class HeartQuoteDetailViewController: BaseViewController {
         ) {
             changes()
             self.headerView.transform = shownTransform
-            self.curationCardView.transform = shownTransform
+            self.curationCardView.transform = self.isChromeVisible ? shownTransform : hiddenBottomTransform
             self.actionBarView.transform = self.isChromeVisible ? shownTransform : hiddenBottomTransform
         }
     }
