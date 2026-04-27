@@ -50,6 +50,7 @@ final class ProfileViewController: BaseViewController {
     private let dimView = UIView()
     private let scrollView = UIScrollView()
     private let contentView = UIView()
+    private let pageStackView = UIStackView()
     private let headerStackView = UIStackView()
     private let eyebrowLabel = UILabel()
     private let titleLabel = UILabel()
@@ -67,8 +68,8 @@ final class ProfileViewController: BaseViewController {
     override func setupUI() {
         view.backgroundColor = UIColor(red: 0.06, green: 0.10, blue: 0.14, alpha: 1)
         configureBackground()
-        configureHeader()
         configureContent()
+        configureHeader()
         renderMenuItems()
     }
 
@@ -116,27 +117,25 @@ final class ProfileViewController: BaseViewController {
         [eyebrowLabel, titleLabel, subtitleLabel].forEach {
             headerStackView.addArrangedSubview($0)
         }
-
-        view.addSubview(headerStackView)
-        headerStackView.translatesAutoresizingMaskIntoConstraints = false
-
-        NSLayoutConstraint.activate([
-            headerStackView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 28),
-            headerStackView.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 24),
-            headerStackView.trailingAnchor.constraint(lessThanOrEqualTo: view.trailingAnchor, constant: -24)
-        ])
     }
 
     private func configureContent() {
         scrollView.showsVerticalScrollIndicator = false
         scrollView.contentInsetAdjustmentBehavior = .never
+        scrollView.alwaysBounceVertical = true
         view.addSubview(scrollView)
         scrollView.translatesAutoresizingMaskIntoConstraints = false
 
         scrollView.addSubview(contentView)
         contentView.translatesAutoresizingMaskIntoConstraints = false
 
-        menuPanelView.layer.cornerRadius = 22
+        pageStackView.axis = .vertical
+        pageStackView.alignment = .fill
+        pageStackView.spacing = 28
+        contentView.addSubview(pageStackView)
+        pageStackView.translatesAutoresizingMaskIntoConstraints = false
+
+        menuPanelView.layer.cornerRadius = 20
         menuPanelView.layer.cornerCurve = .continuous
         menuPanelView.clipsToBounds = true
         menuPanelView.layer.borderWidth = 1
@@ -150,15 +149,18 @@ final class ProfileViewController: BaseViewController {
         versionLabel.textColor = UIColor.white.withAlphaComponent(0.44)
         versionLabel.textAlignment = .center
 
-        contentView.addSubview(menuPanelView)
         menuPanelView.contentView.addSubview(menuStackView)
-        contentView.addSubview(versionLabel)
+        pageStackView.addArrangedSubview(headerStackView)
+        pageStackView.addArrangedSubview(menuPanelView)
+        pageStackView.addArrangedSubview(versionLabel)
         menuPanelView.translatesAutoresizingMaskIntoConstraints = false
         menuStackView.translatesAutoresizingMaskIntoConstraints = false
         versionLabel.translatesAutoresizingMaskIntoConstraints = false
+        pageStackView.setCustomSpacing(30, after: headerStackView)
+        pageStackView.setCustomSpacing(24, after: menuPanelView)
 
         NSLayoutConstraint.activate([
-            scrollView.topAnchor.constraint(equalTo: view.topAnchor),
+            scrollView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor),
             scrollView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
             scrollView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
             scrollView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
@@ -168,21 +170,17 @@ final class ProfileViewController: BaseViewController {
             contentView.trailingAnchor.constraint(equalTo: scrollView.contentLayoutGuide.trailingAnchor),
             contentView.bottomAnchor.constraint(equalTo: scrollView.contentLayoutGuide.bottomAnchor, constant: -116),
             contentView.widthAnchor.constraint(equalTo: scrollView.frameLayoutGuide.widthAnchor),
-            contentView.heightAnchor.constraint(greaterThanOrEqualTo: scrollView.frameLayoutGuide.heightAnchor, constant: 32),
+            contentView.heightAnchor.constraint(greaterThanOrEqualTo: scrollView.frameLayoutGuide.heightAnchor),
 
-            menuPanelView.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 154),
-            menuPanelView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 22),
-            menuPanelView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -22),
+            pageStackView.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 28),
+            pageStackView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 22),
+            pageStackView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -22),
+            pageStackView.bottomAnchor.constraint(lessThanOrEqualTo: contentView.bottomAnchor),
 
             menuStackView.topAnchor.constraint(equalTo: menuPanelView.contentView.topAnchor, constant: 8),
             menuStackView.leadingAnchor.constraint(equalTo: menuPanelView.contentView.leadingAnchor),
             menuStackView.trailingAnchor.constraint(equalTo: menuPanelView.contentView.trailingAnchor),
-            menuStackView.bottomAnchor.constraint(equalTo: menuPanelView.contentView.bottomAnchor, constant: -8),
-
-            versionLabel.topAnchor.constraint(equalTo: menuPanelView.bottomAnchor, constant: 26),
-            versionLabel.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 22),
-            versionLabel.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -22),
-            versionLabel.bottomAnchor.constraint(lessThanOrEqualTo: contentView.bottomAnchor)
+            menuStackView.bottomAnchor.constraint(equalTo: menuPanelView.contentView.bottomAnchor, constant: -8)
         ])
     }
 
