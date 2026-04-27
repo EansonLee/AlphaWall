@@ -23,6 +23,8 @@ final class AudioTherapyViewController: BaseViewController {
     private let idleCacheStartDelay: Duration = .seconds(3)
     private let idleCacheResumeDelay: Duration = .seconds(2)
     private let initialThumbnailTimeout: Duration = .seconds(6)
+    private let heroTopBaseline: CGFloat = 150
+    private let heroHeaderSpacing: CGFloat = 24
 
     private let backgroundImageView = UIImageView()
     private let backgroundVideoView = LoopingVideoView()
@@ -46,6 +48,7 @@ final class AudioTherapyViewController: BaseViewController {
     private let categoryStackView = UIStackView()
     private let cardsGridView = UIStackView()
     private var categoryButtons: [UIButton] = []
+    private var heroTopConstraint: NSLayoutConstraint?
 
     private var items: [AudioTherapyItem] {
         catalog.items
@@ -87,6 +90,7 @@ final class AudioTherapyViewController: BaseViewController {
     override func viewDidLayoutSubviews() {
         super.viewDidLayoutSubviews()
         bottomFadeLayer.frame = bottomFadeView.bounds
+        updateHeroTopConstraint()
         categoryButtons.forEach {
             $0.layer.cornerRadius = $0.bounds.height * 0.5
         }
@@ -238,8 +242,8 @@ final class AudioTherapyViewController: BaseViewController {
         listHeaderLabel.translatesAutoresizingMaskIntoConstraints = false
         cardsGridView.translatesAutoresizingMaskIntoConstraints = false
 
-        let heroTopBaselineConstraint = heroPanelView.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 150)
-        heroTopBaselineConstraint.priority = .defaultHigh
+        let heroTopConstraint = heroPanelView.topAnchor.constraint(equalTo: contentView.topAnchor, constant: heroTopBaseline)
+        self.heroTopConstraint = heroTopConstraint
 
         NSLayoutConstraint.activate([
             scrollView.topAnchor.constraint(equalTo: view.topAnchor),
@@ -254,8 +258,7 @@ final class AudioTherapyViewController: BaseViewController {
             contentView.widthAnchor.constraint(equalTo: scrollView.frameLayoutGuide.widthAnchor),
             contentView.heightAnchor.constraint(greaterThanOrEqualTo: scrollView.frameLayoutGuide.heightAnchor, constant: 140),
 
-            heroTopBaselineConstraint,
-            heroPanelView.topAnchor.constraint(greaterThanOrEqualTo: headerStackView.bottomAnchor, constant: 24),
+            heroTopConstraint,
             heroPanelView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 22),
             heroPanelView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -22),
             heroPanelView.heightAnchor.constraint(equalToConstant: 282),
@@ -279,6 +282,18 @@ final class AudioTherapyViewController: BaseViewController {
             cardsGridView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -22),
             cardsGridView.bottomAnchor.constraint(lessThanOrEqualTo: contentView.bottomAnchor)
         ])
+    }
+
+    private func updateHeroTopConstraint() {
+        guard let heroTopConstraint else { return }
+
+        let headerBottomInScrollFrame = headerStackView.frame.maxY - scrollView.frame.minY
+        let requiredTop = ceil(headerBottomInScrollFrame + heroHeaderSpacing)
+        let nextTop = max(heroTopBaseline, requiredTop)
+
+        if abs(heroTopConstraint.constant - nextTop) > 0.5 {
+            heroTopConstraint.constant = nextTop
+        }
     }
 
     private func configureHeroPanel() {
