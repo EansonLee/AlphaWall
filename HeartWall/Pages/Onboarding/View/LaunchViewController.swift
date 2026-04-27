@@ -22,8 +22,6 @@ final class LaunchViewController: BaseViewController {
     private let brandStackView = UIStackView()
     private let titleLabel = UILabel()
     private let subtitleLabel = UILabel()
-    private let markView = UIView()
-    private let markImageView = UIImageView()
 
     // MARK: - Lifecycle
 
@@ -77,25 +75,10 @@ final class LaunchViewController: BaseViewController {
         subtitleLabel.numberOfLines = 0
         subtitleLabel.adjustsFontForContentSizeCategory = true
 
-        markView.backgroundColor = UIColor.white.withAlphaComponent(0.12)
-        markView.layer.cornerRadius = 18
-        markView.layer.cornerCurve = .continuous
-        markView.layer.borderWidth = 1
-        markView.layer.borderColor = UIColor.white.withAlphaComponent(0.20).cgColor
-
-        markImageView.image = UIImage(systemName: "heart.fill")
-        markImageView.tintColor = UIColor.white.withAlphaComponent(0.92)
-        markImageView.contentMode = .scaleAspectFit
-        markImageView.preferredSymbolConfiguration = UIImage.SymbolConfiguration(pointSize: 18, weight: .semibold)
-
-        markView.addSubview(markImageView)
-        markImageView.translatesAutoresizingMaskIntoConstraints = false
-
         brandStackView.axis = .vertical
         brandStackView.alignment = .leading
-        brandStackView.spacing = 10
+        brandStackView.spacing = 8
         brandStackView.alpha = 0
-        brandStackView.addArrangedSubview(markView)
         brandStackView.addArrangedSubview(titleLabel)
         brandStackView.addArrangedSubview(subtitleLabel)
 
@@ -122,12 +105,6 @@ final class LaunchViewController: BaseViewController {
             bottomScrimView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
             bottomScrimView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
             bottomScrimView.heightAnchor.constraint(equalTo: view.heightAnchor, multiplier: 0.44),
-
-            markView.widthAnchor.constraint(equalToConstant: 54),
-            markView.heightAnchor.constraint(equalTo: markView.widthAnchor),
-
-            markImageView.centerXAnchor.constraint(equalTo: markView.centerXAnchor),
-            markImageView.centerYAnchor.constraint(equalTo: markView.centerYAnchor),
 
             brandStackView.leadingAnchor.constraint(equalTo: view.layoutMarginsGuide.leadingAnchor),
             brandStackView.trailingAnchor.constraint(lessThanOrEqualTo: view.layoutMarginsGuide.trailingAnchor),
