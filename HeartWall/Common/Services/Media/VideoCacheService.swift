@@ -55,6 +55,11 @@ final class VideoCacheService {
         }
     }
 
+    func localVideoURL(for remoteURL: URL) async throws -> URL {
+        guard !remoteURL.isFileURL else { return remoteURL }
+        return try await cacheRemoteVideoIfNeeded(for: remoteURL)
+    }
+
     private func cacheRemoteVideoIfNeeded(for remoteURL: URL) async throws -> URL {
         if let cachedURL = cachedFileURLIfExists(for: remoteURL) {
             touchFileIfNeeded(at: cachedURL)

@@ -5,8 +5,13 @@
 
 import UIKit
 import AVFoundation
+import Photos
 
 final class HeartQuoteDetailViewController: BaseViewController {
+
+    private enum PhotoLibrarySaveError: Error {
+        case notAuthorized
+    }
 
     // MARK: - Properties
 
@@ -34,8 +39,6 @@ final class HeartQuoteDetailViewController: BaseViewController {
     private let backButton = UIButton(type: .system)
     private let titleLabel = UILabel()
     private let pageCounterLabel = UILabel()
-    private let vipBadgeView = UIView()
-    private let vipBadgeLabel = UILabel()
     private let curationCardView = UIVisualEffectView(effect: UIBlurEffect(style: .systemUltraThinMaterialDark))
     private let curationEyebrowLabel = UILabel()
     private let curationTitleLabel = UILabel()
@@ -77,9 +80,6 @@ final class HeartQuoteDetailViewController: BaseViewController {
         super.viewDidLayoutSubviews()
         topFadeLayer.frame = topFadeView.bounds
         bottomFadeLayer.frame = bottomFadeView.bounds
-        if let vipGradient = vipBadgeView.layer.sublayers?.first as? CAGradientLayer {
-            vipGradient.frame = vipBadgeView.bounds
-        }
     }
 
     // MARK: - Setup
@@ -227,35 +227,14 @@ final class HeartQuoteDetailViewController: BaseViewController {
         backButton.layer.cornerCurve = .continuous
         backButton.addTarget(self, action: #selector(handleBack), for: .touchUpInside)
 
-        vipBadgeView.layer.cornerRadius = 5
-        vipBadgeView.layer.cornerCurve = .continuous
-        vipBadgeView.clipsToBounds = true
-        let gradient = CAGradientLayer()
-        gradient.colors = [
-            UIColor(red: 1.00, green: 0.90, blue: 0.68, alpha: 1).cgColor,
-            UIColor(red: 0.98, green: 0.63, blue: 0.40, alpha: 1).cgColor
-        ]
-        gradient.startPoint = CGPoint(x: 0, y: 0)
-        gradient.endPoint = CGPoint(x: 1, y: 1)
-        vipBadgeView.layer.insertSublayer(gradient, at: 0)
-
-        vipBadgeLabel.text = "V"
-        vipBadgeLabel.font = .systemFont(ofSize: 13, weight: .black)
-        vipBadgeLabel.textColor = UIColor(red: 0.64, green: 0.38, blue: 0.25, alpha: 1)
-        vipBadgeLabel.textAlignment = .center
-
         view.addSubview(headerView)
         headerView.addSubview(backButton)
         headerView.addSubview(titleLabel)
         headerView.addSubview(pageCounterLabel)
-        headerView.addSubview(vipBadgeView)
-        vipBadgeView.addSubview(vipBadgeLabel)
         headerView.translatesAutoresizingMaskIntoConstraints = false
         backButton.translatesAutoresizingMaskIntoConstraints = false
         titleLabel.translatesAutoresizingMaskIntoConstraints = false
         pageCounterLabel.translatesAutoresizingMaskIntoConstraints = false
-        vipBadgeView.translatesAutoresizingMaskIntoConstraints = false
-        vipBadgeLabel.translatesAutoresizingMaskIntoConstraints = false
 
         NSLayoutConstraint.activate([
             headerView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 10),
@@ -270,19 +249,11 @@ final class HeartQuoteDetailViewController: BaseViewController {
 
             titleLabel.topAnchor.constraint(equalTo: headerView.topAnchor, constant: 2),
             titleLabel.leadingAnchor.constraint(equalTo: backButton.trailingAnchor, constant: 12),
-            titleLabel.trailingAnchor.constraint(lessThanOrEqualTo: vipBadgeView.leadingAnchor, constant: -14),
+            titleLabel.trailingAnchor.constraint(lessThanOrEqualTo: headerView.trailingAnchor),
 
             pageCounterLabel.topAnchor.constraint(equalTo: titleLabel.bottomAnchor, constant: 2),
             pageCounterLabel.leadingAnchor.constraint(equalTo: titleLabel.leadingAnchor),
-            pageCounterLabel.trailingAnchor.constraint(lessThanOrEqualTo: vipBadgeView.leadingAnchor, constant: -14),
-
-            vipBadgeView.trailingAnchor.constraint(equalTo: headerView.trailingAnchor, constant: -2),
-            vipBadgeView.centerYAnchor.constraint(equalTo: headerView.centerYAnchor),
-            vipBadgeView.widthAnchor.constraint(equalToConstant: 23),
-            vipBadgeView.heightAnchor.constraint(equalToConstant: 23),
-
-            vipBadgeLabel.centerXAnchor.constraint(equalTo: vipBadgeView.centerXAnchor),
-            vipBadgeLabel.centerYAnchor.constraint(equalTo: vipBadgeView.centerYAnchor)
+            pageCounterLabel.trailingAnchor.constraint(lessThanOrEqualTo: headerView.trailingAnchor)
         ])
     }
 
@@ -516,16 +487,17 @@ final class HeartQuoteDetailViewController: BaseViewController {
     @objc
     private func handleDownload() {
         UIImpactFeedbackGenerator(style: .medium).impactOccurred()
-        let subscriptionViewController = SubscriptionViewController(videoResource: OnboardingVideoProvider.shared.selectedResource)
-        subscriptionViewController.hidesBottomBarWhenPushed = true
+        saveButton.isEnabled = false
+        saveButton.configuration?.showsActivityIndicator = true
 
-        if let navigationController {
-            navigationController.pushViewController(subscriptionViewController, animated: true)
-        } else {
-            let navigationController = UINavigationController(rootViewController: subscriptionViewController)
-            navigationController.modalPresentationStyle = .fullScreen
-            navigationController.setNavigationBarHidden(true, animated: false)
-            present(navigationController, animated: true)
+        Task { [weak self, page] in
+            do {
+                let localURL = try await VideoCacheService.shared.localVideoURL(for: page.videoURL)
+                try await Self.saveVideoToPhotoLibrary(localURL)
+                await self?.finishSavingWallpaper(title: "已保存", message: "壁纸已保存到系统相册。")
+            } catch {
+                await self?.finishSavingWallpaper(title: "保存失败", message: "请检查相册权限或稍后重试。")
+            }
         }
     }
 
@@ -536,7 +508,6 @@ final class HeartQuoteDetailViewController: BaseViewController {
             self.headerView.alpha = 1
             self.titleLabel.alpha = self.isChromeVisible ? 1 : 0
             self.pageCounterLabel.alpha = self.isChromeVisible ? 1 : 0
-            self.vipBadgeView.alpha = self.isChromeVisible ? 1 : 0
             self.curationCardView.alpha = self.isChromeVisible ? 1 : 0
             self.actionBarView.alpha = self.isChromeVisible ? 1 : 0
             self.lockStatusLabel.alpha = self.isChromeVisible ? 1 : 0
@@ -668,6 +639,26 @@ final class HeartQuoteDetailViewController: BaseViewController {
         let renderer = UIGraphicsImageRenderer(bounds: wallpaperVideoView.bounds)
         return renderer.image { context in
             wallpaperVideoView.layer.render(in: context.cgContext)
+        }
+    }
+
+    @MainActor
+    private func finishSavingWallpaper(title: String, message: String) {
+        saveButton.isEnabled = true
+        saveButton.configuration?.showsActivityIndicator = false
+        let alert = UIAlertController(title: title, message: message, preferredStyle: .alert)
+        alert.addAction(UIAlertAction(title: "确定", style: .default))
+        present(alert, animated: true)
+    }
+
+    private static func saveVideoToPhotoLibrary(_ fileURL: URL) async throws {
+        let status = await PHPhotoLibrary.requestAuthorization(for: .addOnly)
+        guard status == .authorized || status == .limited else {
+            throw PhotoLibrarySaveError.notAuthorized
+        }
+
+        try await PHPhotoLibrary.shared().performChanges {
+            PHAssetChangeRequest.creationRequestForAssetFromVideo(atFileURL: fileURL)
         }
     }
 

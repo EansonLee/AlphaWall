@@ -9,7 +9,6 @@ final class LaunchViewController: BaseViewController {
 
     // MARK: - Properties
 
-    private let videoResource = OnboardingVideoProvider.shared.selectedResource
     private var hasTransitioned = false
     private var transitionWorkItem: DispatchWorkItem?
     private var didAnimateEntrance = false
@@ -116,14 +115,14 @@ final class LaunchViewController: BaseViewController {
 
     @objc
     private func handleSkip() {
-        showSubscription()
+        showHome()
     }
 
     private func scheduleTransitionIfNeeded() {
         guard transitionWorkItem == nil else { return }
 
         let workItem = DispatchWorkItem { [weak self] in
-            self?.showSubscription()
+            self?.showHome()
         }
         transitionWorkItem = workItem
 
@@ -134,19 +133,19 @@ final class LaunchViewController: BaseViewController {
         2.8
     }
 
-    private func showSubscription() {
+    private func showHome() {
         guard !hasTransitioned, let navigationController else { return }
         hasTransitioned = true
         transitionWorkItem?.cancel()
 
-        let subscriptionViewController = SubscriptionViewController(videoResource: videoResource)
+        let homeRootViewController = HomeRootViewController()
 
         UIView.transition(
             with: navigationController.view,
             duration: UIAccessibility.isReduceMotionEnabled ? 0.15 : 0.45,
             options: [.transitionCrossDissolve, .allowAnimatedContent]
         ) {
-            navigationController.setViewControllers([subscriptionViewController], animated: false)
+            navigationController.setViewControllers([homeRootViewController], animated: false)
         }
     }
 
