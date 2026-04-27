@@ -238,6 +238,9 @@ final class AudioTherapyViewController: BaseViewController {
         listHeaderLabel.translatesAutoresizingMaskIntoConstraints = false
         cardsGridView.translatesAutoresizingMaskIntoConstraints = false
 
+        let heroTopBaselineConstraint = heroPanelView.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 150)
+        heroTopBaselineConstraint.priority = .defaultHigh
+
         NSLayoutConstraint.activate([
             scrollView.topAnchor.constraint(equalTo: view.topAnchor),
             scrollView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
@@ -251,7 +254,8 @@ final class AudioTherapyViewController: BaseViewController {
             contentView.widthAnchor.constraint(equalTo: scrollView.frameLayoutGuide.widthAnchor),
             contentView.heightAnchor.constraint(greaterThanOrEqualTo: scrollView.frameLayoutGuide.heightAnchor, constant: 140),
 
-            heroPanelView.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 150),
+            heroTopBaselineConstraint,
+            heroPanelView.topAnchor.constraint(greaterThanOrEqualTo: headerStackView.bottomAnchor, constant: 24),
             heroPanelView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 22),
             heroPanelView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -22),
             heroPanelView.heightAnchor.constraint(equalToConstant: 282),
