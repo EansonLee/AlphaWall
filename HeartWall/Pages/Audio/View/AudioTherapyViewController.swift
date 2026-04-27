@@ -41,7 +41,6 @@ final class AudioTherapyViewController: BaseViewController {
     private let heroCategoryLabel = UILabel()
     private let heroTitleLabel = UILabel()
     private let heroMetaLabel = UILabel()
-    private let heroActionButton = UIButton(type: .system)
     private let listHeaderLabel = UILabel()
     private let categoryScrollView = UIScrollView()
     private let categoryStackView = UIStackView()
@@ -309,27 +308,10 @@ final class AudioTherapyViewController: BaseViewController {
         heroMetaLabel.textColor = UIColor.white.withAlphaComponent(0.62)
         heroMetaLabel.numberOfLines = 2
 
-        var actionConfiguration = UIButton.Configuration.filled()
-        actionConfiguration.image = UIImage(systemName: "waveform.circle.fill")
-        actionConfiguration.imagePadding = 7
-        actionConfiguration.title = "进入声场"
-        actionConfiguration.baseBackgroundColor = UIColor(red: 0.06, green: 0.64, blue: 0.55, alpha: 0.92)
-        actionConfiguration.baseForegroundColor = .white
-        actionConfiguration.cornerStyle = .capsule
-        actionConfiguration.contentInsets = NSDirectionalEdgeInsets(top: 0, leading: 16, bottom: 0, trailing: 18)
-        actionConfiguration.preferredSymbolConfigurationForImage = UIImage.SymbolConfiguration(pointSize: 15, weight: .semibold)
-        actionConfiguration.titleTextAttributesTransformer = UIConfigurationTextAttributesTransformer { incoming in
-            var outgoing = incoming
-            outgoing.font = .systemFont(ofSize: 14, weight: .bold)
-            return outgoing
-        }
-        heroActionButton.configuration = actionConfiguration
-        heroActionButton.addTarget(self, action: #selector(handleHeroTap), for: .touchUpInside)
-
         let tapGesture = UITapGestureRecognizer(target: self, action: #selector(handleHeroTap))
         heroPanelView.addGestureRecognizer(tapGesture)
 
-        [heroImageView, heroAccentView, heroCategoryLabel, heroTitleLabel, heroMetaLabel, heroActionButton].forEach {
+        [heroImageView, heroAccentView, heroCategoryLabel, heroTitleLabel, heroMetaLabel].forEach {
             heroPanelView.contentView.addSubview($0)
             $0.translatesAutoresizingMaskIntoConstraints = false
         }
@@ -354,12 +336,8 @@ final class AudioTherapyViewController: BaseViewController {
             heroTitleLabel.topAnchor.constraint(equalTo: heroCategoryLabel.bottomAnchor, constant: 4),
 
             heroMetaLabel.leadingAnchor.constraint(equalTo: heroPanelView.contentView.leadingAnchor, constant: 18),
-            heroMetaLabel.trailingAnchor.constraint(lessThanOrEqualTo: heroActionButton.leadingAnchor, constant: -12),
-            heroMetaLabel.bottomAnchor.constraint(equalTo: heroPanelView.contentView.bottomAnchor, constant: -22),
-
-            heroActionButton.trailingAnchor.constraint(equalTo: heroPanelView.contentView.trailingAnchor, constant: -18),
-            heroActionButton.bottomAnchor.constraint(equalTo: heroPanelView.contentView.bottomAnchor, constant: -18),
-            heroActionButton.heightAnchor.constraint(equalToConstant: 42)
+            heroMetaLabel.trailingAnchor.constraint(equalTo: heroPanelView.contentView.trailingAnchor, constant: -18),
+            heroMetaLabel.bottomAnchor.constraint(equalTo: heroPanelView.contentView.bottomAnchor, constant: -22)
         ])
     }
 
@@ -406,7 +384,7 @@ final class AudioTherapyViewController: BaseViewController {
         heroAccentView.backgroundColor = item.accentColor.mixed(with: UIColor(red: 0.17, green: 0.90, blue: 0.82, alpha: 1), amount: 0.46)
         heroCategoryLabel.text = "\(item.categoryTitle.uppercased()) · 今日声场"
         heroTitleLabel.text = item.title
-        heroMetaLabel.text = "\(item.listenerCount)人正在听 · 适合锁屏前的沉浸片刻"
+        heroMetaLabel.text = "\(item.listenerCount)人正在听 · 轻触卡片进入声场"
         listHeaderLabel.text = "\(selectedCategory?.title ?? item.categoryTitle)声场序列"
         heroPanelView.accessibilityLabel = "\(item.title)，\(item.listenerCount)人正在听，进入声场"
     }
