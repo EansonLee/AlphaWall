@@ -61,7 +61,7 @@ final class LaunchViewController: BaseViewController {
             UIColor.black.withAlphaComponent(0.64)
         ])
 
-        titleLabel.text = "心境壁纸"
+        titleLabel.text = "栖幕壁纸"
         titleLabel.font = .systemFont(ofSize: 38, weight: .semibold)
         titleLabel.textColor = UIColor.white.withAlphaComponent(0.98)
         titleLabel.textAlignment = .left
