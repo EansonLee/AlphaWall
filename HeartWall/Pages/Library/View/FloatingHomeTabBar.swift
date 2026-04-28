@@ -119,7 +119,6 @@ private final class FloatingHomeTabBarButton: UIButton {
     private let pulseView = UIView()
     private let capsuleView = UIVisualEffectView(effect: UIBlurEffect(style: .systemThinMaterialDark))
     private let capsuleTintView = UIView()
-    private let activeLineView = UIView()
     private let contentStackView = UIStackView()
     private let iconImageView = UIImageView()
     private let titleLabelView = UILabel()
@@ -150,7 +149,6 @@ private final class FloatingHomeTabBarButton: UIButton {
         let capsuleRadius = capsuleView.bounds.height * 0.5
         capsuleView.layer.cornerRadius = capsuleRadius
         pulseView.layer.cornerRadius = pulseView.bounds.height * 0.5
-        activeLineView.layer.cornerRadius = activeLineView.bounds.height * 0.5
         statusDotView.layer.cornerRadius = statusDotView.bounds.height * 0.5
     }
 
@@ -218,15 +216,6 @@ private final class FloatingHomeTabBarButton: UIButton {
         capsuleView.contentView.addSubview(capsuleTintView)
         capsuleTintView.translatesAutoresizingMaskIntoConstraints = false
 
-        activeLineView.backgroundColor = UIColor(red: 0.70, green: 0.92, blue: 1.00, alpha: 0.94)
-        activeLineView.layer.shadowColor = UIColor(red: 0.70, green: 0.92, blue: 1.00, alpha: 1).cgColor
-        activeLineView.layer.shadowOpacity = 0.45
-        activeLineView.layer.shadowRadius = 6
-        activeLineView.layer.shadowOffset = .zero
-        activeLineView.isUserInteractionEnabled = false
-        addSubview(activeLineView)
-        activeLineView.translatesAutoresizingMaskIntoConstraints = false
-
         contentStackView.axis = .vertical
         contentStackView.alignment = .center
         contentStackView.spacing = 3
@@ -271,11 +260,6 @@ private final class FloatingHomeTabBarButton: UIButton {
             capsuleTintView.trailingAnchor.constraint(equalTo: capsuleView.contentView.trailingAnchor),
             capsuleTintView.bottomAnchor.constraint(equalTo: capsuleView.contentView.bottomAnchor),
 
-            activeLineView.topAnchor.constraint(equalTo: capsuleView.topAnchor, constant: 4),
-            activeLineView.centerXAnchor.constraint(equalTo: centerXAnchor),
-            activeLineView.widthAnchor.constraint(equalToConstant: 22),
-            activeLineView.heightAnchor.constraint(equalToConstant: 2),
-
             contentStackView.centerXAnchor.constraint(equalTo: centerXAnchor),
             contentStackView.centerYAnchor.constraint(equalTo: centerYAnchor, constant: 1),
             contentStackView.leadingAnchor.constraint(greaterThanOrEqualTo: leadingAnchor, constant: 5),
@@ -301,7 +285,7 @@ private final class FloatingHomeTabBarButton: UIButton {
         if isSelected {
             titleAlpha = 1
         } else {
-            titleAlpha = isPrimaryItem ? 0.74 : 0
+            titleAlpha = isPrimaryItem ? 0.78 : 0.66
         }
 
         let capsuleAlpha: CGFloat
@@ -332,8 +316,6 @@ private final class FloatingHomeTabBarButton: UIButton {
                 ? UIColor(red: 0.70, green: 0.92, blue: 1.00, alpha: 0.28).cgColor
                 : UIColor.white.withAlphaComponent(0.13).cgColor
             self.capsuleView.transform = CGAffineTransform(scaleX: capsuleScale, y: capsuleScale)
-            self.activeLineView.alpha = self.isSelected ? 1 : 0
-            self.activeLineView.transform = CGAffineTransform(scaleX: self.isPrimaryItem ? 1.55 : 0.9, y: 1)
             self.contentStackView.transform = CGAffineTransform(
                 translationX: 0,
                 y: selectedOffset
