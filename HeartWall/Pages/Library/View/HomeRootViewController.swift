@@ -84,7 +84,7 @@ final class HomeRootViewController: BaseViewController {
             tabBarView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
             tabBarView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
             tabBarView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
-            tabBarView.heightAnchor.constraint(equalToConstant: 74)
+            tabBarView.heightAnchor.constraint(equalToConstant: 96)
         ])
 
         tabBarView.configure(
