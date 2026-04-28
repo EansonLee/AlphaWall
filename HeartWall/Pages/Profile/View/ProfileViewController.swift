@@ -46,155 +46,132 @@ final class ProfileViewController: BaseViewController {
         }
     }
 
-    private let backgroundView = AuroraBackgroundView()
-    private let dimView = UIView()
+    private let backgroundImageView = UIImageView(image: UIImage(named: "MyPageBackground"))
+    private let backgroundOverlayView = ProfileBackgroundOverlayView()
     private let scrollView = UIScrollView()
     private let contentView = UIView()
     private let pageStackView = UIStackView()
-    private let heroPanelView = UIVisualEffectView(effect: UIBlurEffect(style: .systemUltraThinMaterialDark))
+    private let pageTitleLabel = UILabel()
+    private let heroPanelView = UIVisualEffectView(effect: UIBlurEffect(style: .systemThinMaterialDark))
     private let heroContentStackView = UIStackView()
-    private let launcherIconContainerView = UIView()
-    private let launcherIconImageView = UIImageView(image: UIImage(named: "icon_launcher"))
-    private let launcherIconGlowView = UIView()
-    private let launcherIconHighlightView = UIView()
+    private let avatarContainerView = UIView()
+    private let avatarInitialLabel = UILabel()
     private let headerStackView = UIStackView()
-    private let eyebrowLabel = UILabel()
-    private let titleLabel = UILabel()
-    private let subtitleLabel = UILabel()
-    private let menuPanelView = UIVisualEffectView(effect: UIBlurEffect(style: .systemUltraThinMaterialDark))
+    private let nicknameLabel = UILabel()
+    private let statusLabel = UILabel()
+    private let menuPanelView = UIVisualEffectView(effect: UIBlurEffect(style: .systemThinMaterialDark))
     private let menuStackView = UIStackView()
     private let versionLabel = UILabel()
 
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
         navigationController?.setNavigationBarHidden(true, animated: animated)
-        backgroundView.startAnimatingIfNeeded()
     }
 
     override func setupUI() {
-        view.backgroundColor = UIColor(red: 0.06, green: 0.10, blue: 0.14, alpha: 1)
+        view.backgroundColor = UIColor(red: 0.08, green: 0.08, blue: 0.12, alpha: 1)
         configureBackground()
-        configureContent()
         configureHeader()
+        configureContent()
         renderMenuItems()
     }
 
     private func configureBackground() {
-        view.addSubview(backgroundView)
-        backgroundView.translatesAutoresizingMaskIntoConstraints = false
+        backgroundImageView.contentMode = .scaleAspectFill
+        backgroundImageView.clipsToBounds = true
+        backgroundImageView.isUserInteractionEnabled = false
+        view.addSubview(backgroundImageView)
+        backgroundImageView.translatesAutoresizingMaskIntoConstraints = false
 
-        dimView.backgroundColor = UIColor.black.withAlphaComponent(0.22)
-        view.addSubview(dimView)
-        dimView.translatesAutoresizingMaskIntoConstraints = false
+        backgroundOverlayView.isUserInteractionEnabled = false
+        view.addSubview(backgroundOverlayView)
+        backgroundOverlayView.translatesAutoresizingMaskIntoConstraints = false
 
         NSLayoutConstraint.activate([
-            backgroundView.topAnchor.constraint(equalTo: view.topAnchor),
-            backgroundView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
-            backgroundView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
-            backgroundView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
+            backgroundImageView.topAnchor.constraint(equalTo: view.topAnchor),
+            backgroundImageView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            backgroundImageView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+            backgroundImageView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
 
-            dimView.topAnchor.constraint(equalTo: view.topAnchor),
-            dimView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
-            dimView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
-            dimView.bottomAnchor.constraint(equalTo: view.bottomAnchor)
+            backgroundOverlayView.topAnchor.constraint(equalTo: view.topAnchor),
+            backgroundOverlayView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            backgroundOverlayView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+            backgroundOverlayView.bottomAnchor.constraint(equalTo: view.bottomAnchor)
         ])
     }
 
     private func configureHeader() {
-        heroPanelView.layer.cornerRadius = 26
+        pageTitleLabel.text = "我的"
+        pageTitleLabel.font = .systemFont(ofSize: 34, weight: .heavy)
+        pageTitleLabel.textColor = UIColor.white.withAlphaComponent(0.96)
+        pageTitleLabel.shadowColor = UIColor.black.withAlphaComponent(0.18)
+        pageTitleLabel.shadowOffset = CGSize(width: 0, height: 2)
+
+        heroPanelView.layer.cornerRadius = 28
         heroPanelView.layer.cornerCurve = .continuous
         heroPanelView.clipsToBounds = true
-        heroPanelView.layer.borderWidth = 1
-        heroPanelView.layer.borderColor = UIColor.white.withAlphaComponent(0.18).cgColor
+        heroPanelView.layer.borderWidth = 0.8
+        heroPanelView.layer.borderColor = UIColor.white.withAlphaComponent(0.20).cgColor
+        heroPanelView.contentView.backgroundColor = UIColor.black.withAlphaComponent(0.16)
 
         heroContentStackView.axis = .horizontal
         heroContentStackView.alignment = .center
-        heroContentStackView.spacing = 16
+        heroContentStackView.spacing = 15
         heroPanelView.contentView.addSubview(heroContentStackView)
         heroContentStackView.translatesAutoresizingMaskIntoConstraints = false
 
-        launcherIconGlowView.backgroundColor = UIColor(red: 1.00, green: 0.75, blue: 0.45, alpha: 0.24)
-        launcherIconGlowView.layer.cornerRadius = 30
-        launcherIconGlowView.layer.cornerCurve = .continuous
-        launcherIconGlowView.isUserInteractionEnabled = false
+        avatarContainerView.backgroundColor = UIColor.white.withAlphaComponent(0.18)
+        avatarContainerView.layer.cornerRadius = 31
+        avatarContainerView.layer.cornerCurve = .continuous
+        avatarContainerView.layer.borderWidth = 1
+        avatarContainerView.layer.borderColor = UIColor.white.withAlphaComponent(0.32).cgColor
+        avatarContainerView.clipsToBounds = true
 
-        launcherIconContainerView.backgroundColor = UIColor.white.withAlphaComponent(0.10)
-        launcherIconContainerView.layer.cornerRadius = 20
-        launcherIconContainerView.layer.cornerCurve = .continuous
-        launcherIconContainerView.layer.borderWidth = 1
-        launcherIconContainerView.layer.borderColor = UIColor.white.withAlphaComponent(0.26).cgColor
-        launcherIconContainerView.layer.shadowColor = UIColor.black.cgColor
-        launcherIconContainerView.layer.shadowOpacity = 0.24
-        launcherIconContainerView.layer.shadowRadius = 18
-        launcherIconContainerView.layer.shadowOffset = CGSize(width: 0, height: 10)
-        launcherIconContainerView.clipsToBounds = false
+        avatarInitialLabel.text = "栖"
+        avatarInitialLabel.font = .systemFont(ofSize: 28, weight: .semibold)
+        avatarInitialLabel.textAlignment = .center
+        avatarInitialLabel.textColor = UIColor.white.withAlphaComponent(0.96)
 
-        launcherIconImageView.contentMode = .scaleAspectFill
-        launcherIconImageView.clipsToBounds = true
-        launcherIconImageView.layer.cornerRadius = 18
-        launcherIconImageView.layer.cornerCurve = .continuous
-
-        launcherIconHighlightView.backgroundColor = UIColor.white.withAlphaComponent(0.22)
-        launcherIconHighlightView.layer.cornerRadius = 9
-        launcherIconHighlightView.layer.cornerCurve = .continuous
-        launcherIconHighlightView.isUserInteractionEnabled = false
-
-        launcherIconContainerView.addSubview(launcherIconGlowView)
-        launcherIconContainerView.addSubview(launcherIconImageView)
-        launcherIconContainerView.addSubview(launcherIconHighlightView)
-        launcherIconGlowView.translatesAutoresizingMaskIntoConstraints = false
-        launcherIconImageView.translatesAutoresizingMaskIntoConstraints = false
-        launcherIconHighlightView.translatesAutoresizingMaskIntoConstraints = false
+        avatarContainerView.addSubview(avatarInitialLabel)
+        avatarInitialLabel.translatesAutoresizingMaskIntoConstraints = false
 
         headerStackView.axis = .vertical
         headerStackView.alignment = .leading
-        headerStackView.spacing = 4
+        headerStackView.spacing = 5
         headerStackView.isUserInteractionEnabled = false
 
-        eyebrowLabel.text = "栖幕壁纸"
-        eyebrowLabel.font = .monospacedSystemFont(ofSize: 11, weight: .semibold)
-        eyebrowLabel.textColor = UIColor(red: 1.00, green: 0.86, blue: 0.62, alpha: 0.86)
+        nicknameLabel.text = "栖幕用户"
+        nicknameLabel.font = .systemFont(ofSize: 22, weight: .bold)
+        nicknameLabel.textColor = UIColor.white.withAlphaComponent(0.96)
+        nicknameLabel.adjustsFontSizeToFitWidth = true
+        nicknameLabel.minimumScaleFactor = 0.86
 
-        titleLabel.text = "我的"
-        titleLabel.font = .systemFont(ofSize: 30, weight: .heavy)
-        titleLabel.textColor = UIColor.white.withAlphaComponent(0.96)
+        statusLabel.text = "收藏喜欢的壁纸，保留安静灵感"
+        statusLabel.font = .systemFont(ofSize: 13, weight: .medium)
+        statusLabel.textColor = UIColor.white.withAlphaComponent(0.66)
+        statusLabel.adjustsFontSizeToFitWidth = true
+        statusLabel.minimumScaleFactor = 0.82
 
-        subtitleLabel.text = "收藏、协议与应用信息"
-        subtitleLabel.font = .systemFont(ofSize: 13, weight: .medium)
-        subtitleLabel.textColor = UIColor.white.withAlphaComponent(0.60)
-        subtitleLabel.adjustsFontSizeToFitWidth = true
-        subtitleLabel.minimumScaleFactor = 0.82
-
-        [eyebrowLabel, titleLabel, subtitleLabel].forEach {
+        [nicknameLabel, statusLabel].forEach {
             headerStackView.addArrangedSubview($0)
         }
 
-        heroContentStackView.addArrangedSubview(launcherIconContainerView)
+        heroContentStackView.addArrangedSubview(avatarContainerView)
         heroContentStackView.addArrangedSubview(headerStackView)
 
         NSLayoutConstraint.activate([
-            heroContentStackView.topAnchor.constraint(equalTo: heroPanelView.contentView.topAnchor, constant: 18),
-            heroContentStackView.leadingAnchor.constraint(equalTo: heroPanelView.contentView.leadingAnchor, constant: 18),
-            heroContentStackView.trailingAnchor.constraint(equalTo: heroPanelView.contentView.trailingAnchor, constant: -18),
-            heroContentStackView.bottomAnchor.constraint(equalTo: heroPanelView.contentView.bottomAnchor, constant: -18),
+            heroContentStackView.topAnchor.constraint(equalTo: heroPanelView.contentView.topAnchor, constant: 20),
+            heroContentStackView.leadingAnchor.constraint(equalTo: heroPanelView.contentView.leadingAnchor, constant: 20),
+            heroContentStackView.trailingAnchor.constraint(equalTo: heroPanelView.contentView.trailingAnchor, constant: -20),
+            heroContentStackView.bottomAnchor.constraint(equalTo: heroPanelView.contentView.bottomAnchor, constant: -20),
 
-            launcherIconContainerView.widthAnchor.constraint(equalToConstant: 68),
-            launcherIconContainerView.heightAnchor.constraint(equalToConstant: 68),
+            avatarContainerView.widthAnchor.constraint(equalToConstant: 62),
+            avatarContainerView.heightAnchor.constraint(equalToConstant: 62),
 
-            launcherIconGlowView.centerXAnchor.constraint(equalTo: launcherIconContainerView.centerXAnchor),
-            launcherIconGlowView.centerYAnchor.constraint(equalTo: launcherIconContainerView.centerYAnchor),
-            launcherIconGlowView.widthAnchor.constraint(equalToConstant: 84),
-            launcherIconGlowView.heightAnchor.constraint(equalToConstant: 84),
-
-            launcherIconImageView.topAnchor.constraint(equalTo: launcherIconContainerView.topAnchor, constant: 4),
-            launcherIconImageView.leadingAnchor.constraint(equalTo: launcherIconContainerView.leadingAnchor, constant: 4),
-            launcherIconImageView.trailingAnchor.constraint(equalTo: launcherIconContainerView.trailingAnchor, constant: -4),
-            launcherIconImageView.bottomAnchor.constraint(equalTo: launcherIconContainerView.bottomAnchor, constant: -4),
-
-            launcherIconHighlightView.topAnchor.constraint(equalTo: launcherIconContainerView.topAnchor, constant: 10),
-            launcherIconHighlightView.leadingAnchor.constraint(equalTo: launcherIconContainerView.leadingAnchor, constant: 13),
-            launcherIconHighlightView.widthAnchor.constraint(equalToConstant: 28),
-            launcherIconHighlightView.heightAnchor.constraint(equalToConstant: 12)
+            avatarInitialLabel.topAnchor.constraint(equalTo: avatarContainerView.topAnchor),
+            avatarInitialLabel.leadingAnchor.constraint(equalTo: avatarContainerView.leadingAnchor),
+            avatarInitialLabel.trailingAnchor.constraint(equalTo: avatarContainerView.trailingAnchor),
+            avatarInitialLabel.bottomAnchor.constraint(equalTo: avatarContainerView.bottomAnchor)
         ])
     }
 
@@ -210,38 +187,37 @@ final class ProfileViewController: BaseViewController {
 
         pageStackView.axis = .vertical
         pageStackView.alignment = .fill
-        pageStackView.spacing = 28
+        pageStackView.spacing = 18
         contentView.addSubview(pageStackView)
         pageStackView.translatesAutoresizingMaskIntoConstraints = false
 
-        menuPanelView.layer.cornerRadius = 22
+        menuPanelView.layer.cornerRadius = 24
         menuPanelView.layer.cornerCurve = .continuous
         menuPanelView.clipsToBounds = true
-        menuPanelView.layer.borderWidth = 1
-        menuPanelView.layer.borderColor = UIColor.white.withAlphaComponent(0.16).cgColor
-        menuPanelView.layer.shadowColor = UIColor.black.cgColor
-        menuPanelView.layer.shadowOpacity = 0.12
-        menuPanelView.layer.shadowRadius = 20
-        menuPanelView.layer.shadowOffset = CGSize(width: 0, height: 12)
+        menuPanelView.layer.borderWidth = 0.8
+        menuPanelView.layer.borderColor = UIColor.white.withAlphaComponent(0.18).cgColor
+        menuPanelView.contentView.backgroundColor = UIColor.black.withAlphaComponent(0.14)
 
         menuStackView.axis = .vertical
         menuStackView.spacing = 0
 
         versionLabel.text = appVersionText()
         versionLabel.font = .systemFont(ofSize: 12, weight: .semibold)
-        versionLabel.textColor = UIColor.white.withAlphaComponent(0.44)
+        versionLabel.textColor = UIColor.white.withAlphaComponent(0.52)
         versionLabel.textAlignment = .center
 
         menuPanelView.contentView.addSubview(menuStackView)
+        pageStackView.addArrangedSubview(pageTitleLabel)
         pageStackView.addArrangedSubview(heroPanelView)
         pageStackView.addArrangedSubview(menuPanelView)
         pageStackView.addArrangedSubview(versionLabel)
+        pageTitleLabel.translatesAutoresizingMaskIntoConstraints = false
         heroPanelView.translatesAutoresizingMaskIntoConstraints = false
         menuPanelView.translatesAutoresizingMaskIntoConstraints = false
         menuStackView.translatesAutoresizingMaskIntoConstraints = false
         versionLabel.translatesAutoresizingMaskIntoConstraints = false
-        pageStackView.setCustomSpacing(18, after: heroPanelView)
-        pageStackView.setCustomSpacing(22, after: menuPanelView)
+        pageStackView.setCustomSpacing(22, after: heroPanelView)
+        pageStackView.setCustomSpacing(24, after: menuPanelView)
 
         NSLayoutConstraint.activate([
             scrollView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor),
@@ -256,12 +232,12 @@ final class ProfileViewController: BaseViewController {
             contentView.widthAnchor.constraint(equalTo: scrollView.frameLayoutGuide.widthAnchor),
             contentView.heightAnchor.constraint(greaterThanOrEqualTo: scrollView.frameLayoutGuide.heightAnchor),
 
-            pageStackView.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 28),
-            pageStackView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 22),
-            pageStackView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -22),
+            pageStackView.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 24),
+            pageStackView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 24),
+            pageStackView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -24),
             pageStackView.bottomAnchor.constraint(lessThanOrEqualTo: contentView.bottomAnchor),
 
-            heroPanelView.heightAnchor.constraint(greaterThanOrEqualToConstant: 104),
+            heroPanelView.heightAnchor.constraint(greaterThanOrEqualToConstant: 112),
 
             menuStackView.topAnchor.constraint(equalTo: menuPanelView.contentView.topAnchor, constant: 8),
             menuStackView.leadingAnchor.constraint(equalTo: menuPanelView.contentView.leadingAnchor),
@@ -279,7 +255,7 @@ final class ProfileViewController: BaseViewController {
 
             if index < ProfileItem.allCases.count - 1 {
                 let separator = UIView()
-                separator.backgroundColor = UIColor.white.withAlphaComponent(0.08)
+                separator.backgroundColor = UIColor.white.withAlphaComponent(0.09)
                 menuStackView.addArrangedSubview(separator)
                 separator.heightAnchor.constraint(equalToConstant: 1).isActive = true
             }
@@ -342,18 +318,20 @@ private final class ProfileMenuRowView: UIControl {
         backgroundColor = .clear
         isExclusiveTouch = true
 
-        iconContainerView.layer.cornerRadius = 12
+        iconContainerView.backgroundColor = UIColor.white.withAlphaComponent(0.10)
+        iconContainerView.layer.cornerRadius = 13
         iconContainerView.layer.cornerCurve = .continuous
+        iconContainerView.layer.borderWidth = 0.8
+        iconContainerView.layer.borderColor = UIColor.white.withAlphaComponent(0.14).cgColor
 
-        iconImageView.tintColor = UIColor.black.withAlphaComponent(0.72)
-        iconImageView.preferredSymbolConfiguration = UIImage.SymbolConfiguration(pointSize: 14, weight: .bold)
+        iconImageView.preferredSymbolConfiguration = UIImage.SymbolConfiguration(pointSize: 15, weight: .semibold)
 
-        titleLabel.font = .systemFont(ofSize: 16, weight: .bold)
-        titleLabel.textColor = UIColor.white.withAlphaComponent(0.92)
+        titleLabel.font = .systemFont(ofSize: 16, weight: .semibold)
+        titleLabel.textColor = UIColor.white.withAlphaComponent(0.90)
 
         chevronImageView.image = UIImage(systemName: "chevron.right")
-        chevronImageView.tintColor = UIColor.white.withAlphaComponent(0.28)
-        chevronImageView.preferredSymbolConfiguration = UIImage.SymbolConfiguration(pointSize: 13, weight: .bold)
+        chevronImageView.tintColor = UIColor.white.withAlphaComponent(0.30)
+        chevronImageView.preferredSymbolConfiguration = UIImage.SymbolConfiguration(pointSize: 12, weight: .semibold)
 
         addSubview(iconContainerView)
         iconContainerView.addSubview(iconImageView)
@@ -366,29 +344,64 @@ private final class ProfileMenuRowView: UIControl {
         chevronImageView.translatesAutoresizingMaskIntoConstraints = false
 
         NSLayoutConstraint.activate([
-            heightAnchor.constraint(equalToConstant: 58),
+            heightAnchor.constraint(equalToConstant: 60),
 
-            iconContainerView.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 16),
+            iconContainerView.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 18),
             iconContainerView.centerYAnchor.constraint(equalTo: centerYAnchor),
-            iconContainerView.widthAnchor.constraint(equalToConstant: 34),
-            iconContainerView.heightAnchor.constraint(equalToConstant: 34),
+            iconContainerView.widthAnchor.constraint(equalToConstant: 36),
+            iconContainerView.heightAnchor.constraint(equalToConstant: 36),
 
             iconImageView.centerXAnchor.constraint(equalTo: iconContainerView.centerXAnchor),
             iconImageView.centerYAnchor.constraint(equalTo: iconContainerView.centerYAnchor),
 
-            titleLabel.leadingAnchor.constraint(equalTo: iconContainerView.trailingAnchor, constant: 13),
+            titleLabel.leadingAnchor.constraint(equalTo: iconContainerView.trailingAnchor, constant: 14),
             titleLabel.centerYAnchor.constraint(equalTo: centerYAnchor),
             titleLabel.trailingAnchor.constraint(lessThanOrEqualTo: chevronImageView.leadingAnchor, constant: -12),
 
-            chevronImageView.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -18),
+            chevronImageView.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -20),
             chevronImageView.centerYAnchor.constraint(equalTo: centerYAnchor)
         ])
     }
 
     private func apply(item: ProfileViewController.ProfileItem) {
         iconImageView.image = UIImage(systemName: item.iconName)
+        iconImageView.tintColor = item.accentColor
         titleLabel.text = item.title
-        iconContainerView.backgroundColor = item.accentColor
+    }
+}
+
+private final class ProfileBackgroundOverlayView: UIView {
+
+    private let gradientLayer = CAGradientLayer()
+
+    override init(frame: CGRect) {
+        super.init(frame: frame)
+        configure()
+    }
+
+    @available(*, unavailable)
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
+
+    override func layoutSubviews() {
+        super.layoutSubviews()
+        gradientLayer.frame = bounds
+    }
+
+    private func configure() {
+        gradientLayer.colors = [
+            UIColor.black.withAlphaComponent(0.18).cgColor,
+            UIColor.black.withAlphaComponent(0.03).cgColor,
+            UIColor.black.withAlphaComponent(0.30).cgColor,
+            UIColor.black.withAlphaComponent(0.56).cgColor
+        ]
+        gradientLayer.locations = [0, 0.34, 0.72, 1]
+        gradientLayer.startPoint = CGPoint(x: 0.5, y: 0)
+        gradientLayer.endPoint = CGPoint(x: 0.5, y: 1)
+        layer.addSublayer(gradientLayer)
+
+        backgroundColor = UIColor(red: 0.03, green: 0.03, blue: 0.05, alpha: 0.10)
     }
 }
 
