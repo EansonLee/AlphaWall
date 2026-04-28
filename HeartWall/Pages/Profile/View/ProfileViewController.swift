@@ -170,7 +170,7 @@ final class ProfileViewController: BaseViewController {
         heroTitleLabel.adjustsFontSizeToFitWidth = true
         heroTitleLabel.minimumScaleFactor = 0.86
 
-        heroSubtitleLabel.text = "本地优先 · 安静收藏"
+        heroSubtitleLabel.text = "安静收藏"
         heroSubtitleLabel.font = .systemFont(ofSize: 13, weight: .medium)
         heroSubtitleLabel.textColor = UIColor.white.withAlphaComponent(0.62)
         heroSubtitleLabel.adjustsFontSizeToFitWidth = true
