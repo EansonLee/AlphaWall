@@ -51,14 +51,17 @@ final class ProfileViewController: BaseViewController {
     private let scrollView = UIScrollView()
     private let contentView = UIView()
     private let pageStackView = UIStackView()
-    private let pageTitleLabel = UILabel()
+    private let coverStackView = UIStackView()
+    private let coverTagLabel = UILabel()
+    private let coverTitleLabel = UILabel()
+    private let coverSubtitleLabel = UILabel()
     private let heroPanelView = UIVisualEffectView(effect: UIBlurEffect(style: .systemThinMaterialDark))
     private let heroContentStackView = UIStackView()
-    private let avatarContainerView = UIView()
-    private let avatarInitialLabel = UILabel()
-    private let headerStackView = UIStackView()
-    private let nicknameLabel = UILabel()
-    private let statusLabel = UILabel()
+    private let appIconContainerView = UIView()
+    private let appIconImageView = UIImageView(image: UIImage(named: "icon_launcher"))
+    private let heroTextStackView = UIStackView()
+    private let heroTitleLabel = UILabel()
+    private let heroSubtitleLabel = UILabel()
     private let menuPanelView = UIVisualEffectView(effect: UIBlurEffect(style: .systemThinMaterialDark))
     private let menuStackView = UIStackView()
     private let versionLabel = UILabel()
@@ -101,11 +104,32 @@ final class ProfileViewController: BaseViewController {
     }
 
     private func configureHeader() {
-        pageTitleLabel.text = "我的"
-        pageTitleLabel.font = .systemFont(ofSize: 34, weight: .heavy)
-        pageTitleLabel.textColor = UIColor.white.withAlphaComponent(0.96)
-        pageTitleLabel.shadowColor = UIColor.black.withAlphaComponent(0.18)
-        pageTitleLabel.shadowOffset = CGSize(width: 0, height: 2)
+        coverStackView.axis = .vertical
+        coverStackView.alignment = .leading
+        coverStackView.spacing = 10
+
+        coverTagLabel.text = "PRIVATE COLLECTION"
+        coverTagLabel.font = .monospacedSystemFont(ofSize: 11, weight: .semibold)
+        coverTagLabel.textColor = UIColor.white.withAlphaComponent(0.66)
+
+        coverTitleLabel.text = "私藏壁纸"
+        coverTitleLabel.font = .systemFont(ofSize: 38, weight: .heavy)
+        coverTitleLabel.textColor = UIColor.white.withAlphaComponent(0.97)
+        coverTitleLabel.shadowColor = UIColor.black.withAlphaComponent(0.22)
+        coverTitleLabel.shadowOffset = CGSize(width: 0, height: 2)
+        coverTitleLabel.adjustsFontSizeToFitWidth = true
+        coverTitleLabel.minimumScaleFactor = 0.82
+
+        coverSubtitleLabel.text = "收藏喜欢的画面，留住此刻的安静。"
+        coverSubtitleLabel.font = .systemFont(ofSize: 15, weight: .medium)
+        coverSubtitleLabel.textColor = UIColor.white.withAlphaComponent(0.72)
+        coverSubtitleLabel.numberOfLines = 2
+        coverSubtitleLabel.adjustsFontSizeToFitWidth = true
+        coverSubtitleLabel.minimumScaleFactor = 0.86
+
+        [coverTagLabel, coverTitleLabel, coverSubtitleLabel].forEach {
+            coverStackView.addArrangedSubview($0)
+        }
 
         heroPanelView.layer.cornerRadius = 28
         heroPanelView.layer.cornerCurve = .continuous
@@ -120,58 +144,58 @@ final class ProfileViewController: BaseViewController {
         heroPanelView.contentView.addSubview(heroContentStackView)
         heroContentStackView.translatesAutoresizingMaskIntoConstraints = false
 
-        avatarContainerView.backgroundColor = UIColor.white.withAlphaComponent(0.18)
-        avatarContainerView.layer.cornerRadius = 31
-        avatarContainerView.layer.cornerCurve = .continuous
-        avatarContainerView.layer.borderWidth = 1
-        avatarContainerView.layer.borderColor = UIColor.white.withAlphaComponent(0.32).cgColor
-        avatarContainerView.clipsToBounds = true
+        appIconContainerView.backgroundColor = UIColor.white.withAlphaComponent(0.14)
+        appIconContainerView.layer.cornerRadius = 19
+        appIconContainerView.layer.cornerCurve = .continuous
+        appIconContainerView.layer.borderWidth = 0.8
+        appIconContainerView.layer.borderColor = UIColor.white.withAlphaComponent(0.28).cgColor
+        appIconContainerView.clipsToBounds = true
 
-        avatarInitialLabel.text = "栖"
-        avatarInitialLabel.font = .systemFont(ofSize: 28, weight: .semibold)
-        avatarInitialLabel.textAlignment = .center
-        avatarInitialLabel.textColor = UIColor.white.withAlphaComponent(0.96)
+        appIconImageView.contentMode = .scaleAspectFill
+        appIconImageView.clipsToBounds = true
+        appIconImageView.layer.cornerRadius = 15
+        appIconImageView.layer.cornerCurve = .continuous
 
-        avatarContainerView.addSubview(avatarInitialLabel)
-        avatarInitialLabel.translatesAutoresizingMaskIntoConstraints = false
+        appIconContainerView.addSubview(appIconImageView)
+        appIconImageView.translatesAutoresizingMaskIntoConstraints = false
 
-        headerStackView.axis = .vertical
-        headerStackView.alignment = .leading
-        headerStackView.spacing = 5
-        headerStackView.isUserInteractionEnabled = false
+        heroTextStackView.axis = .vertical
+        heroTextStackView.alignment = .leading
+        heroTextStackView.spacing = 4
+        heroTextStackView.isUserInteractionEnabled = false
 
-        nicknameLabel.text = "栖幕用户"
-        nicknameLabel.font = .systemFont(ofSize: 22, weight: .bold)
-        nicknameLabel.textColor = UIColor.white.withAlphaComponent(0.96)
-        nicknameLabel.adjustsFontSizeToFitWidth = true
-        nicknameLabel.minimumScaleFactor = 0.86
+        heroTitleLabel.text = "HeartWall"
+        heroTitleLabel.font = .systemFont(ofSize: 19, weight: .semibold)
+        heroTitleLabel.textColor = UIColor.white.withAlphaComponent(0.94)
+        heroTitleLabel.adjustsFontSizeToFitWidth = true
+        heroTitleLabel.minimumScaleFactor = 0.86
 
-        statusLabel.text = "收藏喜欢的壁纸，保留安静灵感"
-        statusLabel.font = .systemFont(ofSize: 13, weight: .medium)
-        statusLabel.textColor = UIColor.white.withAlphaComponent(0.66)
-        statusLabel.adjustsFontSizeToFitWidth = true
-        statusLabel.minimumScaleFactor = 0.82
+        heroSubtitleLabel.text = "本地优先 · 安静收藏"
+        heroSubtitleLabel.font = .systemFont(ofSize: 13, weight: .medium)
+        heroSubtitleLabel.textColor = UIColor.white.withAlphaComponent(0.62)
+        heroSubtitleLabel.adjustsFontSizeToFitWidth = true
+        heroSubtitleLabel.minimumScaleFactor = 0.82
 
-        [nicknameLabel, statusLabel].forEach {
-            headerStackView.addArrangedSubview($0)
+        [heroTitleLabel, heroSubtitleLabel].forEach {
+            heroTextStackView.addArrangedSubview($0)
         }
 
-        heroContentStackView.addArrangedSubview(avatarContainerView)
-        heroContentStackView.addArrangedSubview(headerStackView)
+        heroContentStackView.addArrangedSubview(appIconContainerView)
+        heroContentStackView.addArrangedSubview(heroTextStackView)
 
         NSLayoutConstraint.activate([
-            heroContentStackView.topAnchor.constraint(equalTo: heroPanelView.contentView.topAnchor, constant: 20),
-            heroContentStackView.leadingAnchor.constraint(equalTo: heroPanelView.contentView.leadingAnchor, constant: 20),
-            heroContentStackView.trailingAnchor.constraint(equalTo: heroPanelView.contentView.trailingAnchor, constant: -20),
-            heroContentStackView.bottomAnchor.constraint(equalTo: heroPanelView.contentView.bottomAnchor, constant: -20),
+            heroContentStackView.topAnchor.constraint(equalTo: heroPanelView.contentView.topAnchor, constant: 16),
+            heroContentStackView.leadingAnchor.constraint(equalTo: heroPanelView.contentView.leadingAnchor, constant: 16),
+            heroContentStackView.trailingAnchor.constraint(equalTo: heroPanelView.contentView.trailingAnchor, constant: -16),
+            heroContentStackView.bottomAnchor.constraint(equalTo: heroPanelView.contentView.bottomAnchor, constant: -16),
 
-            avatarContainerView.widthAnchor.constraint(equalToConstant: 62),
-            avatarContainerView.heightAnchor.constraint(equalToConstant: 62),
+            appIconContainerView.widthAnchor.constraint(equalToConstant: 56),
+            appIconContainerView.heightAnchor.constraint(equalToConstant: 56),
 
-            avatarInitialLabel.topAnchor.constraint(equalTo: avatarContainerView.topAnchor),
-            avatarInitialLabel.leadingAnchor.constraint(equalTo: avatarContainerView.leadingAnchor),
-            avatarInitialLabel.trailingAnchor.constraint(equalTo: avatarContainerView.trailingAnchor),
-            avatarInitialLabel.bottomAnchor.constraint(equalTo: avatarContainerView.bottomAnchor)
+            appIconImageView.topAnchor.constraint(equalTo: appIconContainerView.topAnchor, constant: 4),
+            appIconImageView.leadingAnchor.constraint(equalTo: appIconContainerView.leadingAnchor, constant: 4),
+            appIconImageView.trailingAnchor.constraint(equalTo: appIconContainerView.trailingAnchor, constant: -4),
+            appIconImageView.bottomAnchor.constraint(equalTo: appIconContainerView.bottomAnchor, constant: -4)
         ])
     }
 
@@ -207,15 +231,16 @@ final class ProfileViewController: BaseViewController {
         versionLabel.textAlignment = .center
 
         menuPanelView.contentView.addSubview(menuStackView)
-        pageStackView.addArrangedSubview(pageTitleLabel)
+        pageStackView.addArrangedSubview(coverStackView)
         pageStackView.addArrangedSubview(heroPanelView)
         pageStackView.addArrangedSubview(menuPanelView)
         pageStackView.addArrangedSubview(versionLabel)
-        pageTitleLabel.translatesAutoresizingMaskIntoConstraints = false
+        coverStackView.translatesAutoresizingMaskIntoConstraints = false
         heroPanelView.translatesAutoresizingMaskIntoConstraints = false
         menuPanelView.translatesAutoresizingMaskIntoConstraints = false
         menuStackView.translatesAutoresizingMaskIntoConstraints = false
         versionLabel.translatesAutoresizingMaskIntoConstraints = false
+        pageStackView.setCustomSpacing(24, after: coverStackView)
         pageStackView.setCustomSpacing(22, after: heroPanelView)
         pageStackView.setCustomSpacing(24, after: menuPanelView)
 
@@ -232,12 +257,12 @@ final class ProfileViewController: BaseViewController {
             contentView.widthAnchor.constraint(equalTo: scrollView.frameLayoutGuide.widthAnchor),
             contentView.heightAnchor.constraint(greaterThanOrEqualTo: scrollView.frameLayoutGuide.heightAnchor),
 
-            pageStackView.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 24),
+            pageStackView.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 30),
             pageStackView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 24),
             pageStackView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -24),
             pageStackView.bottomAnchor.constraint(lessThanOrEqualTo: contentView.bottomAnchor),
 
-            heroPanelView.heightAnchor.constraint(greaterThanOrEqualToConstant: 112),
+            heroPanelView.heightAnchor.constraint(greaterThanOrEqualToConstant: 88),
 
             menuStackView.topAnchor.constraint(equalTo: menuPanelView.contentView.topAnchor, constant: 8),
             menuStackView.leadingAnchor.constraint(equalTo: menuPanelView.contentView.leadingAnchor),
