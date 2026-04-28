@@ -26,11 +26,22 @@ final class HomeRootViewController: BaseViewController {
         var iconName: String {
             switch self {
             case .audio:
-                return "speaker.wave.2.fill"
+                return "waveform"
             case .quote:
-                return "sparkles"
+                return "rectangle.on.rectangle"
             case .profile:
-                return "heart.circle.fill"
+                return "person"
+            }
+        }
+
+        var selectedIconName: String {
+            switch self {
+            case .audio:
+                return "waveform"
+            case .quote:
+                return "rectangle.on.rectangle.fill"
+            case .profile:
+                return "person.fill"
             }
         }
     }
@@ -70,13 +81,18 @@ final class HomeRootViewController: BaseViewController {
             contentContainerView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
             contentContainerView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
 
-            tabBarView.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 24),
-            tabBarView.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -24),
-            tabBarView.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -8),
-            tabBarView.heightAnchor.constraint(equalToConstant: 58)
+            tabBarView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            tabBarView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+            tabBarView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
+            tabBarView.heightAnchor.constraint(equalToConstant: 74)
         ])
 
-        tabBarView.configure(items: Tab.allCases.map { .init(title: $0.title, iconName: $0.iconName) }, selectedIndex: 1)
+        tabBarView.configure(
+            items: Tab.allCases.map {
+                .init(title: $0.title, iconName: $0.iconName, selectedIconName: $0.selectedIconName)
+            },
+            selectedIndex: 1
+        )
         tabBarView.onSelectionChanged = { [weak self] index in
             guard let self, let tab = Tab.allCases[safe: index] else { return }
             self.selectTab(tab)

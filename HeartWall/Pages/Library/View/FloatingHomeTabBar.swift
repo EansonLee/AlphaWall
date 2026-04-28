@@ -10,19 +10,28 @@ final class FloatingHomeTabBar: UIView {
     struct Item {
         let title: String
         let iconName: String
+        let selectedIconName: String?
+
+        init(title: String, iconName: String, selectedIconName: String? = nil) {
+            self.title = title
+            self.iconName = iconName
+            self.selectedIconName = selectedIconName
+        }
     }
 
     var onSelectionChanged: ((Int) -> Void)?
 
-    private let dockBlurView = UIVisualEffectView(effect: UIBlurEffect(style: .systemThinMaterialDark))
-    private let dockTintView = GradientView()
-    private let dockBottomShadeView = GradientView()
-    private let dockTopSheenView = GradientView()
-    private let dockStackView = UIStackView()
+    private let backgroundView = UIVisualEffectView(effect: UIBlurEffect(style: .systemUltraThinMaterialDark))
+    private let tintView = UIView()
+    private let topSeparatorView = UIView()
+    private let selectionIndicatorView = UIView()
+    private let stackView = UIStackView()
     private let audioButton = FloatingHomeTabBarButton()
     private let quoteButton = FloatingHomeTabBarButton()
     private let profileButton = FloatingHomeTabBarButton()
     private lazy var buttons: [FloatingHomeTabBarButton] = [audioButton, quoteButton, profileButton]
+    private var selectionIndicatorCenterXConstraint: NSLayoutConstraint?
+    private var selectedIndex: Int = 0
 
     override init(frame: CGRect) {
         super.init(frame: frame)
@@ -34,123 +43,129 @@ final class FloatingHomeTabBar: UIView {
         fatalError("init(coder:) has not been implemented")
     }
 
-    override func layoutSubviews() {
-        super.layoutSubviews()
-        let cornerRadius = bounds.height * 0.5
-        dockBlurView.layer.cornerRadius = cornerRadius
-        layer.shadowPath = UIBezierPath(roundedRect: bounds, cornerRadius: cornerRadius).cgPath
-    }
-
     func configure(items: [Item], selectedIndex: Int) {
-        items.enumerated().forEach { index, item in
-            guard let button = buttons[safe: index] else { return }
-            button.configure(title: item.title, iconName: item.iconName)
+        buttons.enumerated().forEach { index, button in
+            guard let item = items[safe: index] else {
+                button.isHidden = true
+                return
+            }
+
+            button.isHidden = false
+            button.configure(title: item.title, iconName: item.iconName, selectedIconName: item.selectedIconName)
             button.tag = index
         }
 
-        updateSelection(index: selectedIndex)
+        updateSelection(index: selectedIndex, animated: false)
     }
 
     func updateSelection(index: Int) {
-        buttons.enumerated().forEach { itemIndex, button in
-            button.isSelected = itemIndex == index
-        }
+        updateSelection(index: index, animated: true)
     }
 
     private func configure() {
-        layer.shadowColor = UIColor.black.cgColor
-        layer.shadowOpacity = 0.24
-        layer.shadowRadius = 30
-        layer.shadowOffset = CGSize(width: 0, height: 18)
+        backgroundColor = .clear
 
-        dockBlurView.layer.cornerRadius = 32
-        dockBlurView.layer.cornerCurve = .continuous
-        dockBlurView.clipsToBounds = true
-        dockBlurView.layer.borderWidth = 0.8
-        dockBlurView.layer.borderColor = UIColor.white.withAlphaComponent(0.22).cgColor
-        dockBlurView.contentView.backgroundColor = UIColor(red: 0.04, green: 0.05, blue: 0.07, alpha: 0.34)
-        addSubview(dockBlurView)
-        dockBlurView.translatesAutoresizingMaskIntoConstraints = false
+        backgroundView.clipsToBounds = true
+        backgroundView.contentView.backgroundColor = UIColor.black.withAlphaComponent(0.48)
+        addSubview(backgroundView)
+        backgroundView.translatesAutoresizingMaskIntoConstraints = false
 
-        dockTintView.configure(
-            colors: [
-                UIColor.white.withAlphaComponent(0.16),
-                UIColor(red: 1.00, green: 0.82, blue: 0.54, alpha: 0.10),
-                UIColor(red: 0.42, green: 0.82, blue: 0.92, alpha: 0.08),
-                UIColor.black.withAlphaComponent(0.18)
-            ],
-            locations: [0, 0.34, 0.72, 1],
-            startPoint: CGPoint(x: 0, y: 0),
-            endPoint: CGPoint(x: 1, y: 1)
-        )
-        dockBottomShadeView.configure(
-            colors: [
-                UIColor.clear,
-                UIColor.black.withAlphaComponent(0.26)
-            ],
-            locations: [0, 1],
-            startPoint: CGPoint(x: 0.5, y: 0),
-            endPoint: CGPoint(x: 0.5, y: 1)
-        )
-        dockTopSheenView.configure(
-            colors: [
-                UIColor.white.withAlphaComponent(0.46),
-                UIColor.white.withAlphaComponent(0.16),
-                UIColor.white.withAlphaComponent(0.02)
-            ],
-            locations: [0, 0.52, 1],
-            startPoint: CGPoint(x: 0, y: 0.5),
-            endPoint: CGPoint(x: 1, y: 0.5)
-        )
-        [dockTintView, dockBottomShadeView, dockTopSheenView].forEach {
-            $0.isUserInteractionEnabled = false
-            dockBlurView.contentView.addSubview($0)
-            $0.translatesAutoresizingMaskIntoConstraints = false
-        }
+        tintView.backgroundColor = UIColor(white: 1, alpha: 0.025)
+        tintView.isUserInteractionEnabled = false
+        backgroundView.contentView.addSubview(tintView)
+        tintView.translatesAutoresizingMaskIntoConstraints = false
 
-        dockStackView.axis = .horizontal
-        dockStackView.distribution = .fillEqually
-        dockStackView.alignment = .fill
-        dockStackView.spacing = 6
-        dockBlurView.contentView.addSubview(dockStackView)
-        dockStackView.translatesAutoresizingMaskIntoConstraints = false
+        topSeparatorView.backgroundColor = UIColor.white.withAlphaComponent(0.11)
+        topSeparatorView.isUserInteractionEnabled = false
+        backgroundView.contentView.addSubview(topSeparatorView)
+        topSeparatorView.translatesAutoresizingMaskIntoConstraints = false
+
+        selectionIndicatorView.backgroundColor = UIColor.white.withAlphaComponent(0.94)
+        selectionIndicatorView.layer.cornerRadius = 1.25
+        selectionIndicatorView.layer.cornerCurve = .continuous
+        selectionIndicatorView.layer.shadowColor = UIColor.white.cgColor
+        selectionIndicatorView.layer.shadowOpacity = 0.32
+        selectionIndicatorView.layer.shadowRadius = 6
+        selectionIndicatorView.layer.shadowOffset = .zero
+        selectionIndicatorView.isUserInteractionEnabled = false
+        addSubview(selectionIndicatorView)
+        selectionIndicatorView.translatesAutoresizingMaskIntoConstraints = false
+
+        stackView.axis = .horizontal
+        stackView.distribution = .fillEqually
+        stackView.alignment = .fill
+        stackView.spacing = 0
+        addSubview(stackView)
+        stackView.translatesAutoresizingMaskIntoConstraints = false
 
         [audioButton, quoteButton, profileButton].enumerated().forEach { index, button in
             button.tag = index
             button.addTarget(self, action: #selector(handleTap(_:)), for: .touchUpInside)
-            dockStackView.addArrangedSubview(button)
+            stackView.addArrangedSubview(button)
         }
 
         NSLayoutConstraint.activate([
-            dockBlurView.topAnchor.constraint(equalTo: topAnchor),
-            dockBlurView.leadingAnchor.constraint(equalTo: leadingAnchor),
-            dockBlurView.trailingAnchor.constraint(equalTo: trailingAnchor),
-            dockBlurView.bottomAnchor.constraint(equalTo: bottomAnchor),
+            backgroundView.topAnchor.constraint(equalTo: topAnchor),
+            backgroundView.leadingAnchor.constraint(equalTo: leadingAnchor),
+            backgroundView.trailingAnchor.constraint(equalTo: trailingAnchor),
+            backgroundView.bottomAnchor.constraint(equalTo: bottomAnchor),
 
-            dockTintView.topAnchor.constraint(equalTo: dockBlurView.contentView.topAnchor),
-            dockTintView.leadingAnchor.constraint(equalTo: dockBlurView.contentView.leadingAnchor),
-            dockTintView.trailingAnchor.constraint(equalTo: dockBlurView.contentView.trailingAnchor),
-            dockTintView.bottomAnchor.constraint(equalTo: dockBlurView.contentView.bottomAnchor),
+            tintView.topAnchor.constraint(equalTo: backgroundView.contentView.topAnchor),
+            tintView.leadingAnchor.constraint(equalTo: backgroundView.contentView.leadingAnchor),
+            tintView.trailingAnchor.constraint(equalTo: backgroundView.contentView.trailingAnchor),
+            tintView.bottomAnchor.constraint(equalTo: backgroundView.contentView.bottomAnchor),
 
-            dockBottomShadeView.leadingAnchor.constraint(equalTo: dockBlurView.contentView.leadingAnchor),
-            dockBottomShadeView.trailingAnchor.constraint(equalTo: dockBlurView.contentView.trailingAnchor),
-            dockBottomShadeView.bottomAnchor.constraint(equalTo: dockBlurView.contentView.bottomAnchor),
-            dockBottomShadeView.heightAnchor.constraint(equalToConstant: 28),
+            topSeparatorView.topAnchor.constraint(equalTo: backgroundView.contentView.topAnchor),
+            topSeparatorView.leadingAnchor.constraint(equalTo: backgroundView.contentView.leadingAnchor),
+            topSeparatorView.trailingAnchor.constraint(equalTo: backgroundView.contentView.trailingAnchor),
+            topSeparatorView.heightAnchor.constraint(equalToConstant: 1 / UIScreen.main.scale),
 
-            dockTopSheenView.topAnchor.constraint(equalTo: dockBlurView.contentView.topAnchor),
-            dockTopSheenView.leadingAnchor.constraint(equalTo: dockBlurView.contentView.leadingAnchor, constant: 18),
-            dockTopSheenView.trailingAnchor.constraint(equalTo: dockBlurView.contentView.trailingAnchor, constant: -18),
-            dockTopSheenView.heightAnchor.constraint(equalToConstant: 1),
+            selectionIndicatorView.topAnchor.constraint(equalTo: topAnchor, constant: 1),
+            selectionIndicatorView.widthAnchor.constraint(equalToConstant: 24),
+            selectionIndicatorView.heightAnchor.constraint(equalToConstant: 2.5),
 
-            dockStackView.topAnchor.constraint(equalTo: dockBlurView.contentView.topAnchor, constant: 7),
-            dockStackView.leadingAnchor.constraint(equalTo: dockBlurView.contentView.leadingAnchor, constant: 8),
-            dockStackView.trailingAnchor.constraint(equalTo: dockBlurView.contentView.trailingAnchor, constant: -8),
-            dockStackView.bottomAnchor.constraint(equalTo: dockBlurView.contentView.bottomAnchor, constant: -7)
+            stackView.topAnchor.constraint(equalTo: topAnchor, constant: 7),
+            stackView.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 18),
+            stackView.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -18),
+            stackView.heightAnchor.constraint(equalToConstant: 48)
         ])
+
+        updateSelection(index: selectedIndex, animated: false)
+    }
+
+    private func updateSelection(index: Int, animated: Bool) {
+        guard let selectedButton = buttons[safe: index], !selectedButton.isHidden else { return }
+        selectedIndex = index
+
+        buttons.enumerated().forEach { itemIndex, button in
+            button.isSelected = itemIndex == index
+        }
+
+        selectionIndicatorCenterXConstraint?.isActive = false
+        selectionIndicatorCenterXConstraint = selectionIndicatorView.centerXAnchor.constraint(equalTo: selectedButton.centerXAnchor)
+        selectionIndicatorCenterXConstraint?.isActive = true
+
+        let updates = {
+            self.layoutIfNeeded()
+            self.selectionIndicatorView.alpha = 1
+        }
+
+        guard animated, !UIAccessibility.isReduceMotionEnabled else {
+            updates()
+            return
+        }
+
+        UIView.animate(
+            withDuration: 0.22,
+            delay: 0,
+            options: [.curveEaseOut, .beginFromCurrentState, .allowUserInteraction],
+            animations: updates
+        )
     }
 
     @objc
     private func handleTap(_ sender: UIButton) {
+        UIImpactFeedbackGenerator(style: .light).impactOccurred(intensity: 0.55)
         updateSelection(index: sender.tag)
         onSelectionChanged?(sender.tag)
     }
@@ -158,14 +173,11 @@ final class FloatingHomeTabBar: UIView {
 
 private final class FloatingHomeTabBarButton: UIButton {
 
-    private let selectionBackgroundView = UIVisualEffectView(effect: UIBlurEffect(style: .systemChromeMaterialDark))
-    private let selectionTintView = GradientView()
-    private let selectionTopSheenView = GradientView()
-    private let iconContainerView = UIView()
-    private let iconHaloView = GradientView()
+    private let contentStackView = UIStackView()
     private let iconImageView = UIImageView()
     private let titleLabelView = UILabel()
-    private let contentStackView = UIStackView()
+    private var iconName: String?
+    private var selectedIconName: String?
 
     override var isSelected: Bool {
         didSet {
@@ -180,13 +192,8 @@ private final class FloatingHomeTabBarButton: UIButton {
     }
 
     override init(frame: CGRect) {
-        super.init(frame: CGRect.zero)
+        super.init(frame: frame)
         configure()
-    }
-
-    override func layoutSubviews() {
-        super.layoutSubviews()
-        selectionBackgroundView.layer.cornerRadius = selectionBackgroundView.bounds.height * 0.5
     }
 
     @available(*, unavailable)
@@ -194,153 +201,71 @@ private final class FloatingHomeTabBarButton: UIButton {
         fatalError("init(coder:) has not been implemented")
     }
 
-    func configure(title: String, iconName: String) {
+    func configure(title: String, iconName: String, selectedIconName: String?) {
+        self.iconName = iconName
+        self.selectedIconName = selectedIconName
         titleLabelView.text = title
-        iconImageView.image = UIImage(systemName: iconName)
         accessibilityLabel = title
+        updateAppearance()
     }
 
     private func configure() {
-        selectionBackgroundView.layer.cornerRadius = 25
-        selectionBackgroundView.layer.cornerCurve = .continuous
-        selectionBackgroundView.layer.borderWidth = 1
-        selectionBackgroundView.layer.borderColor = UIColor.white.withAlphaComponent(0.20).cgColor
-        selectionBackgroundView.contentView.backgroundColor = UIColor.white.withAlphaComponent(0.08)
-        selectionBackgroundView.isUserInteractionEnabled = false
-        addSubview(selectionBackgroundView)
-        selectionBackgroundView.translatesAutoresizingMaskIntoConstraints = false
-
-        selectionTintView.configure(
-            colors: [
-                UIColor.white.withAlphaComponent(0.20),
-                UIColor(red: 1.00, green: 0.83, blue: 0.56, alpha: 0.16),
-                UIColor(red: 0.50, green: 0.86, blue: 0.96, alpha: 0.12),
-                UIColor.white.withAlphaComponent(0.07)
-            ],
-            locations: [0, 0.38, 0.74, 1],
-            startPoint: CGPoint(x: 0, y: 0),
-            endPoint: CGPoint(x: 1, y: 1)
-        )
-        selectionTopSheenView.configure(
-            colors: [
-                UIColor.white.withAlphaComponent(0.56),
-                UIColor.white.withAlphaComponent(0.16),
-                UIColor.white.withAlphaComponent(0.01)
-            ],
-            locations: [0, 0.55, 1],
-            startPoint: CGPoint(x: 0, y: 0.5),
-            endPoint: CGPoint(x: 1, y: 0.5)
-        )
-        [selectionTintView, selectionTopSheenView].forEach {
-            $0.isUserInteractionEnabled = false
-            selectionBackgroundView.contentView.addSubview($0)
-            $0.translatesAutoresizingMaskIntoConstraints = false
-        }
+        backgroundColor = .clear
+        isExclusiveTouch = true
+        isAccessibilityElement = true
 
         contentStackView.axis = .vertical
         contentStackView.alignment = .center
-        contentStackView.spacing = 2
+        contentStackView.spacing = 3
         contentStackView.isUserInteractionEnabled = false
-        isExclusiveTouch = true
-        isAccessibilityElement = true
         addSubview(contentStackView)
         contentStackView.translatesAutoresizingMaskIntoConstraints = false
 
-        iconContainerView.isUserInteractionEnabled = false
-        contentStackView.addArrangedSubview(iconContainerView)
-        iconContainerView.translatesAutoresizingMaskIntoConstraints = false
-
-        iconHaloView.configure(
-            colors: [
-                UIColor.white.withAlphaComponent(0.28),
-                UIColor(red: 1.00, green: 0.78, blue: 0.46, alpha: 0.16),
-                UIColor.clear
-            ],
-            locations: [0, 0.58, 1],
-            startPoint: CGPoint(x: 0, y: 0),
-            endPoint: CGPoint(x: 1, y: 1)
-        )
-        iconHaloView.isUserInteractionEnabled = false
-        iconContainerView.addSubview(iconHaloView)
-        iconHaloView.translatesAutoresizingMaskIntoConstraints = false
-
-        iconImageView.tintColor = UIColor.white.withAlphaComponent(0.78)
         iconImageView.contentMode = .scaleAspectFit
-        iconImageView.preferredSymbolConfiguration = UIImage.SymbolConfiguration(
-            pointSize: 17,
-            weight: .semibold
-        )
-        iconContainerView.addSubview(iconImageView)
+        iconImageView.preferredSymbolConfiguration = UIImage.SymbolConfiguration(pointSize: 19, weight: .regular)
+        contentStackView.addArrangedSubview(iconImageView)
         iconImageView.translatesAutoresizingMaskIntoConstraints = false
 
         titleLabelView.font = UIFont.systemFont(ofSize: 10.5, weight: .medium)
-        titleLabelView.textColor = UIColor.white.withAlphaComponent(0.78)
+        titleLabelView.textAlignment = .center
         titleLabelView.numberOfLines = 1
         titleLabelView.adjustsFontSizeToFitWidth = true
         titleLabelView.minimumScaleFactor = 0.82
         contentStackView.addArrangedSubview(titleLabelView)
 
         NSLayoutConstraint.activate([
-            selectionBackgroundView.topAnchor.constraint(equalTo: topAnchor, constant: 3),
-            selectionBackgroundView.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 2),
-            selectionBackgroundView.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -2),
-            selectionBackgroundView.bottomAnchor.constraint(equalTo: bottomAnchor, constant: -3),
-
-            selectionTintView.topAnchor.constraint(equalTo: selectionBackgroundView.contentView.topAnchor),
-            selectionTintView.leadingAnchor.constraint(equalTo: selectionBackgroundView.contentView.leadingAnchor),
-            selectionTintView.trailingAnchor.constraint(equalTo: selectionBackgroundView.contentView.trailingAnchor),
-            selectionTintView.bottomAnchor.constraint(equalTo: selectionBackgroundView.contentView.bottomAnchor),
-
-            selectionTopSheenView.topAnchor.constraint(equalTo: selectionBackgroundView.contentView.topAnchor, constant: 1),
-            selectionTopSheenView.leadingAnchor.constraint(equalTo: selectionBackgroundView.contentView.leadingAnchor, constant: 14),
-            selectionTopSheenView.trailingAnchor.constraint(equalTo: selectionBackgroundView.contentView.trailingAnchor, constant: -14),
-            selectionTopSheenView.heightAnchor.constraint(equalToConstant: 1),
-
             contentStackView.centerXAnchor.constraint(equalTo: centerXAnchor),
-            contentStackView.centerYAnchor.constraint(equalTo: centerYAnchor),
-            contentStackView.leadingAnchor.constraint(greaterThanOrEqualTo: leadingAnchor, constant: 8),
-            trailingAnchor.constraint(greaterThanOrEqualTo: contentStackView.trailingAnchor, constant: 8),
+            contentStackView.centerYAnchor.constraint(equalTo: centerYAnchor, constant: 1),
+            contentStackView.leadingAnchor.constraint(greaterThanOrEqualTo: leadingAnchor, constant: 4),
+            trailingAnchor.constraint(greaterThanOrEqualTo: contentStackView.trailingAnchor, constant: 4),
 
-            iconContainerView.widthAnchor.constraint(equalToConstant: 34),
-            iconContainerView.heightAnchor.constraint(equalToConstant: 24),
-
-            iconHaloView.centerXAnchor.constraint(equalTo: iconContainerView.centerXAnchor),
-            iconHaloView.centerYAnchor.constraint(equalTo: iconContainerView.centerYAnchor),
-            iconHaloView.widthAnchor.constraint(equalToConstant: 31),
-            iconHaloView.heightAnchor.constraint(equalToConstant: 21),
-
-            iconImageView.centerXAnchor.constraint(equalTo: iconContainerView.centerXAnchor),
-            iconImageView.centerYAnchor.constraint(equalTo: iconContainerView.centerYAnchor),
-            iconImageView.widthAnchor.constraint(equalToConstant: 24),
-            iconImageView.heightAnchor.constraint(equalToConstant: 22)
+            iconImageView.widthAnchor.constraint(equalToConstant: 25),
+            iconImageView.heightAnchor.constraint(equalToConstant: 24)
         ])
 
         updateAppearance()
     }
 
     private func updateAppearance() {
-        let tintColor = isSelected
-            ? UIColor.white
-            : UIColor.white.withAlphaComponent(0.58)
-        let selectedScale: CGFloat = isSelected ? 1.018 : 1
-        let pressedScale: CGFloat = isHighlighted ? 0.965 : 1
-        let targetTransform = CGAffineTransform(scaleX: selectedScale * pressedScale, y: selectedScale * pressedScale)
+        let targetColor = isSelected
+            ? UIColor.white.withAlphaComponent(0.96)
+            : UIColor.white.withAlphaComponent(isHighlighted ? 0.62 : 0.48)
+        let targetAlpha: CGFloat = isSelected ? 1 : 0.72
+        let pressedScale: CGFloat = isHighlighted ? 0.93 : 1
+        let selectedOffset: CGFloat = isSelected ? -1 : 0
+
+        if let image = resolvedIconImage(selected: isSelected) {
+            iconImageView.image = image
+        }
 
         let applyChanges = {
-            self.selectionBackgroundView.alpha = self.isSelected ? 1 : 0
-            self.iconHaloView.alpha = self.isSelected ? 1 : 0
-            self.iconImageView.tintColor = tintColor
-            self.iconImageView.preferredSymbolConfiguration = UIImage.SymbolConfiguration(
-                pointSize: self.isSelected ? 18 : 17,
-                weight: self.isSelected ? .bold : .semibold
-            )
-            self.titleLabelView.textColor = tintColor
-            self.titleLabelView.font = UIFont.systemFont(
-                ofSize: self.isSelected ? 11 : 10.5,
-                weight: self.isSelected ? .semibold : .medium
-            )
-            self.titleLabelView.alpha = self.isSelected ? 0.98 : 0.70
-            self.transform = targetTransform
+            self.iconImageView.tintColor = targetColor
+            self.titleLabelView.textColor = targetColor
+            self.titleLabelView.alpha = targetAlpha
+            self.contentStackView.transform = CGAffineTransform(
+                translationX: 0,
+                y: selectedOffset
+            ).scaledBy(x: pressedScale, y: pressedScale)
             self.accessibilityTraits = self.isSelected ? [.button, .selected] : .button
             self.accessibilityValue = self.isSelected ? L10n.text("common.current") : nil
         }
@@ -351,38 +276,24 @@ private final class FloatingHomeTabBarButton: UIButton {
         }
 
         UIView.animate(
-            withDuration: 0.24,
+            withDuration: isHighlighted ? 0.12 : 0.2,
             delay: 0,
             options: [.curveEaseOut, .beginFromCurrentState, .allowUserInteraction],
             animations: applyChanges
         )
     }
-}
 
-private final class GradientView: UIView {
+    private func resolvedIconImage(selected: Bool) -> UIImage? {
+        let symbolName = selected ? selectedIconName ?? iconName : iconName
+        guard let symbolName else { return nil }
 
-    override class var layerClass: AnyClass {
-        CAGradientLayer.self
-    }
+        let configuration = UIImage.SymbolConfiguration(
+            pointSize: selected ? 20 : 19,
+            weight: selected ? .semibold : .regular
+        )
 
-    func configure(
-        colors: [UIColor],
-        locations: [NSNumber]? = nil,
-        startPoint: CGPoint,
-        endPoint: CGPoint
-    ) {
-        guard let gradientLayer = layer as? CAGradientLayer else { return }
-        gradientLayer.colors = colors.map(\.cgColor)
-        gradientLayer.locations = locations
-        gradientLayer.startPoint = startPoint
-        gradientLayer.endPoint = endPoint
-    }
-
-    override func layoutSubviews() {
-        super.layoutSubviews()
-        layer.cornerRadius = bounds.height * 0.5
-        layer.cornerCurve = .continuous
-        clipsToBounds = true
+        return UIImage(systemName: symbolName, withConfiguration: configuration)
+            ?? UIImage(systemName: iconName ?? symbolName, withConfiguration: configuration)
     }
 }
 
