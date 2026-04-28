@@ -342,7 +342,7 @@ private final class FloatingHomeTabBarButton: UIButton {
             self.titleLabelView.alpha = self.isSelected ? 0.98 : 0.70
             self.transform = targetTransform
             self.accessibilityTraits = self.isSelected ? [.button, .selected] : .button
-            self.accessibilityValue = self.isSelected ? "当前" : nil
+            self.accessibilityValue = self.isSelected ? L10n.text("common.current") : nil
         }
 
         guard !UIAccessibility.isReduceMotionEnabled else {

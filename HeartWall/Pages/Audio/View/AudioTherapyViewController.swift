@@ -175,16 +175,16 @@ final class AudioTherapyViewController: BaseViewController {
         headerStackView.spacing = 5
         headerStackView.isUserInteractionEnabled = false
 
-        eyebrowLabel.text = "SPATIAL SANCTUARY"
+        eyebrowLabel.text = L10n.text("audio.eyebrow")
         eyebrowLabel.font = .monospacedSystemFont(ofSize: 11, weight: .semibold)
         eyebrowLabel.textColor = UIColor(red: 0.63, green: 0.91, blue: 0.93, alpha: 0.78)
 
-        titleLabel.text = "音疗声场"
+        titleLabel.text = L10n.text("audio.title")
         titleLabel.font = .systemFont(ofSize: 31, weight: .heavy)
         titleLabel.textColor = UIColor.white.withAlphaComponent(0.96)
         titleLabel.numberOfLines = 1
 
-        subtitleLabel.text = "为当前壁纸选择一段安静的呼吸层"
+        subtitleLabel.text = L10n.text("audio.subtitle")
         subtitleLabel.font = .systemFont(ofSize: 14, weight: .medium)
         subtitleLabel.textColor = UIColor.white.withAlphaComponent(0.62)
         subtitleLabel.numberOfLines = 1
@@ -229,7 +229,7 @@ final class AudioTherapyViewController: BaseViewController {
         cardsGridView.axis = .vertical
         cardsGridView.spacing = 10
 
-        listHeaderLabel.text = "声场序列"
+        listHeaderLabel.text = L10n.text("audio.list.header")
         listHeaderLabel.font = .systemFont(ofSize: 13, weight: .bold)
         listHeaderLabel.textColor = UIColor.white.withAlphaComponent(0.66)
 
@@ -401,11 +401,11 @@ final class AudioTherapyViewController: BaseViewController {
 
         heroImageView.configure(videoURL: item.videoURL)
         heroAccentView.backgroundColor = item.accentColor.mixed(with: UIColor(red: 0.17, green: 0.90, blue: 0.82, alpha: 1), amount: 0.46)
-        heroCategoryLabel.text = "\(item.categoryTitle.uppercased()) · 今日声场"
+        heroCategoryLabel.text = "\(item.categoryTitle.uppercased()) · \(L10n.text("audio.today_field"))"
         heroTitleLabel.text = item.title
-        heroMetaLabel.text = "\(item.listenerCount)人正在听 · 轻触卡片进入声场"
-        listHeaderLabel.text = "\(selectedCategory?.title ?? item.categoryTitle)声场序列"
-        heroPanelView.accessibilityLabel = "\(item.title)，\(item.listenerCount)人正在听，进入声场"
+        heroMetaLabel.text = L10n.text("audio.hero.meta", item.listenerCount)
+        listHeaderLabel.text = L10n.text("audio.list.header.category", selectedCategory?.title ?? item.categoryTitle)
+        heroPanelView.accessibilityLabel = L10n.text("audio.hero.accessibility", item.title, item.listenerCount)
     }
 
     private func renderCategories() {
@@ -731,8 +731,8 @@ private final class AudioTherapyCardView: UIView {
         rankLabel.text = String(format: "%02d", rank)
         titleLabel.text = item.title
         categoryLabel.text = item.categoryTitle
-        countLabel.text = "\(item.listenerCount)人正在听 · 轻触进入"
-        accessibilityLabel = "\(item.title)，\(item.listenerCount)人正在听"
+        countLabel.text = L10n.text("audio.card.count_action", item.listenerCount)
+        accessibilityLabel = L10n.text("audio.card.accessibility", item.title, item.listenerCount)
     }
 }
 

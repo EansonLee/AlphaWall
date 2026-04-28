@@ -38,7 +38,7 @@ class BaseViewController: UIViewController {
 
     func showError(_ message: String) {
         let alert = UIAlertController(title: nil, message: message, preferredStyle: .alert)
-        alert.addAction(UIAlertAction(title: "确定", style: .default))
+        alert.addAction(UIAlertAction(title: L10n.text("common.ok"), style: .default))
         present(alert, animated: true)
     }
 }

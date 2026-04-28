@@ -323,7 +323,7 @@ final class LibraryViewController: BaseViewController {
         greetingLabel.font = UIFont.systemFont(ofSize: 22, weight: .black)
         greetingLabel.textColor = .white
 
-        subtitleLabel.text = "今日心语"
+        subtitleLabel.text = L10n.text("library.subtitle")
         subtitleLabel.font = UIFont.systemFont(ofSize: 12, weight: .semibold)
         subtitleLabel.textColor = UIColor.white.withAlphaComponent(0.66)
 
@@ -590,15 +590,15 @@ final class LibraryViewController: BaseViewController {
 
     private func currentMonthText() -> String {
         let formatter = DateFormatter()
-        formatter.locale = Locale(identifier: "en_US_POSIX")
-        formatter.dateFormat = "MMM"
+        formatter.locale = Locale.current
+        formatter.dateFormat = L10n.text("date.library.month")
         return formatter.string(from: Date()).uppercased()
     }
 
     private func currentDayText() -> String {
         let formatter = DateFormatter()
-        formatter.locale = Locale(identifier: "zh_Hans_CN")
-        formatter.dateFormat = "d"
+        formatter.locale = Locale.current
+        formatter.dateFormat = L10n.text("date.library.day")
         return formatter.string(from: Date())
     }
 
@@ -606,11 +606,11 @@ final class LibraryViewController: BaseViewController {
         let hour = Calendar.current.component(.hour, from: Date())
         switch hour {
         case 5..<12:
-            return "早上好"
+            return L10n.text("library.greeting.morning")
         case 12..<18:
-            return "下午好"
+            return L10n.text("library.greeting.afternoon")
         default:
-            return "晚上好"
+            return L10n.text("library.greeting.evening")
         }
     }
 

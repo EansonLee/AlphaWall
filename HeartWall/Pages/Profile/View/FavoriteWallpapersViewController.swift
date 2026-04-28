@@ -101,7 +101,7 @@ final class FavoriteWallpapersViewController: BaseViewController {
         backButton.layer.cornerCurve = .continuous
         backButton.addTarget(self, action: #selector(handleBack), for: .touchUpInside)
 
-        titleLabel.text = "喜欢的壁纸"
+        titleLabel.text = L10n.text("favorites.title")
         titleLabel.font = .systemFont(ofSize: 24, weight: .heavy)
         titleLabel.textColor = UIColor.white.withAlphaComponent(0.96)
 
@@ -166,12 +166,12 @@ final class FavoriteWallpapersViewController: BaseViewController {
         emptyIconView.tintColor = UIColor(red: 1.00, green: 0.86, blue: 0.62, alpha: 0.86)
         emptyIconView.preferredSymbolConfiguration = UIImage.SymbolConfiguration(pointSize: 30, weight: .semibold)
 
-        emptyTitleLabel.text = "还没有喜欢的壁纸"
+        emptyTitleLabel.text = L10n.text("favorites.empty.title")
         emptyTitleLabel.font = .systemFont(ofSize: 18, weight: .heavy)
         emptyTitleLabel.textColor = UIColor.white.withAlphaComponent(0.92)
         emptyTitleLabel.textAlignment = .center
 
-        emptySubtitleLabel.text = "在壁纸详情页点亮喜欢后会出现在这里"
+        emptySubtitleLabel.text = L10n.text("favorites.empty.subtitle")
         emptySubtitleLabel.font = .systemFont(ofSize: 13, weight: .medium)
         emptySubtitleLabel.textColor = UIColor.white.withAlphaComponent(0.56)
         emptySubtitleLabel.textAlignment = .center
@@ -213,7 +213,7 @@ final class FavoriteWallpapersViewController: BaseViewController {
 
     private func refreshFavorites() {
         favoritePages = FavoriteWallpaperStore.shared.favoritePages(from: allPages)
-        countLabel.text = "\(favoritePages.count) 张"
+        countLabel.text = L10n.text("favorites.count", favoritePages.count)
         emptyStateView.isHidden = !favoritePages.isEmpty
         collectionView.isHidden = favoritePages.isEmpty
         collectionView.reloadData()

@@ -15,15 +15,15 @@ enum HeartQuoteTheme: String, CaseIterable {
     var displayTitle: String {
         switch self {
         case .banner:
-            return "今日臻选"
+            return L10n.text("library.theme.banner")
         case .city:
-            return "城市流光"
+            return L10n.text("library.theme.city")
         case .creative:
-            return "灵感幻境"
+            return L10n.text("library.theme.creative")
         case .nature:
-            return "自然诗境"
+            return L10n.text("library.theme.nature")
         case .anime:
-            return "绮梦次元"
+            return L10n.text("library.theme.anime")
         }
     }
 

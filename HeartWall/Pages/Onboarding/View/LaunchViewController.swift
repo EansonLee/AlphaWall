@@ -61,13 +61,13 @@ final class LaunchViewController: BaseViewController {
             UIColor.black.withAlphaComponent(0.64)
         ])
 
-        titleLabel.text = "栖幕壁纸"
+        titleLabel.text = L10n.text("app.display_name")
         titleLabel.font = .systemFont(ofSize: 38, weight: .semibold)
         titleLabel.textColor = UIColor.white.withAlphaComponent(0.98)
         titleLabel.textAlignment = .left
         titleLabel.adjustsFontForContentSizeCategory = true
 
-        subtitleLabel.text = "把珍藏留在此刻"
+        subtitleLabel.text = L10n.text("launch.subtitle")
         subtitleLabel.font = .systemFont(ofSize: 17, weight: .medium)
         subtitleLabel.textColor = UIColor.white.withAlphaComponent(0.76)
         subtitleLabel.textAlignment = .left

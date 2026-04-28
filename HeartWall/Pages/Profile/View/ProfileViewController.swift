@@ -15,11 +15,11 @@ final class ProfileViewController: BaseViewController {
         var title: String {
             switch self {
             case .favoriteWallpapers:
-                return "喜欢的壁纸"
+                return L10n.text("profile.menu.favorite_wallpapers")
             case .privacy:
-                return "隐私协议"
+                return L10n.text("profile.menu.privacy")
             case .terms:
-                return "用户协议"
+                return L10n.text("profile.menu.terms")
             }
         }
 
@@ -108,11 +108,11 @@ final class ProfileViewController: BaseViewController {
         coverStackView.alignment = .leading
         coverStackView.spacing = 10
 
-        coverTagLabel.text = "PRIVATE COLLECTION"
+        coverTagLabel.text = L10n.text("profile.cover.tag")
         coverTagLabel.font = .monospacedSystemFont(ofSize: 11, weight: .semibold)
         coverTagLabel.textColor = UIColor.white.withAlphaComponent(0.66)
 
-        coverTitleLabel.text = "私藏壁纸"
+        coverTitleLabel.text = L10n.text("profile.cover.title")
         coverTitleLabel.font = .systemFont(ofSize: 38, weight: .heavy)
         coverTitleLabel.textColor = UIColor.white.withAlphaComponent(0.97)
         coverTitleLabel.shadowColor = UIColor.black.withAlphaComponent(0.22)
@@ -120,7 +120,7 @@ final class ProfileViewController: BaseViewController {
         coverTitleLabel.adjustsFontSizeToFitWidth = true
         coverTitleLabel.minimumScaleFactor = 0.82
 
-        coverSubtitleLabel.text = "收藏喜欢的画面，留住此刻的安静。"
+        coverSubtitleLabel.text = L10n.text("profile.cover.subtitle")
         coverSubtitleLabel.font = .systemFont(ofSize: 15, weight: .medium)
         coverSubtitleLabel.textColor = UIColor.white.withAlphaComponent(0.72)
         coverSubtitleLabel.numberOfLines = 2
@@ -170,7 +170,7 @@ final class ProfileViewController: BaseViewController {
         heroTitleLabel.adjustsFontSizeToFitWidth = true
         heroTitleLabel.minimumScaleFactor = 0.86
 
-        heroSubtitleLabel.text = "安静收藏"
+        heroSubtitleLabel.text = L10n.text("profile.hero.subtitle")
         heroSubtitleLabel.font = .systemFont(ofSize: 13, weight: .medium)
         heroSubtitleLabel.textColor = UIColor.white.withAlphaComponent(0.62)
         heroSubtitleLabel.adjustsFontSizeToFitWidth = true
@@ -305,10 +305,10 @@ final class ProfileViewController: BaseViewController {
     private func appVersionText() -> String {
         let version = Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String
         guard let version, !version.isEmpty else {
-            return "版本"
+            return L10n.text("profile.version.empty")
         }
 
-        return "版本 v\(version)"
+        return L10n.text("profile.version.value", version)
     }
 }
 

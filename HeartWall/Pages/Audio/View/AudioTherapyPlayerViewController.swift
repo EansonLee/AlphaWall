@@ -163,7 +163,7 @@ final class AudioTherapyPlayerViewController: BaseViewController {
     }
 
     private func configureInfo() {
-        modeLabel.text = "SANCTUARY MODE"
+        modeLabel.text = L10n.text("audio.player.mode")
         modeLabel.font = .monospacedSystemFont(ofSize: 11, weight: .semibold)
         modeLabel.textColor = UIColor(red: 0.63, green: 0.91, blue: 0.93, alpha: 0.70)
 
@@ -185,7 +185,7 @@ final class AudioTherapyPlayerViewController: BaseViewController {
         headphoneIcon.tintColor = UIColor(red: 0.63, green: 0.91, blue: 0.93, alpha: 0.84)
         headphoneIcon.preferredSymbolConfiguration = UIImage.SymbolConfiguration(pointSize: 12, weight: .medium)
 
-        countLabel.text = "\(selectedItem.listenerCount)人正在听"
+        countLabel.text = L10n.text("audio.listener_count", selectedItem.listenerCount)
         countLabel.font = .systemFont(ofSize: 12, weight: .semibold)
         countLabel.textColor = UIColor.white.withAlphaComponent(0.82)
 
@@ -351,7 +351,7 @@ final class AudioTherapyPlayerViewController: BaseViewController {
         listOverlayView.clipsToBounds = true
         listOverlayView.backgroundColor = UIColor.black.withAlphaComponent(0.24)
 
-        listTitleLabel.text = "同频声场"
+        listTitleLabel.text = L10n.text("audio.list.title")
         listTitleLabel.font = .systemFont(ofSize: 15, weight: .heavy)
         listTitleLabel.textColor = UIColor.white.withAlphaComponent(0.90)
 
@@ -426,12 +426,12 @@ final class AudioTherapyPlayerViewController: BaseViewController {
         timerPanelView.clipsToBounds = true
         timerPanelView.backgroundColor = UIColor.black.withAlphaComponent(0.24)
 
-        timerTitleLabel.text = "定时沉浸"
+        timerTitleLabel.text = L10n.text("audio.timer.title")
         timerTitleLabel.font = .systemFont(ofSize: 15, weight: .bold)
         timerTitleLabel.textColor = UIColor.white.withAlphaComponent(0.92)
         timerTitleLabel.textAlignment = .center
 
-        timerValueLabel.text = "\(selectedTimerMinutes) 分钟"
+        timerValueLabel.text = L10n.text("audio.timer.minutes", selectedTimerMinutes)
         timerValueLabel.font = .systemFont(ofSize: 24, weight: .heavy)
         timerValueLabel.textColor = .white
         timerValueLabel.textAlignment = .center
@@ -475,7 +475,7 @@ final class AudioTherapyPlayerViewController: BaseViewController {
         timerCloseButton.addTarget(self, action: #selector(handleTimerClose), for: .touchUpInside)
 
         var confirmConfiguration = UIButton.Configuration.filled()
-        confirmConfiguration.title = "确认"
+        confirmConfiguration.title = L10n.text("common.confirm")
         confirmConfiguration.baseBackgroundColor = UIColor(red: 0.07, green: 0.68, blue: 0.58, alpha: 0.94)
         confirmConfiguration.baseForegroundColor = .white
         confirmConfiguration.cornerStyle = .capsule
@@ -556,7 +556,7 @@ final class AudioTherapyPlayerViewController: BaseViewController {
         selectedItem = item
         onSelectedItemChanged?(item)
         titleLabel.text = item.title
-        countLabel.text = "\(item.listenerCount)人正在听"
+        countLabel.text = L10n.text("audio.listener_count", item.listenerCount)
         isPlaying = true
         playSelectedItem()
         updatePlayPauseButton()
@@ -806,7 +806,7 @@ extension AudioTherapyPlayerViewController: UIPickerViewDataSource, UIPickerView
         let minutes = timerOptions[row]
         let isSelected = minutes == selectedTimerMinutes
         return NSAttributedString(
-            string: "\(minutes) 分钟",
+            string: L10n.text("audio.timer.minutes", minutes),
             attributes: [
                 .font: UIFont.monospacedDigitSystemFont(ofSize: isSelected ? 14 : 12, weight: isSelected ? .semibold : .medium),
                 .foregroundColor: UIColor.white.withAlphaComponent(isSelected ? 0.94 : 0.48)
@@ -816,7 +816,7 @@ extension AudioTherapyPlayerViewController: UIPickerViewDataSource, UIPickerView
 
     func pickerView(_ pickerView: UIPickerView, didSelectRow row: Int, inComponent component: Int) {
         selectedTimerMinutes = timerOptions[row]
-        timerValueLabel.text = "\(selectedTimerMinutes) 分钟"
+        timerValueLabel.text = L10n.text("audio.timer.minutes", selectedTimerMinutes)
         pickerView.reloadAllComponents()
     }
 }
@@ -915,7 +915,7 @@ private final class AudioTherapyPlayerListCardView: UIView {
         imageView.configure(videoURL: item.videoURL)
         rankLabel.text = String(format: "%02d", rank)
         titleLabel.text = item.title
-        countLabel.text = "\(item.listenerCount)人正在听"
+        countLabel.text = L10n.text("audio.listener_count", item.listenerCount)
     }
 }
 

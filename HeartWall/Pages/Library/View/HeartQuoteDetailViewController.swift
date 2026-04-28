@@ -368,7 +368,7 @@ final class HeartQuoteDetailViewController: BaseViewController {
 
     private func configureSaveButton() {
         var configuration = UIButton.Configuration.filled()
-        configuration.title = "保存壁纸"
+        configuration.title = L10n.text("detail.save_wallpaper")
         configuration.image = UIImage(systemName: "arrow.down.to.line")
         configuration.imagePadding = 7
         configuration.baseBackgroundColor = UIColor(red: 1.00, green: 0.82, blue: 0.55, alpha: 1)
@@ -494,9 +494,15 @@ final class HeartQuoteDetailViewController: BaseViewController {
             do {
                 let localURL = try await VideoCacheService.shared.localVideoURL(for: page.videoURL)
                 try await Self.saveVideoToPhotoLibrary(localURL)
-                await self?.finishSavingWallpaper(title: "已保存", message: "壁纸已保存到系统相册。")
+                await self?.finishSavingWallpaper(
+                    title: L10n.text("detail.save.success.title"),
+                    message: L10n.text("detail.save.success.message")
+                )
             } catch {
-                await self?.finishSavingWallpaper(title: "保存失败", message: "请检查相册权限或稍后重试。")
+                await self?.finishSavingWallpaper(
+                    title: L10n.text("detail.save.failure.title"),
+                    message: L10n.text("detail.save.failure.message")
+                )
             }
         }
     }
@@ -647,7 +653,7 @@ final class HeartQuoteDetailViewController: BaseViewController {
         saveButton.isEnabled = true
         saveButton.configuration?.showsActivityIndicator = false
         let alert = UIAlertController(title: title, message: message, preferredStyle: .alert)
-        alert.addAction(UIAlertAction(title: "确定", style: .default))
+        alert.addAction(UIAlertAction(title: L10n.text("common.ok"), style: .default))
         present(alert, animated: true)
     }
 
@@ -671,8 +677,8 @@ final class HeartQuoteDetailViewController: BaseViewController {
 
     private func currentDateText() -> String {
         let formatter = DateFormatter()
-        formatter.locale = Locale(identifier: "zh_Hans_CN")
-        formatter.dateFormat = "M 月 d 日 EEEE"
+        formatter.locale = Locale.current
+        formatter.dateFormat = L10n.text("date.detail.date")
         return formatter.string(from: Date())
     }
 }

@@ -14,9 +14,9 @@ struct ThemeCatalogLoader {
         var errorDescription: String? {
             switch self {
             case .resourceNotFound(let name):
-                return "未找到资源：\(name).json"
+                return L10n.text("error.resource_not_found", name)
             case .invalidData(let name):
-                return "资源解析失败：\(name).json"
+                return L10n.text("error.resource_invalid", name)
             }
         }
     }
@@ -56,7 +56,7 @@ struct ThemeCatalogLoader {
                 title: Self.makeDisplayTitle(from: resource.title, index: index),
                 videoURL: videoURL,
                 subtitle: Self.makeSubtitle(from: resource.title),
-                badgeText: index == 0 ? "精选" : nil,
+                badgeText: index == 0 ? L10n.text("library.featured.badge") : nil,
                 tags: Self.makeTags(from: resource.title)
             )
         }
@@ -64,28 +64,28 @@ struct ThemeCatalogLoader {
 
     private static func makeDisplayTitle(from rawTitle: String, index: Int) -> String {
         let segments = normalizedSegments(from: rawTitle)
-        let filtered = segments.filter { !$0.isEmpty && $0 != "风景" }
+        let filtered = segments.filter { !$0.isEmpty && !isGenericSceneryTag($0) }
         let selected = Array(filtered.prefix(2))
 
         if !selected.isEmpty {
             return selected.joined(separator: " · ")
         }
 
-        return "主题 \(index + 1)"
+        return L10n.text("library.fallback.theme", index + 1)
     }
 
     private static func makeSubtitle(from rawTitle: String) -> String {
         let segments = normalizedSegments(from: rawTitle)
         let filtered = segments.filter { !$0.isEmpty }
         if filtered.isEmpty {
-            return "动态壁纸"
+            return L10n.text("library.fallback.subtitle")
         }
         return filtered.prefix(4).joined(separator: " · ")
     }
 
     private static func makeTags(from rawTitle: String) -> [String] {
         let segments = normalizedSegments(from: rawTitle)
-        let filtered = segments.filter { !$0.isEmpty && $0 != "风景" }
+        let filtered = segments.filter { !$0.isEmpty && !isGenericSceneryTag($0) }
         return Array(filtered.prefix(4))
     }
 
@@ -96,6 +96,12 @@ struct ThemeCatalogLoader {
             .split(separator: "_")
             .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
             .filter { !$0.isEmpty }
+            .map(L10n.content)
+    }
+
+    private static func isGenericSceneryTag(_ value: String) -> Bool {
+        let rawSceneryTag = "\u{98CE}\u{666F}"
+        return value == L10n.content(rawSceneryTag) || value.lowercased() == "scenery"
     }
 
     private static func makeURL(from rawValue: String) -> URL? {

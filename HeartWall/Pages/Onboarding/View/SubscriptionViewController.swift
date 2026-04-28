@@ -189,7 +189,7 @@ final class SubscriptionViewController: BaseViewController {
         closeButton.addTarget(self, action: #selector(handleEnterHome), for: .touchUpInside)
 
         var restoreConfiguration = UIButton.Configuration.plain()
-        restoreConfiguration.title = "恢复购买"
+        restoreConfiguration.title = L10n.text("subscription.restore")
         restoreConfiguration.baseForegroundColor = UIColor.white.withAlphaComponent(0.72)
         restoreConfiguration.contentInsets = .zero
         restoreButton.configuration = restoreConfiguration
@@ -207,29 +207,29 @@ final class SubscriptionViewController: BaseViewController {
         benefitStackView.spacing = 7
 
         [
-            "所有壁纸无限下载",
-            "白噪音无限畅听",
-            "最新功能抢先体验",
-            "沉浸体验无广告"
+            L10n.text("subscription.benefit.wallpapers"),
+            L10n.text("subscription.benefit.audio"),
+            L10n.text("subscription.benefit.features"),
+            L10n.text("subscription.benefit.no_ads")
         ]
         .map(FeatureRowView.init)
         .forEach(benefitStackView.addArrangedSubview)
 
-        titleLabel.text = "海量动态壁纸高清下载"
+        titleLabel.text = L10n.text("subscription.title")
         titleLabel.font = serifFont(size: 35, weight: .bold)
         titleLabel.textColor = UIColor.white.withAlphaComponent(0.98)
         titleLabel.numberOfLines = 2
         titleLabel.textAlignment = .left
 
-        trialButton.setTitle("免费试用", for: .normal)
+        trialButton.setTitle(L10n.text("subscription.free_trial"), for: .normal)
         trialButton.addTarget(self, action: #selector(handleEnterHome), for: .touchUpInside)
 
-        priceLabel.text = "首周 ¥9.9 后自动续费 ¥48/月，可随时取消"
+        priceLabel.text = L10n.text("subscription.price_note")
         priceLabel.font = .systemFont(ofSize: 12, weight: .medium)
         priceLabel.textColor = UIColor.white.withAlphaComponent(0.70)
         priceLabel.textAlignment = .center
 
-        agreementView.configure(text: "同意《会员协议》和《自动续费协议》")
+        agreementView.configure(text: L10n.text("subscription.agreement"))
 
         [benefitStackView, titleLabel, trialButton, priceLabel, agreementView].forEach {
             contentStackView.addArrangedSubview($0)
@@ -395,8 +395,12 @@ final class SubscriptionViewController: BaseViewController {
 
     @objc
     private func handleRestore() {
-        let alert = UIAlertController(title: "恢复购买", message: "当前版本仅完成订阅页预览，真实购买能力暂未接入。", preferredStyle: .alert)
-        alert.addAction(UIAlertAction(title: "知道了", style: .default))
+        let alert = UIAlertController(
+            title: L10n.text("subscription.restore"),
+            message: L10n.text("subscription.restore.preview_message"),
+            preferredStyle: .alert
+        )
+        alert.addAction(UIAlertAction(title: L10n.text("common.ok"), style: .default))
         present(alert, animated: true)
     }
 
@@ -687,10 +691,7 @@ private final class VideoCarouselCell: UICollectionViewCell {
     }
 
     private static let dateFormatter: DateFormatter = {
-        let formatter = DateFormatter()
-        formatter.locale = Locale(identifier: "zh_CN")
-        formatter.dateFormat = "M月d日 EEEE"
-        return formatter
+        L10n.dateFormatter(dateFormatKey: "date.subscription.card")
     }()
 
 }

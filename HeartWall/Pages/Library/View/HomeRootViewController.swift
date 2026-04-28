@@ -15,11 +15,11 @@ final class HomeRootViewController: BaseViewController {
         var title: String {
             switch self {
             case .audio:
-                return "声境"
+                return L10n.text("tab.audio")
             case .quote:
-                return "灵感"
+                return L10n.text("tab.quote")
             case .profile:
-                return "私藏"
+                return L10n.text("tab.profile")
             }
         }
 

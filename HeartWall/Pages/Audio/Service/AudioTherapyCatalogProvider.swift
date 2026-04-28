@@ -24,7 +24,7 @@ struct AudioTherapyCatalogProvider {
         let categories = directory.categories.map {
             AudioTherapyCategory(
                 id: $0.category,
-                title: $0.title,
+                title: L10n.content($0.title),
                 file: $0.file,
                 count: $0.count
             )
@@ -37,11 +37,11 @@ struct AudioTherapyCatalogProvider {
             return rawItems.enumerated().compactMap { itemIndex, rawItem -> AudioTherapyItem? in
                 guard let videoURL = URL(string: rawItem.url) else { return nil }
                 let categoryID = rawItem.category.isEmpty ? category.category : rawItem.category
-                let categoryTitle = rawItem.categoryTitle.isEmpty ? category.title : rawItem.categoryTitle
+                let categoryTitle = rawItem.categoryTitle.isEmpty ? category.title : L10n.content(rawItem.categoryTitle)
 
                 return AudioTherapyItem(
                     id: rawItem.fileName,
-                    title: rawItem.title,
+                    title: L10n.content(rawItem.title),
                     listenerCount: listenerCount(categoryIndex: categoryIndex, itemIndex: itemIndex),
                     categoryID: categoryID,
                     categoryTitle: categoryTitle,

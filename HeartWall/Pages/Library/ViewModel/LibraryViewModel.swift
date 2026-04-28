@@ -61,7 +61,7 @@ final class LibraryViewModel: BaseViewModel {
     private func makeSection(theme: HeartQuoteTheme, pages: [HeartQuotePage]) -> HeartQuoteSection {
         HeartQuoteSection(
             title: theme.displayTitle,
-            countText: "含\(pages.count)条视频",
+            countText: L10n.text("library.section.count", pages.count),
             items: Array(pages.prefix(3))
         )
     }

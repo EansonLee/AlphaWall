@@ -1,0 +1,80 @@
+"app.display_name" = "棲幕壁紙";
+"launch.subtitle" = "把珍藏留在此刻";
+
+"common.ok" = "確定";
+"common.confirm" = "確認";
+"common.current" = "目前";
+
+"tab.audio" = "聲境";
+"tab.quote" = "靈感";
+"tab.profile" = "私藏";
+
+"subscription.restore" = "恢復購買";
+"subscription.benefit.wallpapers" = "所有壁紙無限下載";
+"subscription.benefit.audio" = "白噪音無限暢聽";
+"subscription.benefit.features" = "最新功能搶先體驗";
+"subscription.benefit.no_ads" = "沉浸體驗無廣告";
+"subscription.title" = "海量動態壁紙高清下載";
+"subscription.free_trial" = "免費試用";
+"subscription.price_note" = "首週 ¥9.9 後自動續費 ¥48/月，可隨時取消";
+"subscription.agreement" = "同意《會員協議》和《自動續費協議》";
+"subscription.restore.preview_message" = "目前版本僅完成訂閱頁預覽，真實購買能力尚未接入。";
+
+"profile.menu.favorite_wallpapers" = "喜歡的壁紙";
+"profile.menu.privacy" = "私隱政策";
+"profile.menu.terms" = "使用者協議";
+"profile.cover.tag" = "PRIVATE COLLECTION";
+"profile.cover.title" = "私藏壁紙";
+"profile.cover.subtitle" = "收藏喜歡的畫面，留住此刻的安靜。";
+"profile.hero.subtitle" = "安靜收藏";
+"profile.version.empty" = "版本";
+"profile.version.value" = "版本 v%@";
+
+"favorites.title" = "喜歡的壁紙";
+"favorites.empty.title" = "還沒有喜歡的壁紙";
+"favorites.empty.subtitle" = "在壁紙詳情頁點亮喜歡後會出現在這裡";
+"favorites.count" = "%d 張";
+
+"audio.eyebrow" = "SPATIAL SANCTUARY";
+"audio.title" = "音療聲場";
+"audio.subtitle" = "為目前壁紙選擇一段安靜的呼吸層";
+"audio.list.header" = "聲場序列";
+"audio.today_field" = "今日聲場";
+"audio.hero.meta" = "%d 人正在聽 · 輕觸卡片進入聲場";
+"audio.list.header.category" = "%@聲場序列";
+"audio.hero.accessibility" = "%@，%d 人正在聽，進入聲場";
+"audio.card.count_action" = "%d 人正在聽 · 輕觸進入";
+"audio.card.accessibility" = "%@，%d 人正在聽";
+"audio.player.mode" = "SANCTUARY MODE";
+"audio.listener_count" = "%d 人正在聽";
+"audio.list.title" = "同頻聲場";
+"audio.timer.title" = "定時沉浸";
+"audio.timer.minutes" = "%d 分鐘";
+
+"library.featured.badge" = "精選";
+"library.theme.banner" = "今日臻選";
+"library.theme.city" = "城市流光";
+"library.theme.creative" = "靈感幻境";
+"library.theme.nature" = "自然詩境";
+"library.theme.anime" = "綺夢次元";
+"library.section.count" = "含 %d 條影片";
+"library.fallback.theme" = "主題 %d";
+"library.fallback.subtitle" = "動態壁紙";
+"library.subtitle" = "今日心語";
+"library.greeting.morning" = "早安";
+"library.greeting.afternoon" = "午安";
+"library.greeting.evening" = "晚安";
+
+"detail.save_wallpaper" = "儲存壁紙";
+"detail.save.success.title" = "已儲存";
+"detail.save.success.message" = "壁紙已儲存到系統相簿。";
+"detail.save.failure.title" = "儲存失敗";
+"detail.save.failure.message" = "請檢查相簿權限或稍後再試。";
+
+"error.resource_not_found" = "未找到資源：%@.json";
+"error.resource_invalid" = "資源解析失敗：%@.json";
+
+"date.subscription.card" = "M月d日 EEEE";
+"date.library.month" = "MMM";
+"date.library.day" = "d";
+"date.detail.date" = "M 月 d 日 EEEE";
