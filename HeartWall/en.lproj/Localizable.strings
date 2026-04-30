@@ -30,6 +30,9 @@
 "profile.version.empty" = "Version";
 "profile.version.value" = "Version v%@";
 
+"agreement.privacy.title" = "Privacy Policy";
+"agreement.terms.title" = "Terms of Use";
+
 "favorites.title" = "Favorite Wallpapers";
 "favorites.empty.title" = "No favorite wallpapers yet";
 "favorites.empty.subtitle" = "Wallpapers you like on the detail page will appear here.";

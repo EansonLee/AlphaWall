@@ -44,6 +44,28 @@ final class ProfileViewController: BaseViewController {
                 return UIColor(red: 0.66, green: 0.78, blue: 0.98, alpha: 1)
             }
         }
+
+        var agreementURL: URL? {
+            switch self {
+            case .favoriteWallpapers:
+                return nil
+            case .privacy:
+                return URL(string: "https://docs.google.com/document/d/1n2nVh6Esl44qqnzkzcKzVcyx4290vUxlfHRON--3GpQ/edit?tab=t.0")
+            case .terms:
+                return URL(string: "https://docs.google.com/document/d/1xgrVsqWmuMHLHbtH7dr15_dqKjy8nfQ4xKl6Qho0hdA/edit?tab=t.0")
+            }
+        }
+
+        var agreementTitle: String {
+            switch self {
+            case .favoriteWallpapers:
+                return title
+            case .privacy:
+                return L10n.text("agreement.privacy.title")
+            case .terms:
+                return L10n.text("agreement.terms.title")
+            }
+        }
     }
 
     private let backgroundImageView = UIImageView(image: UIImage(named: "MyPageBackground"))
@@ -298,7 +320,10 @@ final class ProfileViewController: BaseViewController {
             viewController.hidesBottomBarWhenPushed = true
             navigationController?.pushViewController(viewController, animated: true)
         case .privacy, .terms:
-            break
+            guard let url = item.agreementURL else { return }
+            let viewController = AgreementWebViewController(title: item.agreementTitle, url: url)
+            viewController.hidesBottomBarWhenPushed = true
+            navigationController?.pushViewController(viewController, animated: true)
         }
     }
 

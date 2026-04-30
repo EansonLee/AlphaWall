@@ -30,6 +30,9 @@
 "profile.version.empty" = "版本";
 "profile.version.value" = "版本 v%@";
 
+"agreement.privacy.title" = "隐私政策";
+"agreement.terms.title" = "用户协议";
+
 "favorites.title" = "喜欢的壁纸";
 "favorites.empty.title" = "还没有喜欢的壁纸";
 "favorites.empty.subtitle" = "在壁纸详情页点亮喜欢后会出现在这里";
