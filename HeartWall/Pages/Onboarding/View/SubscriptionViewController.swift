@@ -69,6 +69,7 @@ final class SubscriptionViewController: BaseViewController {
     private let trialButton = GradientCapsuleButton()
     private let priceLabel = UILabel()
     private let agreementView = AgreementRowView()
+    private var selectedProductID: PremiumAccessStore.ProductID = .weekly
 
     // MARK: - Lifecycle
 
@@ -235,14 +236,14 @@ final class SubscriptionViewController: BaseViewController {
             benefitStackView.addArrangedSubview(FeatureRowView(text: benefitText))
         }
 
-        trialButton.setTitle(L10n.text("subscription.free_trial"), for: .normal)
-        trialButton.addTarget(self, action: #selector(handleStartWeeklyTrial), for: .touchUpInside)
+        trialButton.setTitle(L10n.text("subscription.upgrade_now"), for: .normal)
+        trialButton.addTarget(self, action: #selector(handleUpgrade), for: .touchUpInside)
 
         planStackView.axis = .vertical
         planStackView.alignment = .fill
         planStackView.spacing = 8
-        weeklyPlanButton.addTarget(self, action: #selector(handleWeeklyPlan), for: .touchUpInside)
-        yearlyPlanButton.addTarget(self, action: #selector(handleYearlyPlan), for: .touchUpInside)
+        weeklyPlanButton.addTarget(self, action: #selector(handleWeeklyPlanSelection), for: .touchUpInside)
+        yearlyPlanButton.addTarget(self, action: #selector(handleYearlyPlanSelection), for: .touchUpInside)
         planTrayView.addContentView(planStackView)
         planStackView.addArrangedSubview(weeklyPlanButton)
         planStackView.addArrangedSubview(yearlyPlanButton)
@@ -447,18 +448,18 @@ final class SubscriptionViewController: BaseViewController {
     }
 
     @objc
-    private func handleStartWeeklyTrial() {
-        purchase(.weekly)
+    private func handleUpgrade() {
+        purchase(selectedProductID)
     }
 
     @objc
-    private func handleWeeklyPlan() {
-        purchase(.weekly)
+    private func handleWeeklyPlanSelection() {
+        selectProduct(.weekly, animated: true)
     }
 
     @objc
-    private func handleYearlyPlan() {
-        purchase(.yearly)
+    private func handleYearlyPlanSelection() {
+        selectProduct(.yearly, animated: true)
     }
 
     // MARK: - Helpers
@@ -510,14 +511,71 @@ final class SubscriptionViewController: BaseViewController {
             title: weekly.title,
             price: weekly.priceText,
             caption: L10n.text("subscription.plan.weekly.caption"),
-            isPrimary: true
+            isSelected: selectedProductID == .weekly,
+            isRecommended: true,
+            animated: false
         )
         yearlyPlanButton.configure(
             title: yearly.title,
             price: yearly.priceText,
             caption: L10n.text("subscription.plan.yearly.caption"),
-            isPrimary: false
+            isSelected: selectedProductID == .yearly,
+            isRecommended: false,
+            animated: false
         )
+    }
+
+    private func selectProduct(_ productID: PremiumAccessStore.ProductID, animated: Bool) {
+        guard selectedProductID != productID else {
+            animateSelectedPlanConfirmation(for: productID)
+            return
+        }
+
+        selectedProductID = productID
+        UIImpactFeedbackGenerator(style: .light).impactOccurred()
+
+        let weekly = PremiumAccessStore.shared.productDisplay(for: .weekly)
+        let yearly = PremiumAccessStore.shared.productDisplay(for: .yearly)
+        weeklyPlanButton.configure(
+            title: weekly.title,
+            price: weekly.priceText,
+            caption: L10n.text("subscription.plan.weekly.caption"),
+            isSelected: productID == .weekly,
+            isRecommended: true,
+            animated: animated
+        )
+        yearlyPlanButton.configure(
+            title: yearly.title,
+            price: yearly.priceText,
+            caption: L10n.text("subscription.plan.yearly.caption"),
+            isSelected: productID == .yearly,
+            isRecommended: false,
+            animated: animated
+        )
+    }
+
+    private func animateSelectedPlanConfirmation(for productID: PremiumAccessStore.ProductID) {
+        guard !UIAccessibility.isReduceMotionEnabled else { return }
+        let button = productID == .weekly ? weeklyPlanButton : yearlyPlanButton
+        let selectedTransform = CGAffineTransform(translationX: 0, y: -1)
+
+        UIView.animate(
+            withDuration: 0.12,
+            delay: 0,
+            options: [.beginFromCurrentState, .curveEaseOut]
+        ) {
+            button.transform = selectedTransform.scaledBy(x: 0.985, y: 0.985)
+        } completion: { _ in
+            UIView.animate(
+                withDuration: 0.24,
+                delay: 0,
+                usingSpringWithDamping: 0.68,
+                initialSpringVelocity: 0.28,
+                options: [.beginFromCurrentState, .allowUserInteraction]
+            ) {
+                button.transform = selectedTransform
+            }
+        }
     }
 
     private func presentMessage(title: String, message: String) {
@@ -939,10 +997,13 @@ private final class SubscriptionPlanButton: UIControl {
     private let backgroundLayer = CAGradientLayer()
     private let glowLayer = CAGradientLayer()
     private let separatorLayer = CAGradientLayer()
+    private let selectionRingLayer = CAGradientLayer()
+    private let checkmarkView = UIImageView(image: UIImage(systemName: "checkmark.circle.fill"))
     private let titleLabel = UILabel()
     private let captionLabel = UILabel()
     private let priceLabel = UILabel()
     private let chevronImageView = UIImageView(image: UIImage(systemName: "chevron.right"))
+    private var isPlanSelected = false
 
     override init(frame: CGRect) {
         super.init(frame: frame)
@@ -958,27 +1019,64 @@ private final class SubscriptionPlanButton: UIControl {
         didSet {
             UIView.animate(withDuration: 0.16, delay: 0, options: [.beginFromCurrentState, .curveEaseOut]) {
                 self.alpha = self.isHighlighted ? 0.76 : 1
-                self.transform = self.isHighlighted ? CGAffineTransform(scaleX: 0.99, y: 0.99) : .identity
+                let baseTransform = self.isPlanSelected
+                    ? CGAffineTransform(translationX: 0, y: -1)
+                    : .identity
+                self.transform = self.isHighlighted
+                    ? baseTransform.scaledBy(x: 0.99, y: 0.99)
+                    : baseTransform
             }
         }
     }
 
-    func configure(title: String, price: String, caption: String, isPrimary: Bool) {
+    func configure(
+        title: String,
+        price: String,
+        caption: String,
+        isSelected: Bool,
+        isRecommended: Bool,
+        animated: Bool
+    ) {
         titleLabel.text = title
         captionLabel.text = caption
         priceLabel.text = price
-        layer.borderColor = UIColor.white.withAlphaComponent(isPrimary ? 0.26 : 0.10).cgColor
-        backgroundLayer.colors = [
-            UIColor.white.withAlphaComponent(isPrimary ? 0.13 : 0.055).cgColor,
-            UIColor.black.withAlphaComponent(isPrimary ? 0.30 : 0.17).cgColor
-        ]
-        glowLayer.opacity = isPrimary ? 1 : 0.38
-        priceLabel.textColor = isPrimary
-            ? UIColor(red: 1.0, green: 0.88, blue: 0.66, alpha: 1)
-            : UIColor.white.withAlphaComponent(0.76)
-        titleLabel.textColor = UIColor.white.withAlphaComponent(isPrimary ? 0.96 : 0.82)
-        captionLabel.textColor = UIColor.white.withAlphaComponent(isPrimary ? 0.62 : 0.44)
-        chevronImageView.alpha = isPrimary ? 0.82 : 0.42
+
+        let changes = {
+            self.layer.borderColor = UIColor.white.withAlphaComponent(isSelected ? 0.34 : 0.10).cgColor
+            self.backgroundLayer.colors = [
+                UIColor.white.withAlphaComponent(isSelected ? 0.16 : 0.052).cgColor,
+                UIColor.black.withAlphaComponent(isSelected ? 0.26 : 0.17).cgColor
+            ]
+            self.applyPlanPalette(isSelected: isSelected, isRecommended: isRecommended)
+            self.selectionRingLayer.opacity = isSelected ? 1 : 0
+            self.checkmarkView.alpha = isSelected ? 1 : 0
+            self.checkmarkView.transform = isSelected ? .identity : CGAffineTransform(scaleX: 0.74, y: 0.74)
+            self.chevronImageView.alpha = isSelected ? 0 : 0.38
+            self.titleLabel.textColor = UIColor.white.withAlphaComponent(isSelected ? 0.98 : 0.78)
+            self.captionLabel.textColor = UIColor.white.withAlphaComponent(isSelected ? 0.66 : 0.42)
+            self.priceLabel.transform = isSelected ? CGAffineTransform(scaleX: 1.02, y: 1.02) : .identity
+            self.transform = isSelected ? CGAffineTransform(translationX: 0, y: -1) : .identity
+        }
+
+        if animated, !UIAccessibility.isReduceMotionEnabled {
+            UIView.animate(
+                withDuration: 0.30,
+                delay: 0,
+                usingSpringWithDamping: 0.82,
+                initialSpringVelocity: 0.22,
+                options: [.beginFromCurrentState, .allowUserInteraction]
+            ) {
+                changes()
+            }
+            animateLayerSelectionTransition()
+        } else {
+            CATransaction.begin()
+            CATransaction.setDisableActions(true)
+            changes()
+            CATransaction.commit()
+        }
+
+        isPlanSelected = isSelected
     }
 
     private func configure() {
@@ -989,6 +1087,7 @@ private final class SubscriptionPlanButton: UIControl {
         layer.insertSublayer(backgroundLayer, at: 0)
         layer.insertSublayer(glowLayer, above: backgroundLayer)
         layer.insertSublayer(separatorLayer, above: glowLayer)
+        layer.insertSublayer(selectionRingLayer, above: separatorLayer)
 
         backgroundLayer.startPoint = CGPoint(x: 0.1, y: 0)
         backgroundLayer.endPoint = CGPoint(x: 0.9, y: 1)
@@ -1011,6 +1110,11 @@ private final class SubscriptionPlanButton: UIControl {
         separatorLayer.startPoint = CGPoint(x: 0, y: 0.5)
         separatorLayer.endPoint = CGPoint(x: 1, y: 0.5)
 
+        selectionRingLayer.locations = [0, 0.58, 1]
+        selectionRingLayer.startPoint = CGPoint(x: 0, y: 0)
+        selectionRingLayer.endPoint = CGPoint(x: 1, y: 1)
+        selectionRingLayer.opacity = 0
+
         titleLabel.font = .systemFont(ofSize: 14, weight: .bold)
 
         captionLabel.font = .systemFont(ofSize: 11, weight: .medium)
@@ -1024,7 +1128,18 @@ private final class SubscriptionPlanButton: UIControl {
         chevronImageView.preferredSymbolConfiguration = UIImage.SymbolConfiguration(pointSize: 12, weight: .semibold)
         chevronImageView.contentMode = .scaleAspectFit
 
-        let textStackView = UIStackView(arrangedSubviews: [titleLabel, captionLabel])
+        checkmarkView.tintColor = UIColor(red: 1.0, green: 0.88, blue: 0.66, alpha: 1)
+        checkmarkView.preferredSymbolConfiguration = UIImage.SymbolConfiguration(pointSize: 16, weight: .semibold)
+        checkmarkView.contentMode = .scaleAspectFit
+        checkmarkView.alpha = 0
+
+        let titleStackView = UIStackView(arrangedSubviews: [titleLabel, checkmarkView])
+        titleStackView.axis = .horizontal
+        titleStackView.alignment = .center
+        titleStackView.spacing = 6
+        titleStackView.isUserInteractionEnabled = false
+
+        let textStackView = UIStackView(arrangedSubviews: [titleStackView, captionLabel])
         textStackView.axis = .vertical
         textStackView.alignment = .leading
         textStackView.spacing = 2
@@ -1042,6 +1157,9 @@ private final class SubscriptionPlanButton: UIControl {
         NSLayoutConstraint.activate([
             heightAnchor.constraint(equalToConstant: 54),
 
+            checkmarkView.widthAnchor.constraint(equalToConstant: 16),
+            checkmarkView.heightAnchor.constraint(equalToConstant: 16),
+
             chevronImageView.widthAnchor.constraint(equalToConstant: 12),
             chevronImageView.heightAnchor.constraint(equalToConstant: 12),
 
@@ -1058,6 +1176,64 @@ private final class SubscriptionPlanButton: UIControl {
         backgroundLayer.cornerRadius = layer.cornerRadius
         glowLayer.frame = bounds.insetBy(dx: -bounds.width * 0.18, dy: -bounds.height * 0.52)
         separatorLayer.frame = CGRect(x: 16, y: 0, width: max(0, bounds.width - 32), height: 1)
+        selectionRingLayer.frame = bounds
+        selectionRingLayer.cornerRadius = layer.cornerRadius
+        selectionRingLayer.mask = selectionMaskLayer()
+    }
+
+    private func selectionMaskLayer() -> CALayer {
+        let outerPath = UIBezierPath(roundedRect: bounds, cornerRadius: layer.cornerRadius)
+        let innerRect = bounds.insetBy(dx: 1.3, dy: 1.3)
+        let innerPath = UIBezierPath(roundedRect: innerRect, cornerRadius: max(0, layer.cornerRadius - 1.3))
+        outerPath.append(innerPath)
+        outerPath.usesEvenOddFillRule = true
+
+        let maskLayer = CAShapeLayer()
+        maskLayer.frame = bounds
+        maskLayer.path = outerPath.cgPath
+        maskLayer.fillRule = .evenOdd
+        return maskLayer
+    }
+
+    private func applyPlanPalette(isSelected: Bool, isRecommended: Bool) {
+        let warmGold = UIColor(red: 1.0, green: 0.88, blue: 0.66, alpha: 1)
+        let coolBlue = UIColor(red: 0.76, green: 0.86, blue: 1.0, alpha: 1)
+        let accentColor = isRecommended ? warmGold : coolBlue
+        let secondaryAccentColor = isRecommended ? coolBlue : warmGold
+
+        glowLayer.colors = [
+            accentColor.withAlphaComponent(isRecommended ? 0.24 : 0.20).cgColor,
+            secondaryAccentColor.withAlphaComponent(isRecommended ? 0.08 : 0.10).cgColor,
+            UIColor.clear.cgColor
+        ]
+        glowLayer.opacity = isSelected ? 1 : (isRecommended ? 0.48 : 0.30)
+
+        selectionRingLayer.colors = [
+            accentColor.withAlphaComponent(isSelected ? 0.94 : 0.0).cgColor,
+            secondaryAccentColor.withAlphaComponent(isSelected ? 0.50 : 0.0).cgColor,
+            UIColor.clear.cgColor
+        ]
+
+        checkmarkView.tintColor = accentColor
+        priceLabel.textColor = isSelected
+            ? accentColor
+            : UIColor.white.withAlphaComponent(isRecommended ? 0.72 : 0.68)
+    }
+
+    private func animateLayerSelectionTransition() {
+        let glowAnimation = CABasicAnimation(keyPath: "opacity")
+        glowAnimation.fromValue = isPlanSelected ? 1 : 0.28
+        glowAnimation.toValue = glowLayer.opacity
+        glowAnimation.duration = 0.28
+        glowAnimation.timingFunction = CAMediaTimingFunction(name: .easeOut)
+        glowLayer.add(glowAnimation, forKey: "heartwall.plan.glow.selection")
+
+        let ringAnimation = CABasicAnimation(keyPath: "opacity")
+        ringAnimation.fromValue = isPlanSelected ? 1 : 0
+        ringAnimation.toValue = selectionRingLayer.opacity
+        ringAnimation.duration = 0.28
+        ringAnimation.timingFunction = CAMediaTimingFunction(name: .easeOut)
+        selectionRingLayer.add(ringAnimation, forKey: "heartwall.plan.ring.selection")
     }
 }
 
@@ -1138,15 +1314,15 @@ private final class GradientCapsuleButton: UIButton {
 
         let scaleAnimation = CABasicAnimation(keyPath: "transform.scale")
         scaleAnimation.fromValue = 1.0
-        scaleAnimation.toValue = 1.026
+        scaleAnimation.toValue = 1.052
 
         let shadowAnimation = CABasicAnimation(keyPath: "shadowOpacity")
-        shadowAnimation.fromValue = 0.18
-        shadowAnimation.toValue = 0.34
+        shadowAnimation.fromValue = 0.24
+        shadowAnimation.toValue = 0.48
 
         let group = CAAnimationGroup()
         group.animations = [scaleAnimation, shadowAnimation]
-        group.duration = 1.55
+        group.duration = 1.28
         group.autoreverses = true
         group.repeatCount = .infinity
         group.timingFunction = CAMediaTimingFunction(name: .easeInEaseOut)
@@ -1155,9 +1331,9 @@ private final class GradientCapsuleButton: UIButton {
         layer.add(group, forKey: breathingAnimationKey)
 
         let glowAnimation = CABasicAnimation(keyPath: "opacity")
-        glowAnimation.fromValue = 0.58
+        glowAnimation.fromValue = 0.42
         glowAnimation.toValue = 1.0
-        glowAnimation.duration = 1.55
+        glowAnimation.duration = 1.28
         glowAnimation.autoreverses = true
         glowAnimation.repeatCount = .infinity
         glowAnimation.timingFunction = CAMediaTimingFunction(name: .easeInEaseOut)
@@ -1179,9 +1355,9 @@ private final class GradientCapsuleButton: UIButton {
         layer.borderWidth = 1
         layer.borderColor = UIColor.white.withAlphaComponent(0.34).cgColor
         layer.shadowColor = UIColor.black.cgColor
-        layer.shadowOpacity = 0.18
-        layer.shadowRadius = 28
-        layer.shadowOffset = CGSize(width: 0, height: 12)
+        layer.shadowOpacity = 0.24
+        layer.shadowRadius = 34
+        layer.shadowOffset = CGSize(width: 0, height: 14)
 
         gradientLayer.colors = [
             UIColor(red: 0.99, green: 0.91, blue: 0.78, alpha: 1).cgColor,

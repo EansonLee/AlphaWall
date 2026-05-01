@@ -15,13 +15,13 @@
 "subscription.benefit.features" = "Early access to new features";
 "subscription.benefit.no_ads" = "Immersive experience with no ads";
 "subscription.title" = "HD live wallpapers without limits";
-"subscription.free_trial" = "Free Trial";
+"subscription.upgrade_now" = "Upgrade Now";
 "subscription.price_note" = "Subscription auto-renews and can be canceled anytime in App Store account settings.";
 "subscription.plan.weekly" = "Weekly Membership";
 "subscription.plan.yearly" = "Yearly Membership";
 "subscription.plan.weekly.price" = "¥46";
 "subscription.plan.yearly.price" = "¥176";
-"subscription.plan.weekly.caption" = "Starts after the free trial";
+"subscription.plan.weekly.caption" = "Unlock all benefits weekly";
 "subscription.plan.yearly.caption" = "Secondary option for long-term saving";
 "subscription.agreement" = "Agree to the Membership Agreement and Auto-Renewal Agreement";
 "subscription.restore.success" = "Membership subscription restored.";

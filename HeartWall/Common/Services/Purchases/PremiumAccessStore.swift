@@ -44,18 +44,24 @@ final class PremiumAccessStore: ObservableObject {
     }
 
     enum PremiumAccessError: LocalizedError {
-        case productUnavailable
+        case productUnavailable(requestedIDs: [String], loadedIDs: [String])
         case pending
         case verificationFailed
 
         var errorDescription: String? {
             switch self {
-            case .productUnavailable:
-                return "Subscription products are temporarily unavailable. Please try again later."
+            case .productUnavailable(let requestedIDs, let loadedIDs):
+                #if DEBUG
+                return """
+                Subscription products are unavailable. Requested: \(requestedIDs.joined(separator: ", ")); loaded: \(loadedIDs.isEmpty ? "none" : loadedIDs.joined(separator: ", ")). In the simulator, run from Xcode with the HeartWall scheme and HeartWall.storekit selected in Run > Options.
+                """
+                #else
+                return L10n.text("subscription.error.product_unavailable")
+                #endif
             case .pending:
-                return "The purchase is pending confirmation. Check the App Store later for the result."
+                return L10n.text("subscription.error.pending")
             case .verificationFailed:
-                return "Transaction verification failed. Please try again later."
+                return L10n.text("subscription.error.verification_failed")
             }
         }
     }
@@ -88,6 +94,16 @@ final class PremiumAccessStore: ObservableObject {
         }
 
         products = indexedProducts
+
+        #if DEBUG
+        if indexedProducts.count != ProductID.allCases.count {
+            let loadedIDs = loadedProducts.map(\.id).sorted()
+            print(
+                "[StoreKit] Requested subscription products: \(productIDs.sorted()). Loaded: \(loadedIDs). " +
+                "If this is empty in Simulator, run from Xcode with HeartWall.storekit selected in the HeartWall scheme."
+            )
+        }
+        #endif
     }
 
     func productDisplay(for productID: ProductID) -> ProductDisplay {
@@ -106,7 +122,10 @@ final class PremiumAccessStore: ObservableObject {
         }
 
         guard let product = products[productID] else {
-            throw PremiumAccessError.productUnavailable
+            throw PremiumAccessError.productUnavailable(
+                requestedIDs: ProductID.allCases.map(\.rawValue).sorted(),
+                loadedIDs: products.keys.map(\.rawValue).sorted()
+            )
         }
 
         let result = try await product.purchase()
