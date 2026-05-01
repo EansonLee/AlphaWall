@@ -14,6 +14,10 @@ final class HeartQuoteDetailViewController: BaseViewController {
         case notAuthorized
     }
 
+    private enum Layout {
+        static let actionButtonSize: CGFloat = 32
+    }
+
     // MARK: - Properties
 
     private let pages: [HeartQuotePage]
@@ -383,12 +387,12 @@ final class HeartQuoteDetailViewController: BaseViewController {
             actionStack.trailingAnchor.constraint(equalTo: actionBarView.contentView.trailingAnchor, constant: -22),
             actionStack.centerYAnchor.constraint(equalTo: actionBarView.contentView.centerYAnchor),
 
-            favoriteButton.widthAnchor.constraint(equalToConstant: 26),
-            favoriteButton.heightAnchor.constraint(equalToConstant: 26),
-            playButton.widthAnchor.constraint(equalToConstant: 26),
-            playButton.heightAnchor.constraint(equalToConstant: 26),
-            shareButton.widthAnchor.constraint(equalToConstant: 26),
-            shareButton.heightAnchor.constraint(equalToConstant: 26)
+            favoriteButton.widthAnchor.constraint(equalToConstant: Layout.actionButtonSize),
+            favoriteButton.heightAnchor.constraint(equalToConstant: Layout.actionButtonSize),
+            playButton.widthAnchor.constraint(equalToConstant: Layout.actionButtonSize),
+            playButton.heightAnchor.constraint(equalToConstant: Layout.actionButtonSize),
+            shareButton.widthAnchor.constraint(equalToConstant: Layout.actionButtonSize),
+            shareButton.heightAnchor.constraint(equalToConstant: Layout.actionButtonSize)
         ])
     }
 
