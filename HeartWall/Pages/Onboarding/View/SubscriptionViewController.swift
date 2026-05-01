@@ -997,7 +997,8 @@ private final class SubscriptionPlanButton: UIControl {
     private let backgroundLayer = CAGradientLayer()
     private let glowLayer = CAGradientLayer()
     private let separatorLayer = CAGradientLayer()
-    private let selectionRingLayer = CAGradientLayer()
+    private let selectionBorderView = UIView()
+    private let selectedAccentColor = UIColor(red: 1.0, green: 0.88, blue: 0.66, alpha: 1)
     private let checkmarkView = UIImageView(image: UIImage(systemName: "checkmark.circle.fill"))
     private let titleLabel = UILabel()
     private let captionLabel = UILabel()
@@ -1048,7 +1049,7 @@ private final class SubscriptionPlanButton: UIControl {
                 UIColor.black.withAlphaComponent(isSelected ? 0.26 : 0.17).cgColor
             ]
             self.applyPlanPalette(isSelected: isSelected, isRecommended: isRecommended)
-            self.selectionRingLayer.opacity = isSelected ? 1 : 0
+            self.selectionBorderView.alpha = isSelected ? 1 : 0
             self.checkmarkView.alpha = isSelected ? 1 : 0
             self.checkmarkView.transform = isSelected ? .identity : CGAffineTransform(scaleX: 0.74, y: 0.74)
             self.chevronImageView.alpha = isSelected ? 0 : 0.38
@@ -1087,7 +1088,6 @@ private final class SubscriptionPlanButton: UIControl {
         layer.insertSublayer(backgroundLayer, at: 0)
         layer.insertSublayer(glowLayer, above: backgroundLayer)
         layer.insertSublayer(separatorLayer, above: glowLayer)
-        layer.insertSublayer(selectionRingLayer, above: separatorLayer)
 
         backgroundLayer.startPoint = CGPoint(x: 0.1, y: 0)
         backgroundLayer.endPoint = CGPoint(x: 0.9, y: 1)
@@ -1110,11 +1110,6 @@ private final class SubscriptionPlanButton: UIControl {
         separatorLayer.startPoint = CGPoint(x: 0, y: 0.5)
         separatorLayer.endPoint = CGPoint(x: 1, y: 0.5)
 
-        selectionRingLayer.locations = [0, 0.58, 1]
-        selectionRingLayer.startPoint = CGPoint(x: 0, y: 0)
-        selectionRingLayer.endPoint = CGPoint(x: 1, y: 1)
-        selectionRingLayer.opacity = 0
-
         titleLabel.font = .systemFont(ofSize: 14, weight: .bold)
 
         captionLabel.font = .systemFont(ofSize: 11, weight: .medium)
@@ -1128,10 +1123,18 @@ private final class SubscriptionPlanButton: UIControl {
         chevronImageView.preferredSymbolConfiguration = UIImage.SymbolConfiguration(pointSize: 12, weight: .semibold)
         chevronImageView.contentMode = .scaleAspectFit
 
-        checkmarkView.tintColor = UIColor(red: 1.0, green: 0.88, blue: 0.66, alpha: 1)
+        checkmarkView.tintColor = selectedAccentColor
         checkmarkView.preferredSymbolConfiguration = UIImage.SymbolConfiguration(pointSize: 16, weight: .semibold)
         checkmarkView.contentMode = .scaleAspectFit
         checkmarkView.alpha = 0
+
+        selectionBorderView.isUserInteractionEnabled = false
+        selectionBorderView.alpha = 0
+        selectionBorderView.layer.cornerRadius = 16
+        selectionBorderView.layer.cornerCurve = .continuous
+        selectionBorderView.layer.borderWidth = 1.6
+        selectionBorderView.layer.borderColor = selectedAccentColor.withAlphaComponent(0.92).cgColor
+        selectionBorderView.backgroundColor = .clear
 
         let titleStackView = UIStackView(arrangedSubviews: [titleLabel, checkmarkView])
         titleStackView.axis = .horizontal
@@ -1151,11 +1154,18 @@ private final class SubscriptionPlanButton: UIControl {
         stackView.spacing = 12
         stackView.isUserInteractionEnabled = false
 
+        addSubview(selectionBorderView)
         addSubview(stackView)
+        selectionBorderView.translatesAutoresizingMaskIntoConstraints = false
         stackView.translatesAutoresizingMaskIntoConstraints = false
 
         NSLayoutConstraint.activate([
             heightAnchor.constraint(equalToConstant: 54),
+
+            selectionBorderView.topAnchor.constraint(equalTo: topAnchor, constant: 2),
+            selectionBorderView.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 2),
+            selectionBorderView.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -2),
+            selectionBorderView.bottomAnchor.constraint(equalTo: bottomAnchor, constant: -2),
 
             checkmarkView.widthAnchor.constraint(equalToConstant: 16),
             checkmarkView.heightAnchor.constraint(equalToConstant: 16),
@@ -1176,47 +1186,23 @@ private final class SubscriptionPlanButton: UIControl {
         backgroundLayer.cornerRadius = layer.cornerRadius
         glowLayer.frame = bounds.insetBy(dx: -bounds.width * 0.18, dy: -bounds.height * 0.52)
         separatorLayer.frame = CGRect(x: 16, y: 0, width: max(0, bounds.width - 32), height: 1)
-        selectionRingLayer.frame = bounds
-        selectionRingLayer.cornerRadius = layer.cornerRadius
-        selectionRingLayer.mask = selectionMaskLayer()
-    }
-
-    private func selectionMaskLayer() -> CALayer {
-        let outerPath = UIBezierPath(roundedRect: bounds, cornerRadius: layer.cornerRadius)
-        let innerRect = bounds.insetBy(dx: 1.3, dy: 1.3)
-        let innerPath = UIBezierPath(roundedRect: innerRect, cornerRadius: max(0, layer.cornerRadius - 1.3))
-        outerPath.append(innerPath)
-        outerPath.usesEvenOddFillRule = true
-
-        let maskLayer = CAShapeLayer()
-        maskLayer.frame = bounds
-        maskLayer.path = outerPath.cgPath
-        maskLayer.fillRule = .evenOdd
-        return maskLayer
     }
 
     private func applyPlanPalette(isSelected: Bool, isRecommended: Bool) {
-        let warmGold = UIColor(red: 1.0, green: 0.88, blue: 0.66, alpha: 1)
-        let coolBlue = UIColor(red: 0.76, green: 0.86, blue: 1.0, alpha: 1)
-        let accentColor = isRecommended ? warmGold : coolBlue
-        let secondaryAccentColor = isRecommended ? coolBlue : warmGold
+        let primaryGlowAlpha: CGFloat = isSelected ? 0.24 : (isRecommended ? 0.18 : 0.12)
+        let secondaryGlowAlpha: CGFloat = isSelected ? 0.08 : (isRecommended ? 0.06 : 0.04)
 
         glowLayer.colors = [
-            accentColor.withAlphaComponent(isRecommended ? 0.24 : 0.20).cgColor,
-            secondaryAccentColor.withAlphaComponent(isRecommended ? 0.08 : 0.10).cgColor,
+            selectedAccentColor.withAlphaComponent(primaryGlowAlpha).cgColor,
+            UIColor(red: 1.0, green: 0.76, blue: 0.38, alpha: secondaryGlowAlpha).cgColor,
             UIColor.clear.cgColor
         ]
         glowLayer.opacity = isSelected ? 1 : (isRecommended ? 0.48 : 0.30)
 
-        selectionRingLayer.colors = [
-            accentColor.withAlphaComponent(isSelected ? 0.94 : 0.0).cgColor,
-            secondaryAccentColor.withAlphaComponent(isSelected ? 0.50 : 0.0).cgColor,
-            UIColor.clear.cgColor
-        ]
-
-        checkmarkView.tintColor = accentColor
+        checkmarkView.tintColor = selectedAccentColor
+        selectionBorderView.layer.borderColor = selectedAccentColor.withAlphaComponent(isSelected ? 0.92 : 0.0).cgColor
         priceLabel.textColor = isSelected
-            ? accentColor
+            ? selectedAccentColor
             : UIColor.white.withAlphaComponent(isRecommended ? 0.72 : 0.68)
     }
 
@@ -1228,12 +1214,7 @@ private final class SubscriptionPlanButton: UIControl {
         glowAnimation.timingFunction = CAMediaTimingFunction(name: .easeOut)
         glowLayer.add(glowAnimation, forKey: "heartwall.plan.glow.selection")
 
-        let ringAnimation = CABasicAnimation(keyPath: "opacity")
-        ringAnimation.fromValue = isPlanSelected ? 1 : 0
-        ringAnimation.toValue = selectionRingLayer.opacity
-        ringAnimation.duration = 0.28
-        ringAnimation.timingFunction = CAMediaTimingFunction(name: .easeOut)
-        selectionRingLayer.add(ringAnimation, forKey: "heartwall.plan.ring.selection")
+        selectionBorderView.layer.removeAllAnimations()
     }
 }
 
@@ -1314,15 +1295,15 @@ private final class GradientCapsuleButton: UIButton {
 
         let scaleAnimation = CABasicAnimation(keyPath: "transform.scale")
         scaleAnimation.fromValue = 1.0
-        scaleAnimation.toValue = 1.052
+        scaleAnimation.toValue = 1.078
 
         let shadowAnimation = CABasicAnimation(keyPath: "shadowOpacity")
-        shadowAnimation.fromValue = 0.24
-        shadowAnimation.toValue = 0.48
+        shadowAnimation.fromValue = 0.28
+        shadowAnimation.toValue = 0.62
 
         let group = CAAnimationGroup()
         group.animations = [scaleAnimation, shadowAnimation]
-        group.duration = 1.28
+        group.duration = 0.96
         group.autoreverses = true
         group.repeatCount = .infinity
         group.timingFunction = CAMediaTimingFunction(name: .easeInEaseOut)
@@ -1331,9 +1312,9 @@ private final class GradientCapsuleButton: UIButton {
         layer.add(group, forKey: breathingAnimationKey)
 
         let glowAnimation = CABasicAnimation(keyPath: "opacity")
-        glowAnimation.fromValue = 0.42
+        glowAnimation.fromValue = 0.30
         glowAnimation.toValue = 1.0
-        glowAnimation.duration = 1.28
+        glowAnimation.duration = 0.96
         glowAnimation.autoreverses = true
         glowAnimation.repeatCount = .infinity
         glowAnimation.timingFunction = CAMediaTimingFunction(name: .easeInEaseOut)
@@ -1355,9 +1336,9 @@ private final class GradientCapsuleButton: UIButton {
         layer.borderWidth = 1
         layer.borderColor = UIColor.white.withAlphaComponent(0.34).cgColor
         layer.shadowColor = UIColor.black.cgColor
-        layer.shadowOpacity = 0.24
-        layer.shadowRadius = 34
-        layer.shadowOffset = CGSize(width: 0, height: 14)
+        layer.shadowOpacity = 0.28
+        layer.shadowRadius = 40
+        layer.shadowOffset = CGSize(width: 0, height: 16)
 
         gradientLayer.colors = [
             UIColor(red: 0.99, green: 0.91, blue: 0.78, alpha: 1).cgColor,
