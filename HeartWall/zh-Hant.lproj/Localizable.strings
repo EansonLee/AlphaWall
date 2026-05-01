@@ -16,10 +16,19 @@
 "subscription.benefit.no_ads" = "沉浸體驗無廣告";
 "subscription.title" = "海量動態壁紙高清下載";
 "subscription.free_trial" = "免費試用";
-"subscription.price_note" = "首週 ¥9.9 後自動續費 ¥48/月，可隨時取消";
+"subscription.price_note" = "訂閱自動續費，可在 App Store 帳戶設定中隨時取消。";
+"subscription.plan.weekly" = "週會員";
+"subscription.plan.yearly" = "年會員";
+"subscription.plan.weekly.price" = "¥46";
+"subscription.plan.yearly.price" = "¥176";
 "subscription.agreement" = "同意《會員協議》和《自動續費協議》";
-"subscription.restore.preview_message" = "目前版本僅完成訂閱頁預覽，真實購買能力尚未接入。";
+"subscription.restore.empty" = "未找到可恢復的會員訂閱。";
+"subscription.error.title" = "訂閱失敗";
+"subscription.error.product_unavailable" = "暫時無法載入訂閱商品，請稍後重試。";
+"subscription.error.pending" = "購買正在等待確認，請稍後在 App Store 中查看結果。";
+"subscription.error.verification_failed" = "交易校驗未通過，請稍後重試。";
 
+"profile.menu.membership" = "會員訂閱";
 "profile.menu.favorite_wallpapers" = "喜歡的壁紙";
 "profile.menu.privacy" = "私隱政策";
 "profile.menu.terms" = "使用者協議";

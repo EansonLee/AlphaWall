@@ -16,10 +16,19 @@
 "subscription.benefit.no_ads" = "Immersive experience with no ads";
 "subscription.title" = "HD live wallpapers without limits";
 "subscription.free_trial" = "Free Trial";
-"subscription.price_note" = "First week ¥9.9, then ¥48/month. Auto-renews. Cancel anytime.";
+"subscription.price_note" = "Subscription auto-renews and can be canceled anytime in App Store account settings.";
+"subscription.plan.weekly" = "Weekly Membership";
+"subscription.plan.yearly" = "Yearly Membership";
+"subscription.plan.weekly.price" = "¥46";
+"subscription.plan.yearly.price" = "¥176";
 "subscription.agreement" = "Agree to the Membership Agreement and Auto-Renewal Agreement";
-"subscription.restore.preview_message" = "This version only includes a subscription page preview. Real purchase capability is not connected yet.";
+"subscription.restore.empty" = "No active membership subscription was found to restore.";
+"subscription.error.title" = "Subscription Failed";
+"subscription.error.product_unavailable" = "Subscription products are temporarily unavailable. Please try again later.";
+"subscription.error.pending" = "The purchase is pending confirmation. Check the App Store later for the result.";
+"subscription.error.verification_failed" = "Transaction verification failed. Please try again later.";
 
+"profile.menu.membership" = "Membership";
 "profile.menu.favorite_wallpapers" = "Favorite Wallpapers";
 "profile.menu.privacy" = "Privacy Policy";
 "profile.menu.terms" = "Terms of Use";

@@ -8,12 +8,15 @@ import UIKit
 final class ProfileViewController: BaseViewController {
 
     fileprivate enum ProfileItem: CaseIterable {
+        case membership
         case favoriteWallpapers
         case privacy
         case terms
 
         var title: String {
             switch self {
+            case .membership:
+                return L10n.text("profile.menu.membership")
             case .favoriteWallpapers:
                 return L10n.text("profile.menu.favorite_wallpapers")
             case .privacy:
@@ -25,6 +28,8 @@ final class ProfileViewController: BaseViewController {
 
         var iconName: String {
             switch self {
+            case .membership:
+                return "crown.fill"
             case .favoriteWallpapers:
                 return "heart.fill"
             case .privacy:
@@ -36,6 +41,8 @@ final class ProfileViewController: BaseViewController {
 
         var accentColor: UIColor {
             switch self {
+            case .membership:
+                return UIColor(red: 1.00, green: 0.82, blue: 0.55, alpha: 1)
             case .favoriteWallpapers:
                 return UIColor(red: 1.00, green: 0.80, blue: 0.50, alpha: 1)
             case .privacy:
@@ -47,7 +54,7 @@ final class ProfileViewController: BaseViewController {
 
         var agreementURL: URL? {
             switch self {
-            case .favoriteWallpapers:
+            case .membership, .favoriteWallpapers:
                 return nil
             case .privacy:
                 return URL(string: "https://docs.google.com/document/d/1n2nVh6Esl44qqnzkzcKzVcyx4290vUxlfHRON--3GpQ/edit?tab=t.0")
@@ -58,7 +65,7 @@ final class ProfileViewController: BaseViewController {
 
         var agreementTitle: String {
             switch self {
-            case .favoriteWallpapers:
+            case .membership, .favoriteWallpapers:
                 return title
             case .privacy:
                 return L10n.text("agreement.privacy.title")
@@ -315,6 +322,8 @@ final class ProfileViewController: BaseViewController {
         UIImpactFeedbackGenerator(style: .light).impactOccurred()
 
         switch item {
+        case .membership:
+            SubscriptionRoute.presentSubscription(from: self, source: .modal)
         case .favoriteWallpapers:
             let viewController = FavoriteWallpapersViewController()
             viewController.hidesBottomBarWhenPushed = true

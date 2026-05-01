@@ -16,10 +16,19 @@
 "subscription.benefit.no_ads" = "沉浸体验无广告";
 "subscription.title" = "海量动态壁纸高清下载";
 "subscription.free_trial" = "免费试用";
-"subscription.price_note" = "首周 ¥9.9 后自动续费 ¥48/月，可随时取消";
+"subscription.price_note" = "订阅自动续费，可在 App Store 账户设置中随时取消。";
+"subscription.plan.weekly" = "周会员";
+"subscription.plan.yearly" = "年会员";
+"subscription.plan.weekly.price" = "¥46";
+"subscription.plan.yearly.price" = "¥176";
 "subscription.agreement" = "同意《会员协议》和《自动续费协议》";
-"subscription.restore.preview_message" = "当前版本仅完成订阅页预览，真实购买能力暂未接入。";
+"subscription.restore.empty" = "未找到可恢复的会员订阅。";
+"subscription.error.title" = "订阅失败";
+"subscription.error.product_unavailable" = "暂时无法加载订阅商品，请稍后重试。";
+"subscription.error.pending" = "购买正在等待确认，请稍后在 App Store 中查看结果。";
+"subscription.error.verification_failed" = "交易校验未通过，请稍后重试。";
 
+"profile.menu.membership" = "会员订阅";
 "profile.menu.favorite_wallpapers" = "喜欢的壁纸";
 "profile.menu.privacy" = "隐私协议";
 "profile.menu.terms" = "用户协议";

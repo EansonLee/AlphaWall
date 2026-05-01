@@ -7,6 +7,11 @@ import UIKit
 
 final class SubscriptionViewController: BaseViewController {
 
+    enum Source {
+        case appLaunch
+        case modal
+    }
+
     private enum CarouselConfig {
         static let loopMultiplier = 120
         static let autoScrollInterval: TimeInterval = 2.8
@@ -25,6 +30,7 @@ final class SubscriptionViewController: BaseViewController {
     private var lastKnownCarouselSize: CGSize = .zero
     private var autoScrollTimer: Timer?
     private var isUserInteracting = false
+    private let source: Source
 
     // MARK: - UI
 
@@ -56,16 +62,20 @@ final class SubscriptionViewController: BaseViewController {
     private let contentStackView = UIStackView()
     private let benefitStackView = UIStackView()
     private let titleLabel = UILabel()
+    private let planStackView = UIStackView()
+    private let weeklyPlanButton = SubscriptionPlanButton()
+    private let yearlyPlanButton = SubscriptionPlanButton()
     private let trialButton = GradientCapsuleButton()
     private let priceLabel = UILabel()
     private let agreementView = AgreementRowView()
 
     // MARK: - Lifecycle
 
-    init(videoResource: OnboardingVideoResource) {
+    init(videoResource: OnboardingVideoResource, source: Source = .appLaunch) {
         let preferredIndex = min(1, OnboardingVideoResource.allCases.count - 1)
         let middleCycle = max(0, CarouselConfig.loopMultiplier / 2)
         self.currentLoopIndex = (middleCycle * OnboardingVideoResource.allCases.count) + preferredIndex
+        self.source = source
         super.init(nibName: nil, bundle: nil)
     }
 
@@ -206,14 +216,16 @@ final class SubscriptionViewController: BaseViewController {
         benefitStackView.alignment = .fill
         benefitStackView.spacing = 7
 
-        [
+        let benefitTexts = [
             L10n.text("subscription.benefit.wallpapers"),
             L10n.text("subscription.benefit.audio"),
             L10n.text("subscription.benefit.features"),
             L10n.text("subscription.benefit.no_ads")
         ]
-        .map(FeatureRowView.init)
-        .forEach(benefitStackView.addArrangedSubview)
+
+        for benefitText in benefitTexts {
+            benefitStackView.addArrangedSubview(FeatureRowView(text: benefitText))
+        }
 
         titleLabel.text = L10n.text("subscription.title")
         titleLabel.font = serifFont(size: 35, weight: .bold)
@@ -222,7 +234,16 @@ final class SubscriptionViewController: BaseViewController {
         titleLabel.textAlignment = .left
 
         trialButton.setTitle(L10n.text("subscription.free_trial"), for: .normal)
-        trialButton.addTarget(self, action: #selector(handleEnterHome), for: .touchUpInside)
+        trialButton.addTarget(self, action: #selector(handleStartWeeklyTrial), for: .touchUpInside)
+
+        planStackView.axis = .vertical
+        planStackView.alignment = .fill
+        planStackView.spacing = 8
+        weeklyPlanButton.addTarget(self, action: #selector(handleWeeklyPlan), for: .touchUpInside)
+        yearlyPlanButton.addTarget(self, action: #selector(handleYearlyPlan), for: .touchUpInside)
+        planStackView.addArrangedSubview(weeklyPlanButton)
+        planStackView.addArrangedSubview(yearlyPlanButton)
+        refreshPlanButtons()
 
         priceLabel.text = L10n.text("subscription.price_note")
         priceLabel.font = .systemFont(ofSize: 12, weight: .medium)
@@ -231,14 +252,32 @@ final class SubscriptionViewController: BaseViewController {
 
         agreementView.configure(text: L10n.text("subscription.agreement"))
 
-        [benefitStackView, titleLabel, trialButton, priceLabel, agreementView].forEach {
+        [benefitStackView, titleLabel, planStackView, trialButton, priceLabel, agreementView].forEach {
             contentStackView.addArrangedSubview($0)
         }
 
         contentStackView.setCustomSpacing(16, after: benefitStackView)
         contentStackView.setCustomSpacing(18, after: titleLabel)
+        contentStackView.setCustomSpacing(12, after: planStackView)
         contentStackView.setCustomSpacing(10, after: trialButton)
         contentStackView.setCustomSpacing(6, after: priceLabel)
+    }
+
+    override func setupBindings() {
+        Task { [weak self] in
+            await PremiumAccessStore.shared.refreshPurchasedProducts()
+            if PremiumAccessStore.shared.isPremium {
+                self?.finishSubscriptionFlow()
+                return
+            }
+
+            do {
+                try await PremiumAccessStore.shared.loadProducts()
+                self?.refreshPlanButtons()
+            } catch {
+                self?.refreshPlanButtons()
+            }
+        }
     }
 
     // MARK: - Carousel
@@ -381,46 +420,104 @@ final class SubscriptionViewController: BaseViewController {
         backgroundVideoView.pause()
         pauseVisibleCells()
 
-        guard let navigationController else { return }
-        let homeRootViewController = makeHomeRootViewController()
-
-        UIView.transition(
-            with: navigationController.view,
-            duration: UIAccessibility.isReduceMotionEnabled ? 0.15 : 0.40,
-            options: [.transitionCrossDissolve, .allowAnimatedContent]
-        ) {
-            navigationController.setViewControllers([homeRootViewController], animated: false)
+        switch source {
+        case .appLaunch:
+            guard let navigationController else { return }
+            SubscriptionRoute.replaceRootWithLaunch(from: navigationController)
+        case .modal:
+            dismiss(animated: true)
         }
     }
 
     @objc
     private func handleRestore() {
-        let alert = UIAlertController(
-            title: L10n.text("subscription.restore"),
-            message: L10n.text("subscription.restore.preview_message"),
-            preferredStyle: .alert
-        )
-        alert.addAction(UIAlertAction(title: L10n.text("common.ok"), style: .default))
-        present(alert, animated: true)
+        runPurchaseTask {
+            let restored = try await PremiumAccessStore.shared.restorePurchases()
+            if restored {
+                self.finishSubscriptionFlow()
+            } else {
+                self.presentMessage(
+                    title: L10n.text("subscription.restore"),
+                    message: L10n.text("subscription.restore.empty")
+                )
+            }
+        }
+    }
+
+    @objc
+    private func handleStartWeeklyTrial() {
+        purchase(.weekly)
+    }
+
+    @objc
+    private func handleWeeklyPlan() {
+        purchase(.weekly)
+    }
+
+    @objc
+    private func handleYearlyPlan() {
+        purchase(.yearly)
     }
 
     // MARK: - Helpers
+
+    private func purchase(_ productID: PremiumAccessStore.ProductID) {
+        runPurchaseTask {
+            let didPurchase = try await PremiumAccessStore.shared.purchase(productID)
+            if didPurchase {
+                self.finishSubscriptionFlow()
+            }
+        }
+    }
+
+    private func runPurchaseTask(_ operation: @escaping @MainActor () async throws -> Void) {
+        setPurchaseControlsEnabled(false)
+
+        Task { [weak self] in
+            guard let self else { return }
+
+            do {
+                try await operation()
+            } catch {
+                self.presentMessage(
+                    title: L10n.text("subscription.error.title"),
+                    message: error.localizedDescription
+                )
+            }
+
+            self.setPurchaseControlsEnabled(true)
+        }
+    }
+
+    private func finishSubscriptionFlow() {
+        UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+        handleEnterHome()
+    }
+
+    private func setPurchaseControlsEnabled(_ isEnabled: Bool) {
+        [trialButton, restoreButton, weeklyPlanButton, yearlyPlanButton].forEach {
+            $0.isEnabled = isEnabled
+            $0.alpha = isEnabled ? 1 : 0.62
+        }
+    }
+
+    private func refreshPlanButtons() {
+        let weekly = PremiumAccessStore.shared.productDisplay(for: .weekly)
+        let yearly = PremiumAccessStore.shared.productDisplay(for: .yearly)
+        weeklyPlanButton.configure(title: weekly.title, price: weekly.priceText, isPrimary: true)
+        yearlyPlanButton.configure(title: yearly.title, price: yearly.priceText, isPrimary: false)
+    }
+
+    private func presentMessage(title: String, message: String) {
+        let alert = UIAlertController(title: title, message: message, preferredStyle: .alert)
+        alert.addAction(UIAlertAction(title: L10n.text("common.ok"), style: .default))
+        present(alert, animated: true)
+    }
 
     private func serifFont(size: CGFloat, weight: UIFont.Weight) -> UIFont {
         let systemFont = UIFont.systemFont(ofSize: size, weight: weight)
         let descriptor = systemFont.fontDescriptor.withDesign(.serif) ?? systemFont.fontDescriptor
         return UIFont(descriptor: descriptor, size: size)
-    }
-
-    private func makeHomeRootViewController() -> UIViewController {
-        let moduleName = Bundle.main.object(forInfoDictionaryKey: "CFBundleName") as? String ?? "HeartWall"
-        let className = "\(moduleName).HomeRootViewController"
-
-        if let type = NSClassFromString(className) as? UIViewController.Type {
-            return type.init()
-        }
-
-        return UIViewController()
     }
 }
 
@@ -522,7 +619,6 @@ private final class VideoCarouselCell: UICollectionViewCell {
     private let videoView = LoopingVideoView()
     private let dimView = UIView()
     private let borderView = UIView()
-    private let dateLabel = UILabel()
 
     private let fallbackGradientLayer = CAGradientLayer()
     private let glowOrbOne = UIView()
@@ -555,8 +651,6 @@ private final class VideoCarouselCell: UICollectionViewCell {
     }
 
     func configure(resource: OnboardingVideoResource) {
-        dateLabel.text = Self.dateFormatter.string(from: Date())
-
         guard configuredResource != resource else { return }
         configuredResource = resource
 
@@ -584,8 +678,7 @@ private final class VideoCarouselCell: UICollectionViewCell {
 
     func applyFocusProgress(_ progress: CGFloat) {
         let clamped = max(0, min(progress, 1))
-        dateLabel.alpha = 0.30 + (clamped * 0.70)
-        dateLabel.transform = CGAffineTransform(scaleX: 0.96 + (clamped * 0.04), y: 0.96 + (clamped * 0.04))
+        videoContainerView.alpha = 0.96 + (clamped * 0.04)
     }
 
     func play() {
@@ -638,12 +731,8 @@ private final class VideoCarouselCell: UICollectionViewCell {
         borderView.backgroundColor = .clear
         borderView.isUserInteractionEnabled = false
 
-        dateLabel.font = .systemFont(ofSize: 17, weight: .semibold)
-        dateLabel.textColor = UIColor.white.withAlphaComponent(0.88)
-        dateLabel.textAlignment = .center
-
         contentView.addSubview(videoContainerView)
-        [videoView, dimView, borderView, dateLabel].forEach {
+        [videoView, dimView, borderView].forEach {
             videoContainerView.addSubview($0)
             $0.translatesAutoresizingMaskIntoConstraints = false
         }
@@ -668,10 +757,7 @@ private final class VideoCarouselCell: UICollectionViewCell {
             borderView.topAnchor.constraint(equalTo: videoContainerView.topAnchor),
             borderView.leadingAnchor.constraint(equalTo: videoContainerView.leadingAnchor),
             borderView.trailingAnchor.constraint(equalTo: videoContainerView.trailingAnchor),
-            borderView.bottomAnchor.constraint(equalTo: videoContainerView.bottomAnchor),
-
-            dateLabel.centerXAnchor.constraint(equalTo: videoContainerView.centerXAnchor),
-            dateLabel.topAnchor.constraint(equalTo: videoContainerView.safeAreaLayoutGuide.topAnchor, constant: 78)
+            borderView.bottomAnchor.constraint(equalTo: videoContainerView.bottomAnchor)
         ])
     }
 
@@ -689,10 +775,6 @@ private final class VideoCarouselCell: UICollectionViewCell {
             orbView.layer.cornerCurve = .continuous
         }
     }
-
-    private static let dateFormatter: DateFormatter = {
-        L10n.dateFormatter(dateFormatKey: "date.subscription.card")
-    }()
 
 }
 
@@ -734,6 +816,77 @@ private final class FeatureRowView: UIView {
     @available(*, unavailable)
     required init?(coder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
+    }
+}
+
+private final class SubscriptionPlanButton: UIControl {
+
+    private let titleLabel = UILabel()
+    private let priceLabel = UILabel()
+    private let chevronImageView = UIImageView(image: UIImage(systemName: "chevron.right"))
+
+    override init(frame: CGRect) {
+        super.init(frame: frame)
+        configure()
+    }
+
+    @available(*, unavailable)
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
+
+    override var isHighlighted: Bool {
+        didSet {
+            UIView.animate(withDuration: 0.16, delay: 0, options: [.beginFromCurrentState, .curveEaseOut]) {
+                self.alpha = self.isHighlighted ? 0.76 : 1
+                self.transform = self.isHighlighted ? CGAffineTransform(scaleX: 0.99, y: 0.99) : .identity
+            }
+        }
+    }
+
+    func configure(title: String, price: String, isPrimary: Bool) {
+        titleLabel.text = title
+        priceLabel.text = price
+        layer.borderColor = UIColor.white.withAlphaComponent(isPrimary ? 0.28 : 0.14).cgColor
+        backgroundColor = UIColor.white.withAlphaComponent(isPrimary ? 0.13 : 0.07)
+    }
+
+    private func configure() {
+        layer.cornerRadius = 16
+        layer.cornerCurve = .continuous
+        layer.borderWidth = 1
+
+        titleLabel.font = .systemFont(ofSize: 14, weight: .semibold)
+        titleLabel.textColor = UIColor.white.withAlphaComponent(0.90)
+
+        priceLabel.font = .systemFont(ofSize: 14, weight: .bold)
+        priceLabel.textColor = UIColor(red: 1.0, green: 0.86, blue: 0.62, alpha: 0.96)
+        priceLabel.textAlignment = .right
+
+        chevronImageView.tintColor = UIColor.white.withAlphaComponent(0.40)
+        chevronImageView.preferredSymbolConfiguration = UIImage.SymbolConfiguration(pointSize: 12, weight: .semibold)
+        chevronImageView.contentMode = .scaleAspectFit
+
+        let stackView = UIStackView(arrangedSubviews: [titleLabel, priceLabel, chevronImageView])
+        stackView.axis = .horizontal
+        stackView.alignment = .center
+        stackView.spacing = 10
+        stackView.isUserInteractionEnabled = false
+
+        addSubview(stackView)
+        stackView.translatesAutoresizingMaskIntoConstraints = false
+
+        NSLayoutConstraint.activate([
+            heightAnchor.constraint(equalToConstant: 44),
+
+            chevronImageView.widthAnchor.constraint(equalToConstant: 12),
+            chevronImageView.heightAnchor.constraint(equalToConstant: 12),
+
+            stackView.topAnchor.constraint(equalTo: topAnchor, constant: 10),
+            stackView.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 14),
+            stackView.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -14),
+            stackView.bottomAnchor.constraint(equalTo: bottomAnchor, constant: -10)
+        ])
     }
 }
 

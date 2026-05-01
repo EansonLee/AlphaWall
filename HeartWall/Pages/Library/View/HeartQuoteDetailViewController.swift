@@ -4,6 +4,7 @@
 //
 
 import UIKit
+import Combine
 import AVFoundation
 import Photos
 
@@ -37,6 +38,7 @@ final class HeartQuoteDetailViewController: BaseViewController {
     private let dateLabel = UILabel()
     private let headerView = UIView()
     private let backButton = UIButton(type: .system)
+    private let premiumButton = UIButton(type: .system)
     private let titleLabel = UILabel()
     private let pageCounterLabel = UILabel()
     private let curationCardView = UIVisualEffectView(effect: UIBlurEffect(style: .systemUltraThinMaterialDark))
@@ -74,6 +76,7 @@ final class HeartQuoteDetailViewController: BaseViewController {
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
         navigationController?.setNavigationBarHidden(true, animated: animated)
+        updatePremiumButtonVisibility()
     }
 
     override func viewDidLayoutSubviews() {
@@ -101,6 +104,15 @@ final class HeartQuoteDetailViewController: BaseViewController {
         updateFavoriteButton()
         updatePlayButton()
         startPlaybackIfPossible()
+    }
+
+    override func setupBindings() {
+        NotificationCenter.default.publisher(for: .premiumAccessDidChange)
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] _ in
+                self?.updatePremiumButtonVisibility()
+            }
+            .store(in: &cancellables)
     }
 
     private func configureWallpaper() {
@@ -229,12 +241,16 @@ final class HeartQuoteDetailViewController: BaseViewController {
 
         view.addSubview(headerView)
         headerView.addSubview(backButton)
+        headerView.addSubview(premiumButton)
         headerView.addSubview(titleLabel)
         headerView.addSubview(pageCounterLabel)
         headerView.translatesAutoresizingMaskIntoConstraints = false
         backButton.translatesAutoresizingMaskIntoConstraints = false
+        premiumButton.translatesAutoresizingMaskIntoConstraints = false
         titleLabel.translatesAutoresizingMaskIntoConstraints = false
         pageCounterLabel.translatesAutoresizingMaskIntoConstraints = false
+
+        configurePremiumButton()
 
         NSLayoutConstraint.activate([
             headerView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 10),
@@ -247,14 +263,33 @@ final class HeartQuoteDetailViewController: BaseViewController {
             backButton.widthAnchor.constraint(equalToConstant: 32),
             backButton.heightAnchor.constraint(equalToConstant: 32),
 
+            premiumButton.trailingAnchor.constraint(equalTo: headerView.trailingAnchor),
+            premiumButton.centerYAnchor.constraint(equalTo: headerView.centerYAnchor),
+            premiumButton.widthAnchor.constraint(equalToConstant: 32),
+            premiumButton.heightAnchor.constraint(equalToConstant: 32),
+
             titleLabel.topAnchor.constraint(equalTo: headerView.topAnchor, constant: 2),
             titleLabel.leadingAnchor.constraint(equalTo: backButton.trailingAnchor, constant: 12),
-            titleLabel.trailingAnchor.constraint(lessThanOrEqualTo: headerView.trailingAnchor),
+            titleLabel.trailingAnchor.constraint(lessThanOrEqualTo: premiumButton.leadingAnchor, constant: -12),
 
             pageCounterLabel.topAnchor.constraint(equalTo: titleLabel.bottomAnchor, constant: 2),
             pageCounterLabel.leadingAnchor.constraint(equalTo: titleLabel.leadingAnchor),
-            pageCounterLabel.trailingAnchor.constraint(lessThanOrEqualTo: headerView.trailingAnchor)
+            pageCounterLabel.trailingAnchor.constraint(lessThanOrEqualTo: premiumButton.leadingAnchor, constant: -12)
         ])
+    }
+
+    private func configurePremiumButton() {
+        var configuration = UIButton.Configuration.plain()
+        configuration.baseForegroundColor = UIColor(red: 1.00, green: 0.82, blue: 0.55, alpha: 1)
+        configuration.contentInsets = .zero
+        configuration.preferredSymbolConfigurationForImage = UIImage.SymbolConfiguration(pointSize: 16, weight: .bold)
+        premiumButton.configuration = configuration
+        premiumButton.setImage(UIImage(systemName: "crown.fill"), for: .normal)
+        premiumButton.backgroundColor = UIColor.black.withAlphaComponent(0.24)
+        premiumButton.layer.cornerRadius = 16
+        premiumButton.layer.cornerCurve = .continuous
+        premiumButton.addTarget(self, action: #selector(handlePremium), for: .touchUpInside)
+        updatePremiumButtonVisibility()
     }
 
     private func configureCurationCard() {
@@ -485,7 +520,18 @@ final class HeartQuoteDetailViewController: BaseViewController {
     }
 
     @objc
+    private func handlePremium() {
+        UIImpactFeedbackGenerator(style: .light).impactOccurred()
+        SubscriptionRoute.presentSubscription(from: self, source: .modal)
+    }
+
+    @objc
     private func handleDownload() {
+        guard PremiumAccessStore.shared.isPremium else {
+            handlePremium()
+            return
+        }
+
         UIImpactFeedbackGenerator(style: .medium).impactOccurred()
         saveButton.isEnabled = false
         saveButton.configuration?.showsActivityIndicator = true
@@ -519,6 +565,7 @@ final class HeartQuoteDetailViewController: BaseViewController {
             self.lockStatusLabel.alpha = self.isChromeVisible ? 1 : 0
             self.dateLabel.alpha = self.isChromeVisible ? 1 : 0
             self.timeLabel.alpha = self.isChromeVisible ? 1 : 0
+            self.updatePremiumButtonVisibility()
             self.dimOverlayView.backgroundColor = UIColor.black.withAlphaComponent(self.isChromeVisible ? 0.22 : 0.06)
         }
 
@@ -558,6 +605,11 @@ final class HeartQuoteDetailViewController: BaseViewController {
     private func updatePlayButton() {
         let imageName = isPlaying ? "pause.circle" : "play.circle"
         playButton.configuration?.image = UIImage(systemName: imageName)
+    }
+
+    private func updatePremiumButtonVisibility() {
+        premiumButton.isHidden = PremiumAccessStore.shared.isPremium
+        premiumButton.alpha = PremiumAccessStore.shared.isPremium ? 0 : 1
     }
 
     private func updatePageMetadata() {
