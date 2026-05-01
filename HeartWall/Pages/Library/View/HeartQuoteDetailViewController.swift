@@ -15,7 +15,10 @@ final class HeartQuoteDetailViewController: BaseViewController {
     }
 
     private enum Layout {
-        static let actionButtonSize: CGFloat = 32
+        static let actionBarWidth: CGFloat = 168
+        static let actionButtonSize: CGFloat = 30
+        static let actionStackHorizontalInset: CGFloat = 18
+        static let actionStackSpacing: CGFloat = 18
     }
 
     // MARK: - Properties
@@ -370,7 +373,7 @@ final class HeartQuoteDetailViewController: BaseViewController {
         actionStack.axis = .horizontal
         actionStack.alignment = .center
         actionStack.distribution = .equalSpacing
-        actionStack.spacing = 18
+        actionStack.spacing = Layout.actionStackSpacing
 
         view.addSubview(actionBarView)
         actionBarView.contentView.addSubview(actionStack)
@@ -380,11 +383,11 @@ final class HeartQuoteDetailViewController: BaseViewController {
         NSLayoutConstraint.activate([
             actionBarView.trailingAnchor.constraint(equalTo: curationCardView.trailingAnchor, constant: -16),
             actionBarView.bottomAnchor.constraint(equalTo: curationCardView.topAnchor, constant: -12),
-            actionBarView.widthAnchor.constraint(equalToConstant: 150),
+            actionBarView.widthAnchor.constraint(equalToConstant: Layout.actionBarWidth),
             actionBarView.heightAnchor.constraint(equalToConstant: 40),
 
-            actionStack.leadingAnchor.constraint(equalTo: actionBarView.contentView.leadingAnchor, constant: 22),
-            actionStack.trailingAnchor.constraint(equalTo: actionBarView.contentView.trailingAnchor, constant: -22),
+            actionStack.leadingAnchor.constraint(equalTo: actionBarView.contentView.leadingAnchor, constant: Layout.actionStackHorizontalInset),
+            actionStack.trailingAnchor.constraint(equalTo: actionBarView.contentView.trailingAnchor, constant: -Layout.actionStackHorizontalInset),
             actionStack.centerYAnchor.constraint(equalTo: actionBarView.contentView.centerYAnchor),
 
             favoriteButton.widthAnchor.constraint(equalToConstant: Layout.actionButtonSize),
