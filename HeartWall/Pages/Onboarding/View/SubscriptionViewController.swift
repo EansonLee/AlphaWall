@@ -17,6 +17,29 @@ final class SubscriptionViewController: BaseViewController {
         static let autoScrollInterval: TimeInterval = 2.8
     }
 
+    private enum AgreementDestination {
+        case membership
+        case autoRenewal
+
+        var title: String {
+            switch self {
+            case .membership:
+                return L10n.text("agreement.membership.title")
+            case .autoRenewal:
+                return L10n.text("agreement.auto_renewal.title")
+            }
+        }
+
+        var url: URL {
+            switch self {
+            case .membership:
+                return URL(string: "https://docs.google.com/document/d/1ezyhRzcz2i6icO5Q2mDkbraXgNlLduquuzhX32Ff0JM/edit?tab=t.0")!
+            case .autoRenewal:
+                return URL(string: "https://docs.google.com/document/d/1qmXbwmTOBSNVj2rcKN_TYBz14KGAgLk19MoH9VUcLyM/edit?tab=t.0")!
+            }
+        }
+    }
+
     // MARK: - Properties
 
     private let videoResources = OnboardingVideoResource.allCases
@@ -254,7 +277,17 @@ final class SubscriptionViewController: BaseViewController {
         priceLabel.textColor = UIColor.white.withAlphaComponent(0.70)
         priceLabel.textAlignment = .center
 
-        agreementView.configure(text: L10n.text("subscription.agreement"))
+        agreementView.configure(
+            text: L10n.text("subscription.agreement"),
+            links: [
+                .init(text: AgreementDestination.membership.title, action: { [weak self] in
+                    self?.openAgreement(.membership)
+                }),
+                .init(text: AgreementDestination.autoRenewal.title, action: { [weak self] in
+                    self?.openAgreement(.autoRenewal)
+                })
+            ]
+        )
 
         [benefitStackView, planTrayView, trialButton, priceLabel, agreementView].forEach {
             contentStackView.addArrangedSubview($0)
@@ -575,6 +608,20 @@ final class SubscriptionViewController: BaseViewController {
             ) {
                 button.transform = selectedTransform
             }
+        }
+    }
+
+    private func openAgreement(_ destination: AgreementDestination) {
+        UIImpactFeedbackGenerator(style: .light).impactOccurred()
+
+        let viewController = AgreementWebViewController(title: destination.title, url: destination.url)
+        viewController.hidesBottomBarWhenPushed = true
+
+        if let navigationController {
+            navigationController.pushViewController(viewController, animated: true)
+        } else {
+            viewController.modalPresentationStyle = .fullScreen
+            present(viewController, animated: true)
         }
     }
 
@@ -1220,8 +1267,15 @@ private final class SubscriptionPlanButton: UIControl {
 
 private final class AgreementRowView: UIView {
 
+    struct Link {
+        let text: String
+        let action: () -> Void
+    }
+
     private let iconView = UIImageView(image: UIImage(systemName: "checkmark.circle.fill"))
     private let label = UILabel()
+    private var links: [Link] = []
+    private var linkRanges: [NSRange] = []
 
     override init(frame: CGRect) {
         super.init(frame: frame)
@@ -1233,6 +1287,7 @@ private final class AgreementRowView: UIView {
         label.font = .systemFont(ofSize: 11, weight: .medium)
         label.textColor = UIColor.white.withAlphaComponent(0.60)
         label.textAlignment = .center
+        label.isUserInteractionEnabled = true
 
         let stackView = UIStackView(arrangedSubviews: [iconView, label])
         stackView.axis = .horizontal
@@ -1252,6 +1307,9 @@ private final class AgreementRowView: UIView {
             stackView.trailingAnchor.constraint(lessThanOrEqualTo: trailingAnchor),
             stackView.bottomAnchor.constraint(equalTo: bottomAnchor)
         ])
+
+        let tapGesture = UITapGestureRecognizer(target: self, action: #selector(handleTextTap(_:)))
+        label.addGestureRecognizer(tapGesture)
     }
 
     @available(*, unavailable)
@@ -1259,8 +1317,83 @@ private final class AgreementRowView: UIView {
         fatalError("init(coder:) has not been implemented")
     }
 
-    func configure(text: String) {
-        label.text = text
+    func configure(text: String, links: [Link]) {
+        self.links = links
+        linkRanges = []
+
+        let attributedText = NSMutableAttributedString(
+            string: text,
+            attributes: [
+                .font: label.font as Any,
+                .foregroundColor: UIColor.white.withAlphaComponent(0.60)
+            ]
+        )
+
+        for link in links {
+            let range = (text as NSString).range(of: link.text)
+            guard range.location != NSNotFound else { continue }
+
+            linkRanges.append(range)
+            attributedText.addAttributes(
+                [
+                    .foregroundColor: UIColor.white.withAlphaComponent(0.88),
+                    .underlineStyle: NSUnderlineStyle.single.rawValue
+                ],
+                range: range
+            )
+        }
+
+        label.attributedText = attributedText
+        label.accessibilityTraits.insert(.button)
+    }
+
+    @objc
+    private func handleTextTap(_ gesture: UITapGestureRecognizer) {
+        let point = gesture.location(in: label)
+        guard let characterIndex = label.characterIndex(at: point) else { return }
+
+        for (index, range) in linkRanges.enumerated() where NSLocationInRange(characterIndex, range) {
+            links[index].action()
+            return
+        }
+    }
+}
+
+private extension UILabel {
+    func characterIndex(at point: CGPoint) -> Int? {
+        guard let attributedText, attributedText.length > 0 else { return nil }
+
+        let textStorage = NSTextStorage(attributedString: attributedText)
+        let layoutManager = NSLayoutManager()
+        let textContainer = NSTextContainer(size: bounds.size)
+        textContainer.lineFragmentPadding = 0
+        textContainer.maximumNumberOfLines = numberOfLines
+        textContainer.lineBreakMode = lineBreakMode
+
+        layoutManager.addTextContainer(textContainer)
+        textStorage.addLayoutManager(layoutManager)
+
+        let usedRect = layoutManager.usedRect(for: textContainer)
+        let horizontalOffset: CGFloat
+        switch textAlignment {
+        case .center:
+            horizontalOffset = (bounds.width - usedRect.width) * 0.5 - usedRect.minX
+        case .right:
+            horizontalOffset = bounds.width - usedRect.width - usedRect.minX
+        default:
+            horizontalOffset = -usedRect.minX
+        }
+
+        let verticalOffset = (bounds.height - usedRect.height) * 0.5 - usedRect.minY
+        let textPoint = CGPoint(x: point.x - horizontalOffset, y: point.y - verticalOffset)
+        let characterIndex = layoutManager.characterIndex(
+            for: textPoint,
+            in: textContainer,
+            fractionOfDistanceBetweenInsertionPoints: nil
+        )
+
+        guard characterIndex < attributedText.length else { return nil }
+        return characterIndex
     }
 }
 

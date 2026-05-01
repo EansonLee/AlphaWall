@@ -141,7 +141,11 @@ final class AgreementWebViewController: BaseViewController {
 
     @objc
     private func handleBack() {
-        navigationController?.popViewController(animated: true)
+        if let navigationController {
+            navigationController.popViewController(animated: true)
+        } else {
+            dismiss(animated: true)
+        }
     }
 }
 

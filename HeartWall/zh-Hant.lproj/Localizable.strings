@@ -45,6 +45,8 @@
 
 "agreement.privacy.title" = "私隱政策";
 "agreement.terms.title" = "使用者協議";
+"agreement.membership.title" = "會員協議";
+"agreement.auto_renewal.title" = "自動續費協議";
 
 "favorites.title" = "喜歡的壁紙";
 "favorites.empty.title" = "還沒有喜歡的壁紙";

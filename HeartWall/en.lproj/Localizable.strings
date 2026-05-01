@@ -45,6 +45,8 @@
 
 "agreement.privacy.title" = "Privacy Policy";
 "agreement.terms.title" = "Terms of Use";
+"agreement.membership.title" = "Membership Agreement";
+"agreement.auto_renewal.title" = "Auto-Renewal Agreement";
 
 "favorites.title" = "Favorite Wallpapers";
 "favorites.empty.title" = "No favorite wallpapers yet";

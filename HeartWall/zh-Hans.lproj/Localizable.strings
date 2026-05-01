@@ -45,6 +45,8 @@
 
 "agreement.privacy.title" = "隐私政策";
 "agreement.terms.title" = "用户协议";
+"agreement.membership.title" = "会员协议";
+"agreement.auto_renewal.title" = "自动续费协议";
 
 "favorites.title" = "喜欢的壁纸";
 "favorites.empty.title" = "还没有喜欢的壁纸";
