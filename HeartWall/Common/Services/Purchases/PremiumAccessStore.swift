@@ -69,6 +69,7 @@ final class PremiumAccessStore: ObservableObject {
     static let shared = PremiumAccessStore()
 
     @Published private(set) var isPremium = false
+    @Published private(set) var hasLoadedPremiumStatus = false
     @Published private(set) var products: [ProductID: Product] = [:]
 
     private var transactionUpdatesTask: Task<Void, Never>?
@@ -195,9 +196,13 @@ final class PremiumAccessStore: ObservableObject {
     }
 
     private func updatePremiumStatus(_ nextValue: Bool) {
-        guard isPremium != nextValue else { return }
+        let didChange = isPremium != nextValue
         isPremium = nextValue
-        NotificationCenter.default.post(name: .premiumAccessDidChange, object: self)
+        hasLoadedPremiumStatus = true
+
+        if didChange {
+            NotificationCenter.default.post(name: .premiumAccessDidChange, object: self)
+        }
     }
 }
 

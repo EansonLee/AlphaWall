@@ -7,7 +7,7 @@ import UIKit
 
 final class ProfileViewController: BaseViewController {
 
-    fileprivate enum ProfileItem: CaseIterable {
+    fileprivate enum ProfileItem: CaseIterable, Equatable {
         case membership
         case restorePurchases
         case favoriteWallpapers
@@ -80,6 +80,12 @@ final class ProfileViewController: BaseViewController {
                 return L10n.text("agreement.terms.title")
             }
         }
+
+        static func visibleItems(isPremium: Bool) -> [ProfileItem] {
+            allCases.filter { item in
+                !(isPremium && item == .membership)
+            }
+        }
     }
 
     private let backgroundImageView = UIImageView(image: UIImage(named: "MyPageBackground"))
@@ -101,10 +107,12 @@ final class ProfileViewController: BaseViewController {
     private let menuPanelView = UIVisualEffectView(effect: UIBlurEffect(style: .systemThinMaterialDark))
     private let menuStackView = UIStackView()
     private let versionLabel = UILabel()
+    private var visibleMenuItems: [ProfileItem] = []
 
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
         navigationController?.setNavigationBarHidden(true, animated: animated)
+        renderMenuItems()
     }
 
     override func setupUI() {
@@ -112,6 +120,7 @@ final class ProfileViewController: BaseViewController {
         configureBackground()
         configureHeader()
         configureContent()
+        configureObservers()
         renderMenuItems()
     }
 
@@ -200,7 +209,7 @@ final class ProfileViewController: BaseViewController {
         heroTextStackView.spacing = 4
         heroTextStackView.isUserInteractionEnabled = false
 
-        heroTitleLabel.text = "HeartWall"
+        heroTitleLabel.text = "栖幕壁纸"
         heroTitleLabel.font = .systemFont(ofSize: 19, weight: .semibold)
         heroTitleLabel.textColor = UIColor.white.withAlphaComponent(0.94)
         heroTitleLabel.adjustsFontSizeToFitWidth = true
@@ -308,13 +317,22 @@ final class ProfileViewController: BaseViewController {
     }
 
     private func renderMenuItems() {
-        ProfileItem.allCases.enumerated().forEach { index, item in
+        let nextMenuItems = ProfileItem.visibleItems(isPremium: PremiumAccessStore.shared.isPremium)
+        guard nextMenuItems != visibleMenuItems else { return }
+        visibleMenuItems = nextMenuItems
+
+        menuStackView.arrangedSubviews.forEach { subview in
+            menuStackView.removeArrangedSubview(subview)
+            subview.removeFromSuperview()
+        }
+
+        visibleMenuItems.enumerated().forEach { index, item in
             let rowView = ProfileMenuRowView(item: item)
             rowView.addTarget(self, action: #selector(handleMenuTap(_:)), for: .touchUpInside)
             rowView.tag = index
             menuStackView.addArrangedSubview(rowView)
 
-            if index < ProfileItem.allCases.count - 1 {
+            if index < visibleMenuItems.count - 1 {
                 let separator = UIView()
                 separator.backgroundColor = UIColor.white.withAlphaComponent(0.09)
                 menuStackView.addArrangedSubview(separator)
@@ -325,7 +343,7 @@ final class ProfileViewController: BaseViewController {
 
     @objc
     private func handleMenuTap(_ sender: UIControl) {
-        guard let item = ProfileItem.allCases[safe: sender.tag] else { return }
+        guard let item = visibleMenuItems[safe: sender.tag] else { return }
         UIImpactFeedbackGenerator(style: .light).impactOccurred()
 
         switch item {
@@ -352,6 +370,20 @@ final class ProfileViewController: BaseViewController {
         }
 
         return L10n.text("profile.version.value", version)
+    }
+
+    private func configureObservers() {
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(handlePremiumAccessDidChange),
+            name: .premiumAccessDidChange,
+            object: PremiumAccessStore.shared
+        )
+    }
+
+    @objc
+    private func handlePremiumAccessDidChange() {
+        renderMenuItems()
     }
 
     private func restorePurchases() {
