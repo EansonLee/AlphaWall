@@ -291,7 +291,7 @@ final class HeartQuoteDetailViewController: BaseViewController {
         configuration.contentInsets = .zero
         configuration.preferredSymbolConfigurationForImage = UIImage.SymbolConfiguration(pointSize: 16, weight: .bold)
         premiumButton.configuration = configuration
-        premiumButton.setImage(UIImage(systemName: "crown.fill"), for: .normal)
+        premiumButton.setImage(PremiumSubscriptionIcon.image(size: CGSize(width: 26, height: 26)), for: .normal)
         premiumButton.backgroundColor = UIColor.black.withAlphaComponent(0.24)
         premiumButton.layer.cornerRadius = 16
         premiumButton.layer.cornerCurve = .continuous

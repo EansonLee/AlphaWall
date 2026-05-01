@@ -32,7 +32,7 @@ final class ProfileViewController: BaseViewController {
         var iconName: String {
             switch self {
             case .membership:
-                return "crown.fill"
+                return "premium.subscription"
             case .restorePurchases:
                 return "arrow.clockwise.circle.fill"
             case .favoriteWallpapers:
@@ -489,7 +489,9 @@ private final class ProfileMenuRowView: UIControl {
     }
 
     private func apply(item: ProfileViewController.ProfileItem) {
-        iconImageView.image = UIImage(systemName: item.iconName)
+        iconImageView.image = item == .membership
+            ? PremiumSubscriptionIcon.image(size: CGSize(width: 24, height: 24))
+            : UIImage(systemName: item.iconName)
         iconImageView.tintColor = item.accentColor
         titleLabel.text = item.title
     }
