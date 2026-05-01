@@ -12,7 +12,7 @@ final class FavoriteWallpapersViewController: BaseViewController {
     private var allPages: [HeartQuotePage] = []
     private var favoritePages: [HeartQuotePage] = []
 
-    private let backgroundView = AuroraBackgroundView()
+    private let backgroundImageView = UIImageView(image: UIImage(named: "bg_mine"))
     private let dimView = UIView()
     private let headerView = UIView()
     private let backButton = UIButton(type: .system)
@@ -46,7 +46,6 @@ final class FavoriteWallpapersViewController: BaseViewController {
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
         navigationController?.setNavigationBarHidden(true, animated: animated)
-        backgroundView.startAnimatingIfNeeded()
         refreshFavorites()
     }
 
@@ -73,18 +72,21 @@ final class FavoriteWallpapersViewController: BaseViewController {
     }
 
     private func configureBackground() {
-        view.addSubview(backgroundView)
-        backgroundView.translatesAutoresizingMaskIntoConstraints = false
+        backgroundImageView.contentMode = .scaleAspectFill
+        backgroundImageView.clipsToBounds = true
+        backgroundImageView.isUserInteractionEnabled = false
+        view.addSubview(backgroundImageView)
+        backgroundImageView.translatesAutoresizingMaskIntoConstraints = false
 
         dimView.backgroundColor = UIColor.black.withAlphaComponent(0.26)
         view.addSubview(dimView)
         dimView.translatesAutoresizingMaskIntoConstraints = false
 
         NSLayoutConstraint.activate([
-            backgroundView.topAnchor.constraint(equalTo: view.topAnchor),
-            backgroundView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
-            backgroundView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
-            backgroundView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
+            backgroundImageView.topAnchor.constraint(equalTo: view.topAnchor),
+            backgroundImageView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            backgroundImageView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+            backgroundImageView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
 
             dimView.topAnchor.constraint(equalTo: view.topAnchor),
             dimView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
