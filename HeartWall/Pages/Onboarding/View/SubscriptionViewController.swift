@@ -60,9 +60,6 @@ final class SubscriptionViewController: BaseViewController {
     private let closeButton = UIButton(type: .system)
     private let restoreButton = UIButton(type: .system)
     private let bottomOverlayView = BottomRadiantOverlayView()
-    private let contentShadowView = UIView()
-    private let contentGlassView = UIVisualEffectView(effect: UIBlurEffect(style: .systemUltraThinMaterialDark))
-    private let contentBackdropView = UIView()
     private let contentStackView = UIStackView()
     private let benefitStackView = UIStackView()
     private let titleLabel = UILabel()
@@ -135,19 +132,13 @@ final class SubscriptionViewController: BaseViewController {
         configureOverlayContent()
         configureBackgroundVideo()
 
-        [backgroundVideoCropView, backgroundDimView, carouselView, bottomOverlayView, closeButton, restoreButton, contentShadowView].forEach {
+        [backgroundVideoCropView, backgroundDimView, carouselView, bottomOverlayView, closeButton, restoreButton, contentStackView].forEach {
             view.addSubview($0)
             $0.translatesAutoresizingMaskIntoConstraints = false
         }
 
         backgroundVideoCropView.addSubview(backgroundVideoView)
         backgroundVideoView.translatesAutoresizingMaskIntoConstraints = false
-        contentShadowView.addSubview(contentGlassView)
-        contentGlassView.translatesAutoresizingMaskIntoConstraints = false
-        contentGlassView.contentView.addSubview(contentBackdropView)
-        contentGlassView.contentView.addSubview(contentStackView)
-        contentBackdropView.translatesAutoresizingMaskIntoConstraints = false
-        contentStackView.translatesAutoresizingMaskIntoConstraints = false
 
         NSLayoutConstraint.activate([
             backgroundVideoCropView.topAnchor.constraint(equalTo: view.topAnchor),
@@ -183,25 +174,10 @@ final class SubscriptionViewController: BaseViewController {
             restoreButton.centerYAnchor.constraint(equalTo: closeButton.centerYAnchor),
             restoreButton.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -24),
 
-            contentShadowView.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 18),
-            contentShadowView.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -18),
-            contentShadowView.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -12),
-            contentShadowView.topAnchor.constraint(greaterThanOrEqualTo: view.safeAreaLayoutGuide.topAnchor, constant: 76),
-
-            contentGlassView.topAnchor.constraint(equalTo: contentShadowView.topAnchor),
-            contentGlassView.leadingAnchor.constraint(equalTo: contentShadowView.leadingAnchor),
-            contentGlassView.trailingAnchor.constraint(equalTo: contentShadowView.trailingAnchor),
-            contentGlassView.bottomAnchor.constraint(equalTo: contentShadowView.bottomAnchor),
-
-            contentBackdropView.topAnchor.constraint(equalTo: contentGlassView.contentView.topAnchor),
-            contentBackdropView.leadingAnchor.constraint(equalTo: contentGlassView.contentView.leadingAnchor),
-            contentBackdropView.trailingAnchor.constraint(equalTo: contentGlassView.contentView.trailingAnchor),
-            contentBackdropView.bottomAnchor.constraint(equalTo: contentGlassView.contentView.bottomAnchor),
-
-            contentStackView.topAnchor.constraint(equalTo: contentGlassView.contentView.topAnchor, constant: 18),
-            contentStackView.leadingAnchor.constraint(equalTo: contentGlassView.contentView.leadingAnchor, constant: 16),
-            contentStackView.trailingAnchor.constraint(equalTo: contentGlassView.contentView.trailingAnchor, constant: -16),
-            contentStackView.bottomAnchor.constraint(equalTo: contentGlassView.contentView.bottomAnchor, constant: -12),
+            contentStackView.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 24),
+            contentStackView.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -24),
+            contentStackView.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -12),
+            contentStackView.topAnchor.constraint(greaterThanOrEqualTo: view.safeAreaLayoutGuide.topAnchor, constant: 78),
 
             trialButton.heightAnchor.constraint(equalToConstant: 60)
         ])
@@ -237,8 +213,6 @@ final class SubscriptionViewController: BaseViewController {
     }
 
     private func configureOverlayContent() {
-        configureContentGlass()
-
         contentStackView.axis = .vertical
         contentStackView.alignment = .fill
         contentStackView.spacing = 8
@@ -295,25 +269,6 @@ final class SubscriptionViewController: BaseViewController {
         contentStackView.setCustomSpacing(12, after: planTrayView)
         contentStackView.setCustomSpacing(8, after: trialButton)
         contentStackView.setCustomSpacing(5, after: priceLabel)
-    }
-
-    private func configureContentGlass() {
-        contentShadowView.layer.cornerRadius = 30
-        contentShadowView.layer.cornerCurve = .continuous
-        contentShadowView.layer.shadowColor = UIColor.black.cgColor
-        contentShadowView.layer.shadowOpacity = 0.28
-        contentShadowView.layer.shadowRadius = 30
-        contentShadowView.layer.shadowOffset = CGSize(width: 0, height: 18)
-
-        contentGlassView.layer.cornerRadius = 30
-        contentGlassView.layer.cornerCurve = .continuous
-        contentGlassView.clipsToBounds = true
-        contentGlassView.layer.borderWidth = 1
-        contentGlassView.layer.borderColor = UIColor.white.withAlphaComponent(0.16).cgColor
-        contentGlassView.contentView.backgroundColor = UIColor.black.withAlphaComponent(0.12)
-
-        contentBackdropView.isUserInteractionEnabled = false
-        contentBackdropView.backgroundColor = UIColor.white.withAlphaComponent(0.03)
     }
 
     override func setupBindings() {
@@ -588,12 +543,12 @@ final class SubscriptionViewController: BaseViewController {
         didAnimateContentEntrance = true
 
         guard !UIAccessibility.isReduceMotionEnabled else {
-            contentShadowView.alpha = 1
+            contentStackView.alpha = 1
             return
         }
 
-        contentShadowView.alpha = 0
-        contentShadowView.transform = CGAffineTransform(translationX: 0, y: 26).scaledBy(x: 0.985, y: 0.985)
+        contentStackView.alpha = 0
+        contentStackView.transform = CGAffineTransform(translationX: 0, y: 26).scaledBy(x: 0.985, y: 0.985)
         planTrayView.prepareForEntrance()
 
         UIView.animate(
@@ -603,8 +558,8 @@ final class SubscriptionViewController: BaseViewController {
             initialSpringVelocity: 0.38,
             options: [.curveEaseOut, .allowUserInteraction]
         ) {
-            self.contentShadowView.alpha = 1
-            self.contentShadowView.transform = .identity
+            self.contentStackView.alpha = 1
+            self.contentStackView.transform = .identity
         } completion: { _ in
             self.planTrayView.animateEntrance()
         }
@@ -911,8 +866,7 @@ private final class FeatureRowView: UIView {
 
 private final class SubscriptionPlanTrayView: UIView {
 
-    private let backgroundLayer = CAGradientLayer()
-    private let bottomGlowLayer = CAGradientLayer()
+    private let washLayer = CAGradientLayer()
     private let hairlineLayer = CAGradientLayer()
 
     override init(frame: CGRect) {
@@ -927,8 +881,7 @@ private final class SubscriptionPlanTrayView: UIView {
 
     override func layoutSubviews() {
         super.layoutSubviews()
-        backgroundLayer.frame = bounds
-        bottomGlowLayer.frame = bounds.insetBy(dx: -bounds.width * 0.12, dy: -bounds.height * 0.18)
+        washLayer.frame = bounds.insetBy(dx: -bounds.width * 0.16, dy: -bounds.height * 0.20)
         hairlineLayer.frame = CGRect(x: 18, y: 0, width: max(0, bounds.width - 36), height: 1)
     }
 
@@ -937,10 +890,10 @@ private final class SubscriptionPlanTrayView: UIView {
         contentView.translatesAutoresizingMaskIntoConstraints = false
 
         NSLayoutConstraint.activate([
-            contentView.topAnchor.constraint(equalTo: topAnchor, constant: 12),
-            contentView.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 10),
-            contentView.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -10),
-            contentView.bottomAnchor.constraint(equalTo: bottomAnchor, constant: -10)
+            contentView.topAnchor.constraint(equalTo: topAnchor, constant: 10),
+            contentView.leadingAnchor.constraint(equalTo: leadingAnchor),
+            contentView.trailingAnchor.constraint(equalTo: trailingAnchor),
+            contentView.bottomAnchor.constraint(equalTo: bottomAnchor, constant: -8)
         ])
     }
 
@@ -968,42 +921,28 @@ private final class SubscriptionPlanTrayView: UIView {
     }
 
     private func configure() {
-        clipsToBounds = true
-        layer.cornerRadius = 22
-        layer.cornerCurve = .continuous
-        layer.borderWidth = 1
-        layer.borderColor = UIColor.white.withAlphaComponent(0.10).cgColor
+        clipsToBounds = false
 
-        backgroundLayer.colors = [
-            UIColor.white.withAlphaComponent(0.12).cgColor,
-            UIColor.white.withAlphaComponent(0.055).cgColor,
-            UIColor.black.withAlphaComponent(0.10).cgColor
-        ]
-        backgroundLayer.locations = [0, 0.46, 1]
-        backgroundLayer.startPoint = CGPoint(x: 0.5, y: 0)
-        backgroundLayer.endPoint = CGPoint(x: 0.5, y: 1)
-
-        bottomGlowLayer.type = .radial
-        bottomGlowLayer.colors = [
-            UIColor(red: 1.0, green: 0.86, blue: 0.62, alpha: 0.28).cgColor,
-            UIColor(red: 0.77, green: 0.86, blue: 1.0, alpha: 0.10).cgColor,
+        washLayer.type = .radial
+        washLayer.colors = [
+            UIColor(red: 1.0, green: 0.86, blue: 0.62, alpha: 0.18).cgColor,
+            UIColor(red: 0.77, green: 0.86, blue: 1.0, alpha: 0.07).cgColor,
             UIColor.clear.cgColor
         ]
-        bottomGlowLayer.locations = [0, 0.34, 1]
-        bottomGlowLayer.startPoint = CGPoint(x: 0.5, y: 1.0)
-        bottomGlowLayer.endPoint = CGPoint(x: 0.5, y: 0.10)
+        washLayer.locations = [0, 0.34, 1]
+        washLayer.startPoint = CGPoint(x: 0.5, y: 1.0)
+        washLayer.endPoint = CGPoint(x: 0.5, y: 0.0)
 
         hairlineLayer.colors = [
             UIColor.clear.cgColor,
-            UIColor.white.withAlphaComponent(0.32).cgColor,
+            UIColor.white.withAlphaComponent(0.20).cgColor,
             UIColor.clear.cgColor
         ]
         hairlineLayer.startPoint = CGPoint(x: 0, y: 0.5)
         hairlineLayer.endPoint = CGPoint(x: 1, y: 0.5)
 
-        layer.insertSublayer(backgroundLayer, at: 0)
-        layer.insertSublayer(bottomGlowLayer, above: backgroundLayer)
-        layer.insertSublayer(hairlineLayer, above: bottomGlowLayer)
+        layer.insertSublayer(washLayer, at: 0)
+        layer.insertSublayer(hairlineLayer, above: washLayer)
     }
 }
 
@@ -1037,8 +976,8 @@ private final class SubscriptionPlanButton: UIControl {
         titleLabel.text = title
         captionLabel.text = caption
         priceLabel.text = price
-        layer.borderColor = UIColor.white.withAlphaComponent(isPrimary ? 0.26 : 0.10).cgColor
-        backgroundColor = UIColor.white.withAlphaComponent(isPrimary ? 0.15 : 0.055)
+        layer.borderColor = UIColor.white.withAlphaComponent(isPrimary ? 0.22 : 0.08).cgColor
+        backgroundColor = UIColor.black.withAlphaComponent(isPrimary ? 0.24 : 0.12)
         priceLabel.textColor = isPrimary
             ? UIColor(red: 1.0, green: 0.88, blue: 0.66, alpha: 1)
             : UIColor.white.withAlphaComponent(0.76)
@@ -1046,7 +985,7 @@ private final class SubscriptionPlanButton: UIControl {
     }
 
     private func configure() {
-        layer.cornerRadius = 18
+        layer.cornerRadius = 16
         layer.cornerCurve = .continuous
         layer.borderWidth = 1
 
@@ -1242,22 +1181,22 @@ private final class BottomRadiantOverlayView: UIView {
 
         radialGlowLayer.type = .radial
         radialGlowLayer.colors = [
-            UIColor(red: 0.98, green: 0.90, blue: 0.68, alpha: 0.40).cgColor,
-            UIColor(red: 0.72, green: 0.84, blue: 1.00, alpha: 0.14).cgColor,
+            UIColor(red: 0.98, green: 0.90, blue: 0.68, alpha: 0.34).cgColor,
+            UIColor(red: 0.72, green: 0.84, blue: 1.00, alpha: 0.13).cgColor,
             UIColor.clear.cgColor
         ]
-        radialGlowLayer.locations = [0, 0.34, 1]
+        radialGlowLayer.locations = [0, 0.30, 1]
         radialGlowLayer.startPoint = CGPoint(x: 0.5, y: 1.0)
         radialGlowLayer.endPoint = CGPoint(x: 0.5, y: 0.0)
 
         verticalFadeLayer.colors = [
             UIColor.clear.cgColor,
-            UIColor.black.withAlphaComponent(0.06).cgColor,
-            UIColor.black.withAlphaComponent(0.32).cgColor,
-            UIColor.black.withAlphaComponent(0.76).cgColor,
+            UIColor.black.withAlphaComponent(0.04).cgColor,
+            UIColor.black.withAlphaComponent(0.30).cgColor,
+            UIColor.black.withAlphaComponent(0.74).cgColor,
             UIColor.black.withAlphaComponent(0.96).cgColor
         ]
-        verticalFadeLayer.locations = [0, 0.34, 0.58, 0.82, 1]
+        verticalFadeLayer.locations = [0, 0.30, 0.55, 0.80, 1]
         verticalFadeLayer.startPoint = CGPoint(x: 0.5, y: 0)
         verticalFadeLayer.endPoint = CGPoint(x: 0.5, y: 1)
 
@@ -1275,10 +1214,10 @@ private final class BottomRadiantOverlayView: UIView {
 
         verticalFadeLayer.frame = bounds
         radialGlowLayer.frame = CGRect(
-            x: -bounds.width * 0.28,
-            y: bounds.height * 0.15,
-            width: bounds.width * 1.56,
-            height: bounds.height * 1.06
+            x: -bounds.width * 0.42,
+            y: bounds.height * 0.38,
+            width: bounds.width * 1.84,
+            height: bounds.height * 0.78
         )
     }
 }
