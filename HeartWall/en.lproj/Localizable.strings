@@ -22,6 +22,7 @@
 "subscription.plan.weekly.price" = "¥46";
 "subscription.plan.yearly.price" = "¥176";
 "subscription.agreement" = "Agree to the Membership Agreement and Auto-Renewal Agreement";
+"subscription.restore.success" = "Membership subscription restored.";
 "subscription.restore.empty" = "No active membership subscription was found to restore.";
 "subscription.error.title" = "Subscription Failed";
 "subscription.error.product_unavailable" = "Subscription products are temporarily unavailable. Please try again later.";
@@ -29,6 +30,7 @@
 "subscription.error.verification_failed" = "Transaction verification failed. Please try again later.";
 
 "profile.menu.membership" = "Membership";
+"profile.menu.restore_purchases" = "Restore Purchases";
 "profile.menu.favorite_wallpapers" = "Favorite Wallpapers";
 "profile.menu.privacy" = "Privacy Policy";
 "profile.menu.terms" = "Terms of Use";

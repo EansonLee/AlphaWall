@@ -9,6 +9,7 @@ final class ProfileViewController: BaseViewController {
 
     fileprivate enum ProfileItem: CaseIterable {
         case membership
+        case restorePurchases
         case favoriteWallpapers
         case privacy
         case terms
@@ -17,6 +18,8 @@ final class ProfileViewController: BaseViewController {
             switch self {
             case .membership:
                 return L10n.text("profile.menu.membership")
+            case .restorePurchases:
+                return L10n.text("profile.menu.restore_purchases")
             case .favoriteWallpapers:
                 return L10n.text("profile.menu.favorite_wallpapers")
             case .privacy:
@@ -30,6 +33,8 @@ final class ProfileViewController: BaseViewController {
             switch self {
             case .membership:
                 return "crown.fill"
+            case .restorePurchases:
+                return "arrow.clockwise.circle.fill"
             case .favoriteWallpapers:
                 return "heart.fill"
             case .privacy:
@@ -43,6 +48,8 @@ final class ProfileViewController: BaseViewController {
             switch self {
             case .membership:
                 return UIColor(red: 1.00, green: 0.82, blue: 0.55, alpha: 1)
+            case .restorePurchases:
+                return UIColor(red: 0.52, green: 0.78, blue: 1.00, alpha: 1)
             case .favoriteWallpapers:
                 return UIColor(red: 1.00, green: 0.80, blue: 0.50, alpha: 1)
             case .privacy:
@@ -54,7 +61,7 @@ final class ProfileViewController: BaseViewController {
 
         var agreementURL: URL? {
             switch self {
-            case .membership, .favoriteWallpapers:
+            case .membership, .restorePurchases, .favoriteWallpapers:
                 return nil
             case .privacy:
                 return URL(string: "https://docs.google.com/document/d/1n2nVh6Esl44qqnzkzcKzVcyx4290vUxlfHRON--3GpQ/edit?tab=t.0")
@@ -65,7 +72,7 @@ final class ProfileViewController: BaseViewController {
 
         var agreementTitle: String {
             switch self {
-            case .membership, .favoriteWallpapers:
+            case .membership, .restorePurchases, .favoriteWallpapers:
                 return title
             case .privacy:
                 return L10n.text("agreement.privacy.title")
@@ -324,6 +331,8 @@ final class ProfileViewController: BaseViewController {
         switch item {
         case .membership:
             SubscriptionRoute.presentSubscription(from: self, source: .modal)
+        case .restorePurchases:
+            restorePurchases()
         case .favoriteWallpapers:
             let viewController = FavoriteWallpapersViewController()
             viewController.hidesBottomBarWhenPushed = true
@@ -343,6 +352,26 @@ final class ProfileViewController: BaseViewController {
         }
 
         return L10n.text("profile.version.value", version)
+    }
+
+    private func restorePurchases() {
+        Task { [weak self] in
+            do {
+                let restored = try await PremiumAccessStore.shared.restorePurchases()
+                let message = restored
+                    ? L10n.text("subscription.restore.success")
+                    : L10n.text("subscription.restore.empty")
+                self?.showProfileMessage(title: L10n.text("subscription.restore"), message: message)
+            } catch {
+                self?.showProfileMessage(title: L10n.text("subscription.error.title"), message: error.localizedDescription)
+            }
+        }
+    }
+
+    private func showProfileMessage(title: String, message: String) {
+        let alert = UIAlertController(title: title, message: message, preferredStyle: .alert)
+        alert.addAction(UIAlertAction(title: L10n.text("common.ok"), style: .default))
+        present(alert, animated: true)
     }
 }
 

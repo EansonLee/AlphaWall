@@ -22,6 +22,7 @@
 "subscription.plan.weekly.price" = "¥46";
 "subscription.plan.yearly.price" = "¥176";
 "subscription.agreement" = "同意《会员协议》和《自动续费协议》";
+"subscription.restore.success" = "会员订阅已恢复。";
 "subscription.restore.empty" = "未找到可恢复的会员订阅。";
 "subscription.error.title" = "订阅失败";
 "subscription.error.product_unavailable" = "暂时无法加载订阅商品，请稍后重试。";
@@ -29,6 +30,7 @@
 "subscription.error.verification_failed" = "交易校验未通过，请稍后重试。";
 
 "profile.menu.membership" = "会员订阅";
+"profile.menu.restore_purchases" = "恢复购买";
 "profile.menu.favorite_wallpapers" = "喜欢的壁纸";
 "profile.menu.privacy" = "隐私协议";
 "profile.menu.terms" = "用户协议";
