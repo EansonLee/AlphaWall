@@ -30,6 +30,7 @@ final class SubscriptionViewController: BaseViewController {
     private var lastKnownCarouselSize: CGSize = .zero
     private var autoScrollTimer: Timer?
     private var isUserInteracting = false
+    private var didAnimateContentEntrance = false
     private let source: Source
 
     // MARK: - UI
@@ -59,9 +60,13 @@ final class SubscriptionViewController: BaseViewController {
     private let closeButton = UIButton(type: .system)
     private let restoreButton = UIButton(type: .system)
     private let bottomOverlayView = BottomRadiantOverlayView()
+    private let contentShadowView = UIView()
+    private let contentGlassView = UIVisualEffectView(effect: UIBlurEffect(style: .systemUltraThinMaterialDark))
+    private let contentBackdropView = UIView()
     private let contentStackView = UIStackView()
     private let benefitStackView = UIStackView()
     private let titleLabel = UILabel()
+    private let planTrayView = SubscriptionPlanTrayView()
     private let planStackView = UIStackView()
     private let weeklyPlanButton = SubscriptionPlanButton()
     private let yearlyPlanButton = SubscriptionPlanButton()
@@ -93,6 +98,8 @@ final class SubscriptionViewController: BaseViewController {
         startAutoScrollIfNeeded()
         syncCurrentIndexFromScrollPosition()
         refreshVisibleCellState(animated: false)
+        animateContentEntranceIfNeeded()
+        trialButton.startBreathing()
     }
 
     override func viewDidDisappear(_ animated: Bool) {
@@ -100,6 +107,7 @@ final class SubscriptionViewController: BaseViewController {
         stopAutoScroll()
         backgroundVideoView.pause()
         pauseVisibleCells()
+        trialButton.stopBreathing()
     }
 
     override func viewDidLayoutSubviews() {
@@ -127,13 +135,19 @@ final class SubscriptionViewController: BaseViewController {
         configureOverlayContent()
         configureBackgroundVideo()
 
-        [backgroundVideoCropView, backgroundDimView, carouselView, bottomOverlayView, closeButton, restoreButton, contentStackView].forEach {
+        [backgroundVideoCropView, backgroundDimView, carouselView, bottomOverlayView, closeButton, restoreButton, contentShadowView].forEach {
             view.addSubview($0)
             $0.translatesAutoresizingMaskIntoConstraints = false
         }
 
         backgroundVideoCropView.addSubview(backgroundVideoView)
         backgroundVideoView.translatesAutoresizingMaskIntoConstraints = false
+        contentShadowView.addSubview(contentGlassView)
+        contentGlassView.translatesAutoresizingMaskIntoConstraints = false
+        contentGlassView.contentView.addSubview(contentBackdropView)
+        contentGlassView.contentView.addSubview(contentStackView)
+        contentBackdropView.translatesAutoresizingMaskIntoConstraints = false
+        contentStackView.translatesAutoresizingMaskIntoConstraints = false
 
         NSLayoutConstraint.activate([
             backgroundVideoCropView.topAnchor.constraint(equalTo: view.topAnchor),
@@ -169,12 +183,27 @@ final class SubscriptionViewController: BaseViewController {
             restoreButton.centerYAnchor.constraint(equalTo: closeButton.centerYAnchor),
             restoreButton.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -24),
 
-            contentStackView.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 24),
-            contentStackView.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -24),
-            contentStackView.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -14),
-            contentStackView.topAnchor.constraint(greaterThanOrEqualTo: view.centerYAnchor, constant: 70),
+            contentShadowView.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 18),
+            contentShadowView.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -18),
+            contentShadowView.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -12),
+            contentShadowView.topAnchor.constraint(greaterThanOrEqualTo: view.safeAreaLayoutGuide.topAnchor, constant: 76),
 
-            trialButton.heightAnchor.constraint(equalToConstant: 58)
+            contentGlassView.topAnchor.constraint(equalTo: contentShadowView.topAnchor),
+            contentGlassView.leadingAnchor.constraint(equalTo: contentShadowView.leadingAnchor),
+            contentGlassView.trailingAnchor.constraint(equalTo: contentShadowView.trailingAnchor),
+            contentGlassView.bottomAnchor.constraint(equalTo: contentShadowView.bottomAnchor),
+
+            contentBackdropView.topAnchor.constraint(equalTo: contentGlassView.contentView.topAnchor),
+            contentBackdropView.leadingAnchor.constraint(equalTo: contentGlassView.contentView.leadingAnchor),
+            contentBackdropView.trailingAnchor.constraint(equalTo: contentGlassView.contentView.trailingAnchor),
+            contentBackdropView.bottomAnchor.constraint(equalTo: contentGlassView.contentView.bottomAnchor),
+
+            contentStackView.topAnchor.constraint(equalTo: contentGlassView.contentView.topAnchor, constant: 18),
+            contentStackView.leadingAnchor.constraint(equalTo: contentGlassView.contentView.leadingAnchor, constant: 16),
+            contentStackView.trailingAnchor.constraint(equalTo: contentGlassView.contentView.trailingAnchor, constant: -16),
+            contentStackView.bottomAnchor.constraint(equalTo: contentGlassView.contentView.bottomAnchor, constant: -12),
+
+            trialButton.heightAnchor.constraint(equalToConstant: 60)
         ])
     }
 
@@ -208,13 +237,15 @@ final class SubscriptionViewController: BaseViewController {
     }
 
     private func configureOverlayContent() {
+        configureContentGlass()
+
         contentStackView.axis = .vertical
         contentStackView.alignment = .fill
-        contentStackView.spacing = 12
+        contentStackView.spacing = 8
 
         benefitStackView.axis = .vertical
         benefitStackView.alignment = .fill
-        benefitStackView.spacing = 7
+        benefitStackView.spacing = 6
 
         let benefitTexts = [
             L10n.text("subscription.benefit.wallpapers"),
@@ -228,10 +259,12 @@ final class SubscriptionViewController: BaseViewController {
         }
 
         titleLabel.text = L10n.text("subscription.title")
-        titleLabel.font = serifFont(size: 35, weight: .bold)
+        titleLabel.font = serifFont(size: 29, weight: .bold)
         titleLabel.textColor = UIColor.white.withAlphaComponent(0.98)
         titleLabel.numberOfLines = 2
-        titleLabel.textAlignment = .left
+        titleLabel.textAlignment = .center
+        titleLabel.adjustsFontSizeToFitWidth = true
+        titleLabel.minimumScaleFactor = 0.86
 
         trialButton.setTitle(L10n.text("subscription.free_trial"), for: .normal)
         trialButton.addTarget(self, action: #selector(handleStartWeeklyTrial), for: .touchUpInside)
@@ -241,6 +274,7 @@ final class SubscriptionViewController: BaseViewController {
         planStackView.spacing = 8
         weeklyPlanButton.addTarget(self, action: #selector(handleWeeklyPlan), for: .touchUpInside)
         yearlyPlanButton.addTarget(self, action: #selector(handleYearlyPlan), for: .touchUpInside)
+        planTrayView.addContentView(planStackView)
         planStackView.addArrangedSubview(weeklyPlanButton)
         planStackView.addArrangedSubview(yearlyPlanButton)
         refreshPlanButtons()
@@ -252,15 +286,34 @@ final class SubscriptionViewController: BaseViewController {
 
         agreementView.configure(text: L10n.text("subscription.agreement"))
 
-        [benefitStackView, titleLabel, planStackView, trialButton, priceLabel, agreementView].forEach {
+        [titleLabel, benefitStackView, planTrayView, trialButton, priceLabel, agreementView].forEach {
             contentStackView.addArrangedSubview($0)
         }
 
-        contentStackView.setCustomSpacing(16, after: benefitStackView)
-        contentStackView.setCustomSpacing(18, after: titleLabel)
-        contentStackView.setCustomSpacing(12, after: planStackView)
-        contentStackView.setCustomSpacing(10, after: trialButton)
-        contentStackView.setCustomSpacing(6, after: priceLabel)
+        contentStackView.setCustomSpacing(10, after: titleLabel)
+        contentStackView.setCustomSpacing(12, after: benefitStackView)
+        contentStackView.setCustomSpacing(12, after: planTrayView)
+        contentStackView.setCustomSpacing(8, after: trialButton)
+        contentStackView.setCustomSpacing(5, after: priceLabel)
+    }
+
+    private func configureContentGlass() {
+        contentShadowView.layer.cornerRadius = 30
+        contentShadowView.layer.cornerCurve = .continuous
+        contentShadowView.layer.shadowColor = UIColor.black.cgColor
+        contentShadowView.layer.shadowOpacity = 0.28
+        contentShadowView.layer.shadowRadius = 30
+        contentShadowView.layer.shadowOffset = CGSize(width: 0, height: 18)
+
+        contentGlassView.layer.cornerRadius = 30
+        contentGlassView.layer.cornerCurve = .continuous
+        contentGlassView.clipsToBounds = true
+        contentGlassView.layer.borderWidth = 1
+        contentGlassView.layer.borderColor = UIColor.white.withAlphaComponent(0.16).cgColor
+        contentGlassView.contentView.backgroundColor = UIColor.black.withAlphaComponent(0.12)
+
+        contentBackdropView.isUserInteractionEnabled = false
+        contentBackdropView.backgroundColor = UIColor.white.withAlphaComponent(0.03)
     }
 
     override func setupBindings() {
@@ -504,8 +557,18 @@ final class SubscriptionViewController: BaseViewController {
     private func refreshPlanButtons() {
         let weekly = PremiumAccessStore.shared.productDisplay(for: .weekly)
         let yearly = PremiumAccessStore.shared.productDisplay(for: .yearly)
-        weeklyPlanButton.configure(title: weekly.title, price: weekly.priceText, isPrimary: true)
-        yearlyPlanButton.configure(title: yearly.title, price: yearly.priceText, isPrimary: false)
+        weeklyPlanButton.configure(
+            title: weekly.title,
+            price: weekly.priceText,
+            caption: L10n.text("subscription.plan.weekly.caption"),
+            isPrimary: true
+        )
+        yearlyPlanButton.configure(
+            title: yearly.title,
+            price: yearly.priceText,
+            caption: L10n.text("subscription.plan.yearly.caption"),
+            isPrimary: false
+        )
     }
 
     private func presentMessage(title: String, message: String) {
@@ -518,6 +581,33 @@ final class SubscriptionViewController: BaseViewController {
         let systemFont = UIFont.systemFont(ofSize: size, weight: weight)
         let descriptor = systemFont.fontDescriptor.withDesign(.serif) ?? systemFont.fontDescriptor
         return UIFont(descriptor: descriptor, size: size)
+    }
+
+    private func animateContentEntranceIfNeeded() {
+        guard !didAnimateContentEntrance else { return }
+        didAnimateContentEntrance = true
+
+        guard !UIAccessibility.isReduceMotionEnabled else {
+            contentShadowView.alpha = 1
+            return
+        }
+
+        contentShadowView.alpha = 0
+        contentShadowView.transform = CGAffineTransform(translationX: 0, y: 26).scaledBy(x: 0.985, y: 0.985)
+        planTrayView.prepareForEntrance()
+
+        UIView.animate(
+            withDuration: 0.58,
+            delay: 0.08,
+            usingSpringWithDamping: 0.88,
+            initialSpringVelocity: 0.38,
+            options: [.curveEaseOut, .allowUserInteraction]
+        ) {
+            self.contentShadowView.alpha = 1
+            self.contentShadowView.transform = .identity
+        } completion: { _ in
+            self.planTrayView.animateEntrance()
+        }
     }
 }
 
@@ -819,9 +909,108 @@ private final class FeatureRowView: UIView {
     }
 }
 
+private final class SubscriptionPlanTrayView: UIView {
+
+    private let backgroundLayer = CAGradientLayer()
+    private let bottomGlowLayer = CAGradientLayer()
+    private let hairlineLayer = CAGradientLayer()
+
+    override init(frame: CGRect) {
+        super.init(frame: frame)
+        configure()
+    }
+
+    @available(*, unavailable)
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
+
+    override func layoutSubviews() {
+        super.layoutSubviews()
+        backgroundLayer.frame = bounds
+        bottomGlowLayer.frame = bounds.insetBy(dx: -bounds.width * 0.12, dy: -bounds.height * 0.18)
+        hairlineLayer.frame = CGRect(x: 18, y: 0, width: max(0, bounds.width - 36), height: 1)
+    }
+
+    func addContentView(_ contentView: UIView) {
+        addSubview(contentView)
+        contentView.translatesAutoresizingMaskIntoConstraints = false
+
+        NSLayoutConstraint.activate([
+            contentView.topAnchor.constraint(equalTo: topAnchor, constant: 12),
+            contentView.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 10),
+            contentView.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -10),
+            contentView.bottomAnchor.constraint(equalTo: bottomAnchor, constant: -10)
+        ])
+    }
+
+    func prepareForEntrance() {
+        guard !UIAccessibility.isReduceMotionEnabled else { return }
+        alpha = 0
+        transform = CGAffineTransform(translationX: 0, y: 10)
+    }
+
+    func animateEntrance() {
+        guard !UIAccessibility.isReduceMotionEnabled else {
+            alpha = 1
+            transform = .identity
+            return
+        }
+
+        UIView.animate(
+            withDuration: 0.38,
+            delay: 0,
+            options: [.curveEaseOut, .allowUserInteraction]
+        ) {
+            self.alpha = 1
+            self.transform = .identity
+        }
+    }
+
+    private func configure() {
+        clipsToBounds = true
+        layer.cornerRadius = 22
+        layer.cornerCurve = .continuous
+        layer.borderWidth = 1
+        layer.borderColor = UIColor.white.withAlphaComponent(0.10).cgColor
+
+        backgroundLayer.colors = [
+            UIColor.white.withAlphaComponent(0.12).cgColor,
+            UIColor.white.withAlphaComponent(0.055).cgColor,
+            UIColor.black.withAlphaComponent(0.10).cgColor
+        ]
+        backgroundLayer.locations = [0, 0.46, 1]
+        backgroundLayer.startPoint = CGPoint(x: 0.5, y: 0)
+        backgroundLayer.endPoint = CGPoint(x: 0.5, y: 1)
+
+        bottomGlowLayer.type = .radial
+        bottomGlowLayer.colors = [
+            UIColor(red: 1.0, green: 0.86, blue: 0.62, alpha: 0.28).cgColor,
+            UIColor(red: 0.77, green: 0.86, blue: 1.0, alpha: 0.10).cgColor,
+            UIColor.clear.cgColor
+        ]
+        bottomGlowLayer.locations = [0, 0.34, 1]
+        bottomGlowLayer.startPoint = CGPoint(x: 0.5, y: 1.0)
+        bottomGlowLayer.endPoint = CGPoint(x: 0.5, y: 0.10)
+
+        hairlineLayer.colors = [
+            UIColor.clear.cgColor,
+            UIColor.white.withAlphaComponent(0.32).cgColor,
+            UIColor.clear.cgColor
+        ]
+        hairlineLayer.startPoint = CGPoint(x: 0, y: 0.5)
+        hairlineLayer.endPoint = CGPoint(x: 1, y: 0.5)
+
+        layer.insertSublayer(backgroundLayer, at: 0)
+        layer.insertSublayer(bottomGlowLayer, above: backgroundLayer)
+        layer.insertSublayer(hairlineLayer, above: bottomGlowLayer)
+    }
+}
+
 private final class SubscriptionPlanButton: UIControl {
 
     private let titleLabel = UILabel()
+    private let captionLabel = UILabel()
     private let priceLabel = UILabel()
     private let chevronImageView = UIImageView(image: UIImage(systemName: "chevron.right"))
 
@@ -844,48 +1033,63 @@ private final class SubscriptionPlanButton: UIControl {
         }
     }
 
-    func configure(title: String, price: String, isPrimary: Bool) {
+    func configure(title: String, price: String, caption: String, isPrimary: Bool) {
         titleLabel.text = title
+        captionLabel.text = caption
         priceLabel.text = price
-        layer.borderColor = UIColor.white.withAlphaComponent(isPrimary ? 0.28 : 0.14).cgColor
-        backgroundColor = UIColor.white.withAlphaComponent(isPrimary ? 0.13 : 0.07)
+        layer.borderColor = UIColor.white.withAlphaComponent(isPrimary ? 0.26 : 0.10).cgColor
+        backgroundColor = UIColor.white.withAlphaComponent(isPrimary ? 0.15 : 0.055)
+        priceLabel.textColor = isPrimary
+            ? UIColor(red: 1.0, green: 0.88, blue: 0.66, alpha: 1)
+            : UIColor.white.withAlphaComponent(0.76)
+        chevronImageView.alpha = isPrimary ? 0.82 : 0.42
     }
 
     private func configure() {
-        layer.cornerRadius = 16
+        layer.cornerRadius = 18
         layer.cornerCurve = .continuous
         layer.borderWidth = 1
 
-        titleLabel.font = .systemFont(ofSize: 14, weight: .semibold)
-        titleLabel.textColor = UIColor.white.withAlphaComponent(0.90)
+        titleLabel.font = .systemFont(ofSize: 14, weight: .bold)
+        titleLabel.textColor = UIColor.white.withAlphaComponent(0.92)
 
-        priceLabel.font = .systemFont(ofSize: 14, weight: .bold)
-        priceLabel.textColor = UIColor(red: 1.0, green: 0.86, blue: 0.62, alpha: 0.96)
+        captionLabel.font = .systemFont(ofSize: 11, weight: .medium)
+        captionLabel.textColor = UIColor.white.withAlphaComponent(0.54)
+        captionLabel.numberOfLines = 1
+
+        priceLabel.font = .monospacedDigitSystemFont(ofSize: 15, weight: .bold)
         priceLabel.textAlignment = .right
+        priceLabel.setContentCompressionResistancePriority(.required, for: .horizontal)
 
         chevronImageView.tintColor = UIColor.white.withAlphaComponent(0.40)
         chevronImageView.preferredSymbolConfiguration = UIImage.SymbolConfiguration(pointSize: 12, weight: .semibold)
         chevronImageView.contentMode = .scaleAspectFit
 
-        let stackView = UIStackView(arrangedSubviews: [titleLabel, priceLabel, chevronImageView])
+        let textStackView = UIStackView(arrangedSubviews: [titleLabel, captionLabel])
+        textStackView.axis = .vertical
+        textStackView.alignment = .leading
+        textStackView.spacing = 2
+        textStackView.isUserInteractionEnabled = false
+
+        let stackView = UIStackView(arrangedSubviews: [textStackView, priceLabel, chevronImageView])
         stackView.axis = .horizontal
         stackView.alignment = .center
-        stackView.spacing = 10
+        stackView.spacing = 12
         stackView.isUserInteractionEnabled = false
 
         addSubview(stackView)
         stackView.translatesAutoresizingMaskIntoConstraints = false
 
         NSLayoutConstraint.activate([
-            heightAnchor.constraint(equalToConstant: 44),
+            heightAnchor.constraint(equalToConstant: 54),
 
             chevronImageView.widthAnchor.constraint(equalToConstant: 12),
             chevronImageView.heightAnchor.constraint(equalToConstant: 12),
 
-            stackView.topAnchor.constraint(equalTo: topAnchor, constant: 10),
+            stackView.topAnchor.constraint(equalTo: topAnchor, constant: 9),
             stackView.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 14),
-            stackView.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -14),
-            stackView.bottomAnchor.constraint(equalTo: bottomAnchor, constant: -10)
+            stackView.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -12),
+            stackView.bottomAnchor.constraint(equalTo: bottomAnchor, constant: -9)
         ])
     }
 }
@@ -940,6 +1144,8 @@ private final class GradientCapsuleButton: UIButton {
 
     private let gradientLayer = CAGradientLayer()
     private let glowLayer = CALayer()
+    private let breathingAnimationKey = "heartwall.subscription.cta.breathing"
+    private let glowBreathingAnimationKey = "heartwall.subscription.cta.glow.breathing"
 
     override init(frame: CGRect) {
         super.init(frame: frame)
@@ -959,6 +1165,44 @@ private final class GradientCapsuleButton: UIButton {
         glowLayer.cornerRadius = glowLayer.bounds.height * 0.5
     }
 
+    func startBreathing() {
+        guard !UIAccessibility.isReduceMotionEnabled else { return }
+        guard layer.animation(forKey: breathingAnimationKey) == nil else { return }
+
+        let scaleAnimation = CABasicAnimation(keyPath: "transform.scale")
+        scaleAnimation.fromValue = 1.0
+        scaleAnimation.toValue = 1.026
+
+        let shadowAnimation = CABasicAnimation(keyPath: "shadowOpacity")
+        shadowAnimation.fromValue = 0.18
+        shadowAnimation.toValue = 0.34
+
+        let group = CAAnimationGroup()
+        group.animations = [scaleAnimation, shadowAnimation]
+        group.duration = 1.55
+        group.autoreverses = true
+        group.repeatCount = .infinity
+        group.timingFunction = CAMediaTimingFunction(name: .easeInEaseOut)
+        group.isRemovedOnCompletion = false
+
+        layer.add(group, forKey: breathingAnimationKey)
+
+        let glowAnimation = CABasicAnimation(keyPath: "opacity")
+        glowAnimation.fromValue = 0.58
+        glowAnimation.toValue = 1.0
+        glowAnimation.duration = 1.55
+        glowAnimation.autoreverses = true
+        glowAnimation.repeatCount = .infinity
+        glowAnimation.timingFunction = CAMediaTimingFunction(name: .easeInEaseOut)
+        glowAnimation.isRemovedOnCompletion = false
+        glowLayer.add(glowAnimation, forKey: glowBreathingAnimationKey)
+    }
+
+    func stopBreathing() {
+        layer.removeAnimation(forKey: breathingAnimationKey)
+        glowLayer.removeAnimation(forKey: glowBreathingAnimationKey)
+    }
+
     private func configure() {
         clipsToBounds = false
         layer.cornerRadius = 29
@@ -969,8 +1213,8 @@ private final class GradientCapsuleButton: UIButton {
         layer.borderColor = UIColor.white.withAlphaComponent(0.34).cgColor
         layer.shadowColor = UIColor.black.cgColor
         layer.shadowOpacity = 0.18
-        layer.shadowRadius = 24
-        layer.shadowOffset = CGSize(width: 0, height: 10)
+        layer.shadowRadius = 28
+        layer.shadowOffset = CGSize(width: 0, height: 12)
 
         gradientLayer.colors = [
             UIColor(red: 0.99, green: 0.91, blue: 0.78, alpha: 1).cgColor,
@@ -980,7 +1224,7 @@ private final class GradientCapsuleButton: UIButton {
         gradientLayer.endPoint = CGPoint(x: 0.95, y: 0.50)
 
         glowLayer.backgroundColor = UIColor.white.withAlphaComponent(0.22).cgColor
-        glowLayer.opacity = 1
+        glowLayer.opacity = 0.78
 
         setTitleColor(UIColor(red: 0.35, green: 0.23, blue: 0.11, alpha: 1), for: .normal)
         titleLabel?.font = .systemFont(ofSize: 18, weight: .bold)
@@ -998,22 +1242,22 @@ private final class BottomRadiantOverlayView: UIView {
 
         radialGlowLayer.type = .radial
         radialGlowLayer.colors = [
-            UIColor(red: 0.98, green: 0.90, blue: 0.68, alpha: 0.34).cgColor,
-            UIColor(red: 0.96, green: 0.84, blue: 0.58, alpha: 0.12).cgColor,
+            UIColor(red: 0.98, green: 0.90, blue: 0.68, alpha: 0.40).cgColor,
+            UIColor(red: 0.72, green: 0.84, blue: 1.00, alpha: 0.14).cgColor,
             UIColor.clear.cgColor
         ]
-        radialGlowLayer.locations = [0, 0.28, 1]
+        radialGlowLayer.locations = [0, 0.34, 1]
         radialGlowLayer.startPoint = CGPoint(x: 0.5, y: 1.0)
         radialGlowLayer.endPoint = CGPoint(x: 0.5, y: 0.0)
 
         verticalFadeLayer.colors = [
             UIColor.clear.cgColor,
-            UIColor.black.withAlphaComponent(0.04).cgColor,
-            UIColor.black.withAlphaComponent(0.24).cgColor,
-            UIColor.black.withAlphaComponent(0.68).cgColor,
-            UIColor.black.withAlphaComponent(0.94).cgColor
+            UIColor.black.withAlphaComponent(0.06).cgColor,
+            UIColor.black.withAlphaComponent(0.32).cgColor,
+            UIColor.black.withAlphaComponent(0.76).cgColor,
+            UIColor.black.withAlphaComponent(0.96).cgColor
         ]
-        verticalFadeLayer.locations = [0, 0.40, 0.60, 0.82, 1]
+        verticalFadeLayer.locations = [0, 0.34, 0.58, 0.82, 1]
         verticalFadeLayer.startPoint = CGPoint(x: 0.5, y: 0)
         verticalFadeLayer.endPoint = CGPoint(x: 0.5, y: 1)
 
@@ -1032,9 +1276,9 @@ private final class BottomRadiantOverlayView: UIView {
         verticalFadeLayer.frame = bounds
         radialGlowLayer.frame = CGRect(
             x: -bounds.width * 0.28,
-            y: bounds.height * 0.22,
+            y: bounds.height * 0.15,
             width: bounds.width * 1.56,
-            height: bounds.height * 0.96
+            height: bounds.height * 1.06
         )
     }
 }

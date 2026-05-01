@@ -21,6 +21,8 @@
 "subscription.plan.yearly" = "年會員";
 "subscription.plan.weekly.price" = "¥46";
 "subscription.plan.yearly.price" = "¥176";
+"subscription.plan.weekly.caption" = "免費試用後自動開通";
+"subscription.plan.yearly.caption" = "長期收藏輔助選擇";
 "subscription.agreement" = "同意《會員協議》和《自動續費協議》";
 "subscription.restore.success" = "會員訂閱已恢復。";
 "subscription.restore.empty" = "未找到可恢復的會員訂閱。";

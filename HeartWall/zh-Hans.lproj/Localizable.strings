@@ -21,6 +21,8 @@
 "subscription.plan.yearly" = "年会员";
 "subscription.plan.weekly.price" = "¥46";
 "subscription.plan.yearly.price" = "¥176";
+"subscription.plan.weekly.caption" = "免费试用后自动开通";
+"subscription.plan.yearly.caption" = "长期收藏辅助选择";
 "subscription.agreement" = "同意《会员协议》和《自动续费协议》";
 "subscription.restore.success" = "会员订阅已恢复。";
 "subscription.restore.empty" = "未找到可恢复的会员订阅。";
