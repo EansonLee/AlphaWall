@@ -1,0 +1,155 @@
+{
+  "appPolicies" : {
+    "eula" : "",
+    "policies" : [
+      {
+        "locale" : "zh_CN",
+        "policyText" : "",
+        "policyURL" : ""
+      }
+    ]
+  },
+  "identifier" : "HeartWallStoreKit",
+  "nonRenewingSubscriptions" : [
+
+  ],
+  "products" : [
+
+  ],
+  "settings" : {
+    "_failTransactionsEnabled" : false,
+    "_locale" : "zh_CN",
+    "_storefront" : "CHN",
+    "_storeKitErrors" : [
+      {
+        "current" : {
+          "index" : 2,
+          "type" : "generic"
+        },
+        "enabled" : false,
+        "name" : "Load Products"
+      },
+      {
+        "current" : null,
+        "enabled" : false,
+        "name" : "Purchase"
+      },
+      {
+        "current" : null,
+        "enabled" : false,
+        "name" : "Verification"
+      },
+      {
+        "current" : null,
+        "enabled" : false,
+        "name" : "App Store Sync"
+      },
+      {
+        "current" : null,
+        "enabled" : false,
+        "name" : "Subscription Status"
+      },
+      {
+        "current" : null,
+        "enabled" : false,
+        "name" : "App Transaction"
+      },
+      {
+        "current" : null,
+        "enabled" : false,
+        "name" : "Manage Subscriptions Sheet"
+      },
+      {
+        "current" : null,
+        "enabled" : false,
+        "name" : "Refund Request Sheet"
+      },
+      {
+        "current" : null,
+        "enabled" : false,
+        "name" : "Offer Code Redeem Sheet"
+      }
+    ]
+  },
+  "subscriptionGroups" : [
+    {
+      "id" : "HEARTWALLVIP",
+      "localizations" : [
+
+      ],
+      "name" : "HeartWall VIP",
+      "subscriptions" : [
+        {
+          "adHocOffers" : [
+
+          ],
+          "codeOffers" : [
+
+          ],
+          "displayPrice" : "46",
+          "familyShareable" : false,
+          "groupNumber" : 1,
+          "internalID" : "6765557191",
+          "introductoryOffer" : null,
+          "localizations" : [
+            {
+              "description" : "解锁全部壁纸、高清保存、无限制下载次数。",
+              "displayName" : "周会员",
+              "locale" : "zh_CN"
+            },
+            {
+              "description" : "Unlock all wallpapers, HD saves, and unlimited downloads.",
+              "displayName" : "Weekly Membership",
+              "locale" : "en_US"
+            }
+          ],
+          "productID" : "heartwall.vip.weekly",
+          "recurringSubscriptionPeriod" : "P1W",
+          "referenceName" : "HeartWall Weekly Membership",
+          "subscriptionGroupID" : "HEARTWALLVIP",
+          "type" : "RecurringSubscription",
+          "winbackOffers" : [
+
+          ]
+        },
+        {
+          "adHocOffers" : [
+
+          ],
+          "codeOffers" : [
+
+          ],
+          "displayPrice" : "176",
+          "familyShareable" : false,
+          "groupNumber" : 2,
+          "internalID" : "6765558248",
+          "introductoryOffer" : null,
+          "localizations" : [
+            {
+              "description" : "解锁全部壁纸、高清保存、无限制下载次数。",
+              "displayName" : "年会员",
+              "locale" : "zh_CN"
+            },
+            {
+              "description" : "Unlock all wallpapers, HD saves, and unlimited downloads.",
+              "displayName" : "Yearly Membership",
+              "locale" : "en_US"
+            }
+          ],
+          "productID" : "heartwall.vip.yearly",
+          "recurringSubscriptionPeriod" : "P1Y",
+          "referenceName" : "HeartWall Yearly Membership",
+          "subscriptionGroupID" : "HEARTWALLVIP",
+          "type" : "RecurringSubscription",
+          "winbackOffers" : [
+
+          ]
+        }
+      ]
+    }
+  ],
+  "version" : {
+    "major" : 4,
+    "minor" : 0
+  }
+}
