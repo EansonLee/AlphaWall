@@ -124,6 +124,11 @@ final class ProfileViewController: BaseViewController {
         renderMenuItems()
     }
 
+    @MainActor
+    deinit {
+        NotificationCenter.default.removeObserver(self)
+    }
+
     private func configureBackground() {
         backgroundImageView.contentMode = .scaleAspectFill
         backgroundImageView.clipsToBounds = true
