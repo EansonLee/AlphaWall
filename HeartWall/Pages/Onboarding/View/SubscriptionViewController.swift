@@ -62,7 +62,6 @@ final class SubscriptionViewController: BaseViewController {
     private let bottomOverlayView = BottomRadiantOverlayView()
     private let contentStackView = UIStackView()
     private let benefitStackView = UIStackView()
-    private let titleLabel = UILabel()
     private let planTrayView = SubscriptionPlanTrayView()
     private let planStackView = UIStackView()
     private let weeklyPlanButton = SubscriptionPlanButton()
@@ -204,11 +203,15 @@ final class SubscriptionViewController: BaseViewController {
         closeButton.addTarget(self, action: #selector(handleEnterHome), for: .touchUpInside)
 
         var restoreConfiguration = UIButton.Configuration.plain()
-        restoreConfiguration.title = L10n.text("subscription.restore")
-        restoreConfiguration.baseForegroundColor = UIColor.white.withAlphaComponent(0.72)
-        restoreConfiguration.contentInsets = .zero
+        restoreConfiguration.attributedTitle = AttributedString(
+            L10n.text("subscription.restore"),
+            attributes: AttributeContainer([
+                .font: UIFont.systemFont(ofSize: 12, weight: .medium)
+            ])
+        )
+        restoreConfiguration.baseForegroundColor = UIColor.white.withAlphaComponent(0.58)
+        restoreConfiguration.contentInsets = NSDirectionalEdgeInsets(top: 4, leading: 6, bottom: 4, trailing: 6)
         restoreButton.configuration = restoreConfiguration
-        restoreButton.titleLabel?.font = .systemFont(ofSize: 14, weight: .medium)
         restoreButton.addTarget(self, action: #selector(handleRestore), for: .touchUpInside)
     }
 
@@ -232,14 +235,6 @@ final class SubscriptionViewController: BaseViewController {
             benefitStackView.addArrangedSubview(FeatureRowView(text: benefitText))
         }
 
-        titleLabel.text = L10n.text("subscription.title")
-        titleLabel.font = serifFont(size: 29, weight: .bold)
-        titleLabel.textColor = UIColor.white.withAlphaComponent(0.98)
-        titleLabel.numberOfLines = 2
-        titleLabel.textAlignment = .center
-        titleLabel.adjustsFontSizeToFitWidth = true
-        titleLabel.minimumScaleFactor = 0.86
-
         trialButton.setTitle(L10n.text("subscription.free_trial"), for: .normal)
         trialButton.addTarget(self, action: #selector(handleStartWeeklyTrial), for: .touchUpInside)
 
@@ -260,12 +255,11 @@ final class SubscriptionViewController: BaseViewController {
 
         agreementView.configure(text: L10n.text("subscription.agreement"))
 
-        [titleLabel, benefitStackView, planTrayView, trialButton, priceLabel, agreementView].forEach {
+        [benefitStackView, planTrayView, trialButton, priceLabel, agreementView].forEach {
             contentStackView.addArrangedSubview($0)
         }
 
-        contentStackView.setCustomSpacing(10, after: titleLabel)
-        contentStackView.setCustomSpacing(12, after: benefitStackView)
+        contentStackView.setCustomSpacing(14, after: benefitStackView)
         contentStackView.setCustomSpacing(12, after: planTrayView)
         contentStackView.setCustomSpacing(8, after: trialButton)
         contentStackView.setCustomSpacing(5, after: priceLabel)
@@ -530,12 +524,6 @@ final class SubscriptionViewController: BaseViewController {
         let alert = UIAlertController(title: title, message: message, preferredStyle: .alert)
         alert.addAction(UIAlertAction(title: L10n.text("common.ok"), style: .default))
         present(alert, animated: true)
-    }
-
-    private func serifFont(size: CGFloat, weight: UIFont.Weight) -> UIFont {
-        let systemFont = UIFont.systemFont(ofSize: size, weight: weight)
-        let descriptor = systemFont.fontDescriptor.withDesign(.serif) ?? systemFont.fontDescriptor
-        return UIFont(descriptor: descriptor, size: size)
     }
 
     private func animateContentEntranceIfNeeded() {
@@ -948,6 +936,9 @@ private final class SubscriptionPlanTrayView: UIView {
 
 private final class SubscriptionPlanButton: UIControl {
 
+    private let backgroundLayer = CAGradientLayer()
+    private let glowLayer = CAGradientLayer()
+    private let separatorLayer = CAGradientLayer()
     private let titleLabel = UILabel()
     private let captionLabel = UILabel()
     private let priceLabel = UILabel()
@@ -976,24 +967,53 @@ private final class SubscriptionPlanButton: UIControl {
         titleLabel.text = title
         captionLabel.text = caption
         priceLabel.text = price
-        layer.borderColor = UIColor.white.withAlphaComponent(isPrimary ? 0.22 : 0.08).cgColor
-        backgroundColor = UIColor.black.withAlphaComponent(isPrimary ? 0.24 : 0.12)
+        layer.borderColor = UIColor.white.withAlphaComponent(isPrimary ? 0.26 : 0.10).cgColor
+        backgroundLayer.colors = [
+            UIColor.white.withAlphaComponent(isPrimary ? 0.13 : 0.055).cgColor,
+            UIColor.black.withAlphaComponent(isPrimary ? 0.30 : 0.17).cgColor
+        ]
+        glowLayer.opacity = isPrimary ? 1 : 0.38
         priceLabel.textColor = isPrimary
             ? UIColor(red: 1.0, green: 0.88, blue: 0.66, alpha: 1)
             : UIColor.white.withAlphaComponent(0.76)
+        titleLabel.textColor = UIColor.white.withAlphaComponent(isPrimary ? 0.96 : 0.82)
+        captionLabel.textColor = UIColor.white.withAlphaComponent(isPrimary ? 0.62 : 0.44)
         chevronImageView.alpha = isPrimary ? 0.82 : 0.42
     }
 
     private func configure() {
-        layer.cornerRadius = 16
+        clipsToBounds = true
+        layer.cornerRadius = 18
         layer.cornerCurve = .continuous
         layer.borderWidth = 1
+        layer.insertSublayer(backgroundLayer, at: 0)
+        layer.insertSublayer(glowLayer, above: backgroundLayer)
+        layer.insertSublayer(separatorLayer, above: glowLayer)
+
+        backgroundLayer.startPoint = CGPoint(x: 0.1, y: 0)
+        backgroundLayer.endPoint = CGPoint(x: 0.9, y: 1)
+
+        glowLayer.type = .radial
+        glowLayer.colors = [
+            UIColor(red: 1.0, green: 0.86, blue: 0.62, alpha: 0.22).cgColor,
+            UIColor(red: 0.76, green: 0.86, blue: 1.0, alpha: 0.08).cgColor,
+            UIColor.clear.cgColor
+        ]
+        glowLayer.locations = [0, 0.36, 1]
+        glowLayer.startPoint = CGPoint(x: 0.15, y: 1.0)
+        glowLayer.endPoint = CGPoint(x: 1.0, y: 0.0)
+
+        separatorLayer.colors = [
+            UIColor.clear.cgColor,
+            UIColor.white.withAlphaComponent(0.24).cgColor,
+            UIColor.clear.cgColor
+        ]
+        separatorLayer.startPoint = CGPoint(x: 0, y: 0.5)
+        separatorLayer.endPoint = CGPoint(x: 1, y: 0.5)
 
         titleLabel.font = .systemFont(ofSize: 14, weight: .bold)
-        titleLabel.textColor = UIColor.white.withAlphaComponent(0.92)
 
         captionLabel.font = .systemFont(ofSize: 11, weight: .medium)
-        captionLabel.textColor = UIColor.white.withAlphaComponent(0.54)
         captionLabel.numberOfLines = 1
 
         priceLabel.font = .monospacedDigitSystemFont(ofSize: 15, weight: .bold)
@@ -1030,6 +1050,14 @@ private final class SubscriptionPlanButton: UIControl {
             stackView.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -12),
             stackView.bottomAnchor.constraint(equalTo: bottomAnchor, constant: -9)
         ])
+    }
+
+    override func layoutSubviews() {
+        super.layoutSubviews()
+        backgroundLayer.frame = bounds
+        backgroundLayer.cornerRadius = layer.cornerRadius
+        glowLayer.frame = bounds.insetBy(dx: -bounds.width * 0.18, dy: -bounds.height * 0.52)
+        separatorLayer.frame = CGRect(x: 16, y: 0, width: max(0, bounds.width - 32), height: 1)
     }
 }
 
